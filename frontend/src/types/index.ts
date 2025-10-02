@@ -1,0 +1,79 @@
+// Core shared types for frontend
+
+export type ID = number;
+
+export type Weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR';
+
+export interface TeacherAide {
+  id: ID;
+  name: string;
+  qualifications?: string | null;
+  colour_hex: string;
+  created_at?: string;
+}
+
+export interface Availability {
+  id: ID;
+  aide_id: ID;
+  weekday: Weekday;
+  start_time: string; // HH:MM:SS
+  end_time: string;   // HH:MM:SS
+}
+
+export type TaskCategory =
+  | 'PLAYGROUND'
+  | 'CLASS_SUPPORT'
+  | 'GROUP_SUPPORT'
+  | 'INDIVIDUAL_SUPPORT';
+
+export interface Classroom {
+  id: ID;
+  name: string;
+  capacity?: number | null;
+  notes?: string | null;
+  created_at?: string;
+}
+
+export interface Task {
+  id: ID;
+  title: string;
+  category: TaskCategory;
+  start_time: string; // HH:MM:SS
+  end_time: string;   // HH:MM:SS
+  recurrence_rule?: string | null;
+  expires_on?: string | null; // YYYY-MM-DD
+  classroom_id?: ID | null;
+  notes?: string | null;
+  status?: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE';
+  classroom?: Classroom;
+}
+
+export interface Assignment {
+  id: ID;
+  task_id: ID;
+  aide_id: ID | null;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  end_time: string;   // HH:MM:SS
+  status: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE';
+  version: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Absence {
+  id: ID;
+  aide_id: ID;
+  date: string; // YYYY-MM-DD
+  reason?: string | null;
+  created_at?: string;
+}
+
+export interface ApiError {
+  error: string;
+  message?: string;
+}
+
+
+
+

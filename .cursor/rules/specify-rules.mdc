@@ -1,0 +1,25 @@
+﻿ # Timetable 3 Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-10-01
+
+## Active Technologies
+- Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Vite, Material-UI v5, Zustand, @hello-pangea/dnd (001-create-a-drag)
+
+## Project Structure
+```
+backend/
+frontend/
+tests/
+```
+
+## Commands
+cd src; pytest; ruff check .
+
+## Code Style
+Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
+
+## Recent Changes
+- 001-create-a-drag: Added Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Vite, Material-UI v5, Zustand, @hello-pangea/dnd
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

@@ -1,0 +1,36 @@
+import { api } from './api';
+import type { Assignment, ID } from '../types';
+
+export const assignmentsApi = {
+  create(payload: Omit<Assignment, 'id' | 'version' | 'created_at' | 'updated_at'>): Promise<Assignment> {
+    return api.post('/assignments', payload).then((r) => r.data as Assignment);
+  },
+  get(id: ID): Promise<Assignment> {
+    return api.get(`/assignments/${id}`).then((r) => r.data as Assignment);
+  },
+  update(id: ID, payload: Partial<Pick<Assignment, 'aide_id' | 'start_time' | 'end_time' | 'status' | 'version'>>): Promise<Assignment> {
+    return api.put(`/assignments/${id}`, payload).then((r) => r.data as Assignment);
+  },
+  batch(payload: { task_id: ID; aide_id: ID | null; dates: string[]; start_time: string; end_time: string; }) {
+    return api.post('/assignments/batch', payload).then((r) => r.data as { assignments: Assignment[]; conflicts: any[] });
+  },
+  weeklyMatrix(startDateISO: string) {
+    const url = `/assignments/weekly-matrix?start_date=${startDateISO}`;
+    const maybe = (api as any)?.get?.(url);
+    if (!maybe || typeof (maybe as any).then !== 'function') {
+      return Promise.resolve({ assignments: [] } as any);
+    }
+    return (maybe as any).then((r: any) => (r?.data ?? { assignments: [] }) as any);
+  },
+  unassigned(dateISO?: string) {
+    const q = dateISO ? `?date=${dateISO}` : '';
+    const url = `/assignments/unassigned${q}`;
+    const maybe = (api as any)?.get?.(url);
+    if (!maybe || typeof (maybe as any).then !== 'function') {
+      return Promise.resolve([] as Assignment[]);
+    }
+    return (maybe as any).then((r: any) => (r?.data ?? []) as Assignment[]);
+  },
+};
+
+
