@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { api } from '../services/api';
@@ -8,6 +8,30 @@ import { useUndoStore } from '../store/stores/undoStore';
 export function useDragDrop() {
   const [conflicts, setConflicts] = useState<any[] | null>(null);
   const { execute } = useUndoStore();
+
+  // Debounce map for drag-triggered updates (per-assignment key)
+  const pendingTimersRef = useRef<Record<string, any>>({});
+  const debouncedUpdate = useCallback(
+    async (key: string, fn: () => Promise<void>) => {
+      return await new Promise<void>((resolve, reject) => {
+        const pending = pendingTimersRef.current[key];
+        if (pending) {
+          clearTimeout(pending);
+        }
+        pendingTimersRef.current[key] = setTimeout(async () => {
+          try {
+            await fn();
+            resolve();
+          } catch (e) {
+            reject(e);
+          } finally {
+            delete pendingTimersRef.current[key];
+          }
+        }, 150);
+      });
+    },
+    []
+  );
 
   const onDragEnd = useCallback(async (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -28,7 +52,8 @@ export function useDragDrop() {
       description: `Move assignment ${assignmentId} ${sourceAideId} -> ${destAideId}`,
       async do() {
         try {
-          await assignmentsApi.update(assignmentId, { aide_id: destAideId });
+          // Debounce drag-triggered update to reduce API chatter
+          await debouncedUpdate(`asg-${assignmentId}`, () => assignmentsApi.update(assignmentId, { aide_id: destAideId }));
         } catch (e: any) {
           if (e?.status === 409 && e?.data?.conflicts) {
             setConflicts({ conflicts: e.data.conflicts, assignmentId, destAideId });
@@ -41,7 +66,7 @@ export function useDragDrop() {
         await assignmentsApi.update(assignmentId, { aide_id: Number.isFinite(sourceAideId) ? sourceAideId : null });
       },
     });
-  }, [execute]);
+  }, [execute, debouncedUpdate]);
 
   const ConflictUI = conflicts ? (
     <ConflictModal

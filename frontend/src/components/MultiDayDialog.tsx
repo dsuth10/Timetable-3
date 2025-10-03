@@ -9,9 +9,9 @@ type Props = {
 export default function MultiDayDialog({ open, days, onToggle, onApply, onClose }: Props) {
   if (!open) return null;
   return (
-    <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="multiday-modal-title" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'white', borderRadius: 8, padding: 16, minWidth: 360 }}>
-        <h3 style={{ marginTop: 0 }}>Apply to multiple days</h3>
+        <h3 id="multiday-modal-title" style={{ marginTop: 0 }}>Apply to multiple days</h3>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {days.map((d) => (
             <li key={d.key} style={{ marginBottom: 6 }}>

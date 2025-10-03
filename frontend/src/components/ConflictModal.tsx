@@ -20,9 +20,9 @@ type Props = {
 export default function ConflictModal({ open, conflicts, onReplace, onCancel, onClose }: Props) {
   if (!open) return null;
   return (
-    <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="conflict-modal-title" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'white', borderRadius: 8, padding: 16, minWidth: 360 }}>
-        <h3 style={{ marginTop: 0 }}>Assignment Conflict</h3>
+        <h3 id="conflict-modal-title" style={{ marginTop: 0 }}>Assignment Conflict</h3>
         <p>The following assignments conflict with your action:</p>
         <ul>
           {conflicts.map((c) => (
