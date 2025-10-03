@@ -1,4 +1,5 @@
 import { Droppable } from '@hello-pangea/dnd';
+import { memo } from 'react';
 import type { ID } from '../../types';
 
 type TimetableSlotProps = {
@@ -6,7 +7,7 @@ type TimetableSlotProps = {
   children?: React.ReactNode;
 };
 
-export function TimetableSlot({ droppableId, children }: TimetableSlotProps) {
+function TimetableSlotBase({ droppableId, children }: TimetableSlotProps) {
   return (
     <Droppable droppableId={droppableId}>
       {(provided) => (
@@ -18,5 +19,7 @@ export function TimetableSlot({ droppableId, children }: TimetableSlotProps) {
     </Droppable>
   );
 }
+
+export const TimetableSlot = memo(TimetableSlotBase);
 
 

@@ -1,4 +1,5 @@
 import { Draggable } from '@hello-pangea/dnd';
+import { memo } from 'react';
 import type { Assignment } from '../../types';
 
 type TaskCardProps = {
@@ -6,7 +7,7 @@ type TaskCardProps = {
   index: number;
 };
 
-export function TaskCard({ assignment, index }: TaskCardProps) {
+function TaskCardBase({ assignment, index }: TaskCardProps) {
   return (
     <Draggable draggableId={`asg-${assignment.id}`} index={index}>
       {(dragProvided) => (
@@ -30,5 +31,18 @@ export function TaskCard({ assignment, index }: TaskCardProps) {
     </Draggable>
   );
 }
+
+export const TaskCard = memo(TaskCardBase, (prev, next) => {
+  const a = prev.assignment;
+  const b = next.assignment;
+  return (
+    a.id === b.id &&
+    a.aide_id === b.aide_id &&
+    a.start_time === b.start_time &&
+    a.end_time === b.end_time &&
+    a.status === b.status &&
+    prev.index === next.index
+  );
+});
 
 

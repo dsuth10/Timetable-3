@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { api } from '../services/api';

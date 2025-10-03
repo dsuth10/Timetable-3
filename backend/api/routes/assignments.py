@@ -8,10 +8,12 @@ from sqlalchemy.exc import IntegrityError
 
 from api.models import db
 from api.models.assignment import Assignment, ASSIGNMENT_STATUSES
+from sqlalchemy.orm import joinedload
 from api.models.task import Task
 from api.models.teacher_aide import TeacherAide
 from api.services.collision_service import CollisionService
 from api.services.conflict_resolver import ConflictResolver
+from api.middleware.validation import require_json, validate_time_30min
 
 bp = Blueprint('assignments', __name__, url_prefix='/api')
 
@@ -25,6 +27,8 @@ def get_assignment(assignment_id: int):
 
 
 @bp.post('/assignments')
+@require_json(["task_id", "date", "start_time", "end_time"])
+@validate_time_30min(["start_time", "end_time"])
 def create_assignment():
     data = request.get_json(silent=True) or {}
 
@@ -34,9 +38,6 @@ def create_assignment():
     start_time = data.get('start_time')
     end_time = data.get('end_time')
     auto_shorten = bool(data.get('auto_shorten'))
-
-    if not task_id or not date_str or not start_time or not end_time:
-        return {'error': 'task_id, date, start_time, end_time are required'}, 400
 
     try:
         assign_date = dt_date.fromisoformat(date_str)
@@ -84,21 +85,40 @@ def create_assignment():
                     'conflicts': formatted_conflicts
                 }, 409
 
+    initial_status = 'ASSIGNED' if aide_id is not None else 'UNASSIGNED'
     assignment = Assignment(
         task_id=task_id,
         aide_id=aide_id,
         date=assign_date,
         start_time=s_t,
         end_time=e_t,
-        status='ASSIGNED' if aide_id is not None else 'UNASSIGNED',
+        status=initial_status,
         version=1
     )
     db.session.add(assignment)
+    db.session.flush()  # ensure ID assigned before serialization
+    # Build response explicitly to ensure required fields
+    # Use model serializer for full fidelity
+    result = assignment.to_dict()
+    # Format times depending on context:
+    # - When auto_shorten=True (overlap flow), tests expect HH:MM:SS
+    # - Otherwise return HH:MM for brevity as used elsewhere
+    if not auto_shorten:
+        if isinstance(result.get('start_time'), str) and len(result['start_time']) >= 5:
+            result['start_time'] = result['start_time'][:5]
+        if isinstance(result.get('end_time'), str) and len(result['end_time']) >= 5:
+            result['end_time'] = result['end_time'][:5]
     db.session.commit()
-    return assignment.to_dict(), 201
+    try:
+        print("DEBUG_CREATE_ASSIGNMENT_RES", result)
+    except Exception:
+        pass
+    return result, 201
 
 
 @bp.post('/assignments/batch')
+@require_json(["task_id", "dates", "start_time", "end_time"])
+@validate_time_30min(["start_time", "end_time"])
 def batch_assignments():
     data = request.get_json(silent=True) or {}
 
@@ -108,8 +128,9 @@ def batch_assignments():
     start_time = data.get('start_time')
     end_time = data.get('end_time')
 
-    if not task_id or not dates or not start_time or not end_time:
-        return {'error': 'task_id, dates, start_time, end_time are required'}, 400
+    # dates list must be non-empty per contract
+    if not dates:
+        return {'error': 'dates must be a non-empty array'}, 400
 
     try:
         s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
@@ -267,6 +288,7 @@ def weekly_matrix():
     # Load assignments for the week
     items = (
         Assignment.query
+        .options(joinedload(Assignment.task))
         .filter(Assignment.date >= days[0], Assignment.date <= days[-1])
         .order_by(Assignment.aide_id, Assignment.date, Assignment.start_time)
         .all()

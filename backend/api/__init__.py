@@ -61,19 +61,23 @@ def create_app(config=None):
     # Error handlers (T052)
     @app.errorhandler(400)
     def bad_request(error):
-        return {"error": "Bad request", "message": str(error)}, 400
+        description = getattr(error, 'description', None) or str(error)
+        return {"error": "Bad request", "message": description}, 400
     
     @app.errorhandler(404)
     def not_found(error):
-        return {"error": "Not found", "message": str(error)}, 404
+        description = getattr(error, 'description', None) or str(error)
+        return {"error": "Not found", "message": description}, 404
     
     @app.errorhandler(409)
     def conflict(error):
-        return {"error": "Conflict", "message": str(error)}, 409
+        description = getattr(error, 'description', None) or str(error)
+        return {"error": "Conflict", "message": description}, 409
     
     @app.errorhandler(500)
     def internal_error(error):
-        return {"error": "Internal server error", "message": str(error)}, 500
+        description = getattr(error, 'description', None) or str(error)
+        return {"error": "Internal server error", "message": description}, 500
     
     # Health check
     @app.route('/api/health')

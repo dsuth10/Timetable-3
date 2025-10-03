@@ -112,87 +112,87 @@ frontend/
 - [x] **T036** [P] Implement Request model in `backend/api/models/request.py` ✅
 
 ### Business Logic & Services
-- [ ] **T037** Implement RRULE parser and occurrence generator in `backend/api/recurrence.py`
-- [ ] **T038** Implement collision detection service in `backend/api/services/collision_service.py`
-- [ ] **T039** Implement conflict resolution (replace/shorten) in `backend/api/services/conflict_resolver.py`
-- [ ] **T040** Implement absence cascade logic in `backend/api/services/absence_service.py`
-- [ ] **T041** Implement background scheduler for horizon extension in `backend/api/scheduler.py`
+- [x] **T037** Implement RRULE parser and occurrence generator in `backend/api/recurrence.py` ✅
+- [x] **T038** Implement collision detection service in `backend/api/services/collision_service.py` ✅
+- [x] **T039** Implement conflict resolution (replace/shorten) in `backend/api/services/conflict_resolver.py` ✅
+- [x] **T040** Implement absence cascade logic in `backend/api/services/absence_service.py` ✅
+- [x] **T041** Implement background scheduler for horizon extension in `backend/api/scheduler.py` ✅
 
 ### Flask API Endpoints
-- [ ] **T042** [P] Implement /api/aides CRUD routes in `backend/api/routes/aides.py`
-- [ ] **T043** [P] Implement /api/aides/{id}/availability routes in `backend/api/routes/availability.py`
-- [ ] **T044** [P] Implement /api/tasks and /api/recurring-tasks routes in `backend/api/routes/tasks.py`
-- [ ] **T045** Implement /api/assignments routes (GET, POST, PUT, DELETE) in `backend/api/routes/assignments.py`
-- [ ] **T046** Implement /api/assignments/weekly-matrix endpoint in `backend/api/routes/assignments.py`
-- [ ] **T047** Implement /api/assignments/batch endpoint in `backend/api/routes/assignments.py`
-- [ ] **T048** Implement /api/assignments/check collision endpoint in `backend/api/routes/assignments.py`
-- [ ] **T049** [P] Implement /api/absences routes with cascade in `backend/api/routes/absences.py`
-- [ ] **T050** [P] Implement /api/requests routes in `backend/api/routes/requests.py`
-- [ ] **T051** [P] Implement /api/classrooms CRUD routes in `backend/api/routes/classrooms.py`
+- [x] **T042** [P] Implement /api/aides CRUD routes in `backend/api/routes/aides.py` ✅
+- [x] **T043** [P] Implement /api/aides/{id}/availability routes in `backend/api/routes/availability.py` ✅
+- [x] **T044** [P] Implement /api/tasks and /api/recurring-tasks routes in `backend/api/routes/tasks.py` ✅
+- [x] **T045** Implement /api/assignments routes (GET, POST, PUT, DELETE) in `backend/api/routes/assignments.py` ✅
+- [x] **T046** Implement /api/assignments/weekly-matrix endpoint in `backend/api/routes/assignments.py` ✅
+- [x] **T047** Implement /api/assignments/batch endpoint in `backend/api/routes/assignments.py` ✅
+- [x] **T048** Implement /api/assignments/check collision endpoint in `backend/api/routes/assignments.py` ✅
+- [x] **T049** [P] Implement /api/absences routes with cascade in `backend/api/routes/absences.py` ✅
+- [x] **T050** [P] Implement /api/requests routes in `backend/api/routes/requests.py` ✅
+- [x] **T051** [P] Implement /api/classrooms CRUD routes in `backend/api/routes/classrooms.py` ✅
 
 ### Error Handling & Validation
-- [ ] **T052** Add Flask error handlers (400, 404, 409, 500) in `backend/api/__init__.py`
-- [ ] **T053** Add input validation middleware in `backend/api/middleware/validation.py`
+- [x] **T052** Add Flask error handlers (400, 404, 409, 500) in `backend/api/__init__.py` ✅
+- [x] **T053** Add input validation middleware in `backend/api/middleware/validation.py` ✅
 
 ---
 
 ## Phase 3.4: Frontend Core Implementation
 
 ### State Management (Zustand Stores)
-- [ ] **T054** [P] Implement aidesStore in `frontend/src/store/stores/aidesStore.ts`
-- [ ] **T055** [P] Implement tasksStore in `frontend/src/store/stores/tasksStore.ts`
-- [ ] **T056** [P] Implement assignmentsStore with weekly matrix in `frontend/src/store/stores/assignmentsStore.ts`
-- [ ] **T057** [P] Implement absencesStore in `frontend/src/store/stores/absencesStore.ts`
-- [ ] **T058** [P] Implement undoStore (10-level buffer) in `frontend/src/store/stores/undoStore.ts`
-- [ ] **T059** [P] Implement uiStore (selected week, modals) in `frontend/src/store/stores/uiStore.ts`
+- [x] **T054** [P] Implement aidesStore in `frontend/src/store/stores/aides.ts` ✅
+- [x] **T055** [P] Implement tasksStore in `frontend/src/store/stores/tasks.ts` ✅
+- [x] **T056** [P] Implement assignmentsStore with weekly matrix in `frontend/src/store/stores/assignments.ts` ✅
+- [x] **T057** [P] Implement absencesStore in `frontend/src/store/stores/absences.ts` ✅
+- [x] **T058** [P] Implement undoStore (10-level buffer) in `frontend/src/store/stores/undoStore.ts` ✅
+- [x] **T059** [P] Implement uiStore (selected week, modals) in `frontend/src/store/stores/uiStore.ts` ✅
 
 ### API Client Layer
-- [ ] **T060** [P] Create Axios API client in `frontend/src/services/api.ts`
-- [ ] **T061** [P] Implement aidesApi service in `frontend/src/services/aidesApi.ts`
-- [ ] **T062** [P] Implement tasksApi service in `frontend/src/services/tasksApi.ts`
-- [ ] **T063** [P] Implement assignmentsApi service in `frontend/src/services/assignmentsApi.ts`
-- [ ] **T064** [P] Implement absencesApi service in `frontend/src/services/absencesApi.ts`
+- [x] **T060** [P] Create Axios API client in `frontend/src/services/api.ts` ✅
+- [x] **T061** [P] Implement aidesApi service in `frontend/src/services/aidesApi.ts` ✅
+- [x] **T062** [P] Implement tasksApi service in `frontend/src/services/tasksApi.ts` ✅
+- [x] **T063** [P] Implement assignmentsApi service in `frontend/src/services/assignmentsApi.ts` ✅
+- [x] **T064** [P] Implement absencesApi service in `frontend/src/services/absencesApi.ts` ✅
 
 ### React Components - Layout
-- [ ] **T065** Implement App.tsx with routing (Schedule, Aides, Tasks, Requests) in `frontend/src/App.tsx`
-- [ ] **T066** [P] Implement Schedule page in `frontend/src/pages/Schedule.tsx`
-- [ ] **T067** [P] Implement Aides management page in `frontend/src/pages/Aides.tsx`
-- [ ] **T068** [P] Implement Tasks management page in `frontend/src/pages/Tasks.tsx`
-- [ ] **T069** [P] Implement Requests page in `frontend/src/pages/Requests.tsx`
+- [x] **T065** Implement App.tsx with routing (Schedule, Aides, Tasks, Requests) in `frontend/src/pages/App.tsx` ✅
+- [x] **T066** [P] Implement Schedule page in `frontend/src/pages/Schedule.tsx` ✅
+- [x] **T067** [P] Implement Aides management page in `frontend/src/pages/Aides.tsx` ✅
+- [x] **T068** [P] Implement Tasks management page in `frontend/src/pages/Tasks.tsx` ✅
+- [x] **T069** [P] Implement Requests page in `frontend/src/pages/Requests.tsx` ✅
 
 ### React Components - Timetable
-- [ ] **T070** Implement TimetableGrid component in `frontend/src/components/TimetableGrid/TimetableGrid.tsx`
-- [ ] **T071** Implement TimetableSlot (drop target) in `frontend/src/components/TimetableGrid/TimetableSlot.tsx`
-- [ ] **T072** Implement TaskCard (draggable) in `frontend/src/components/TimetableGrid/TaskCard.tsx`
-- [ ] **T073** Implement UnassignedTasksPanel with filtering in `frontend/src/components/UnassignedPanel.tsx`
+- [x] **T070** Implement TimetableGrid component in `frontend/src/components/TimetableGrid/TimetableGrid.tsx` ✅
+- [x] **T071** Implement TimetableSlot (drop target) in `frontend/src/components/TimetableGrid/TimetableSlot.tsx` ✅
+- [x] **T072** Implement TaskCard (draggable) in `frontend/src/components/TimetableGrid/TaskCard.tsx` ✅
+- [x] **T073** Implement UnassignedTasksPanel with filtering in `frontend/src/components/UnassignedPanel.tsx` ✅
 
 ### React Components - Drag-Drop
-- [ ] **T074** Setup @hello-pangea/dnd context in `frontend/src/components/DragDropContext.tsx`
-- [ ] **T075** Implement drag handlers (onDragEnd, collision check) in `frontend/src/hooks/useDragDrop.ts`
-- [ ] **T076** Implement ConflictModal (replace/cancel) in `frontend/src/components/ConflictModal.tsx`
-- [ ] **T077** Implement MultiDayDialog for recurring tasks in `frontend/src/components/MultiDayDialog.tsx`
+- [x] **T074** Setup @hello-pangea/dnd context in `frontend/src/components/DragDropContext.tsx` ✅
+- [x] **T075** Implement drag handlers (onDragEnd, collision check) in `frontend/src/hooks/useDragDrop.tsx` ✅
+- [x] **T076** Implement ConflictModal (replace/cancel) in `frontend/src/components/ConflictModal.tsx` ✅
+- [x] **T077** Implement MultiDayDialog for recurring tasks in `frontend/src/components/MultiDayDialog.tsx` ✅
 
 ### React Components - Modals & Forms
-- [ ] **T078** [P] Implement TaskCreationModal in `frontend/src/components/TaskModals/TaskCreationModal.tsx`
-- [ ] **T079** [P] Implement AbsenceModal in `frontend/src/components/AbsenceModal.tsx`
-- [ ] **T080** [P] Implement AideFormModal in `frontend/src/components/AideFormModal.tsx`
+- [x] **T078** [P] Implement TaskCreationModal in `frontend/src/components/TaskModals/TaskCreationModal.tsx` ✅
+- [x] **T079** [P] Implement AbsenceModal in `frontend/src/components/AbsenceModal.tsx` ✅
+- [x] **T080** [P] Implement AideFormModal in `frontend/src/components/AideFormModal.tsx` ✅
 
 ### React Components - UI Controls
-- [ ] **T081** Implement week navigation (prev/next/today) in `frontend/src/components/WeekNavigation.tsx`
-- [ ] **T082** Implement undo/redo buttons in `frontend/src/components/UndoRedoControls.tsx`
-- [ ] **T083** Add toast notification system in `frontend/src/components/ToastNotifications.tsx`
-- [ ] **T084** Add error boundary in `frontend/src/components/ErrorBoundary.tsx`
+- [x] **T081** Implement week navigation (prev/next/today) in `frontend/src/components/WeekNavigation.tsx` ✅
+- [x] **T082** Implement undo/redo buttons in `frontend/src/components/UndoRedoControls.tsx` ✅
+- [x] **T083** Add toast notification system in `frontend/src/components/ToastNotifications.tsx` ✅
+- [x] **T084** Add error boundary in `frontend/src/components/ErrorBoundary.tsx` ✅
 
 ---
 
 ## Phase 3.5: Integration & Testing
 
 ### End-to-End Tests (Cypress)
-- [ ] **T085** [P] E2E test: Drag task to assign in `frontend/cypress/e2e/drag-assign.cy.ts`
-- [ ] **T086** [P] E2E test: Conflict resolution flow in `frontend/cypress/e2e/conflict-resolution.cy.ts`
-- [ ] **T087** [P] E2E test: Absence handling in `frontend/cypress/e2e/absence-handling.cy.ts`
-- [ ] **T088** [P] E2E test: Recurring task multi-day in `frontend/cypress/e2e/recurring-multiday.cy.ts`
-- [ ] **T089** [P] E2E test: Undo/redo actions in `frontend/cypress/e2e/undo-redo.cy.ts`
+- [x] **T085** [P] E2E test: Drag task to assign in `frontend/cypress/e2e/drag-assign.cy.ts` ✅
+- [x] **T086** [P] E2E test: Conflict resolution flow in `frontend/cypress/e2e/conflict-resolution.cy.ts` ✅
+- [x] **T087** [P] E2E test: Absence handling in `frontend/cypress/e2e/absence-handling.cy.ts` ✅
+- [x] **T088** [P] E2E test: Recurring task multi-day in `frontend/cypress/e2e/recurring-multiday.cy.ts` ✅
+- [x] **T089** [P] E2E test: Undo/redo actions in `frontend/cypress/e2e/undo-redo.cy.ts` ✅
 
 ### Accessibility Testing
 - [ ] **T090** [P] Accessibility test: Keyboard navigation in `frontend/tests/accessibility/keyboard-nav.test.ts`

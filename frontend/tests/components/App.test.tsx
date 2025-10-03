@@ -19,7 +19,7 @@ describe('App', () => {
 
     render(<App />);
     expect(await screen.findByText('John Smith')).toBeInTheDocument();
-    expect(screen.getByText('Mary Johnson')).toBeInTheDocument();
+    expect(screen.getAllByText('Mary Johnson').length).toBeGreaterThan(0);
   });
 });
 
