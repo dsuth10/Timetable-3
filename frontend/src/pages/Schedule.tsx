@@ -43,14 +43,25 @@ export default function Schedule() {
     setError(undefined);
     assignmentsApi.weeklyMatrix(selectedWeekStartISO)
       .then((matrix) => {
-        // Expecting matrix structure per backend contract; fall back to grouping items if needed
+        // Process the matrix structure from the API
         const byAide: Record<string, Assignment[]> = {};
-        const items: Assignment[] = (matrix?.assignments || []) as Assignment[];
-        for (const a of items) {
-          const key = String(a.aide_id ?? 'unassigned');
-          byAide[key] = byAide[key] || [];
-          byAide[key].push(a);
+        
+        if (matrix?.matrix) {
+          // Iterate through each aide in the matrix
+          Object.entries(matrix.matrix).forEach(([aideId, days]) => {
+            const aideAssignments: Assignment[] = [];
+            
+            // Iterate through each day for this aide
+            Object.entries(days).forEach(([date, assignments]) => {
+              if (Array.isArray(assignments)) {
+                aideAssignments.push(...assignments);
+              }
+            });
+            
+            byAide[aideId] = aideAssignments;
+          });
         }
+        
         setAssignmentsByAide(byAide);
       })
       .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
@@ -126,12 +137,23 @@ export default function Schedule() {
             });
             const matrix = await assignmentsApi.weeklyMatrix(selectedWeekStartISO);
             const byAide: Record<string, Assignment[]> = {};
-            const items: Assignment[] = (matrix?.assignments || []) as Assignment[];
-            for (const a of items) {
-              const key = String(a.aide_id ?? 'unassigned');
-              byAide[key] = byAide[key] || [];
-              byAide[key].push(a);
+            
+            if (matrix?.matrix) {
+              // Iterate through each aide in the matrix
+              Object.entries(matrix.matrix).forEach(([aideId, days]) => {
+                const aideAssignments: Assignment[] = [];
+                
+                // Iterate through each day for this aide
+                Object.entries(days).forEach(([date, assignments]) => {
+                  if (Array.isArray(assignments)) {
+                    aideAssignments.push(...assignments);
+                  }
+                });
+                
+                byAide[aideId] = aideAssignments;
+              });
             }
+            
             setAssignmentsByAide(byAide);
           } catch (e: any) {
             setError(e.message || 'Failed to apply multi-day');
