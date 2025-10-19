@@ -153,6 +153,67 @@ def create_recurring_task():
     return task.to_dict(), 201
 
 
+@bp.put('/tasks/<int:task_id>')
+def update_task(task_id: int):
+    """Update an existing task (template only for recurring tasks)"""
+    task = db.session.get(Task, task_id)
+    if not task:
+        return {'error': 'Task not found'}, 404
+
+    data = request.get_json(silent=True) or {}
+    
+    # Extract and validate fields
+    title = data.get('title')
+    category = data.get('category')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+    classroom_id = data.get('classroom_id')
+    notes = data.get('notes')
+    recurrence_rule = data.get('recurrence_rule')
+    expires_on = data.get('expires_on')
+    
+    # Update fields if provided
+    try:
+        if title is not None:
+            task.title = title.strip()
+        
+        if category is not None:
+            task.category = category.strip()
+        
+        if start_time is not None:
+            s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
+            task.start_time = dt_time(s_h, s_m)
+        
+        if end_time is not None:
+            e_h, e_m = [int(x) for x in end_time.split(':')[:2]]
+            task.end_time = dt_time(e_h, e_m)
+        
+        if 'classroom_id' in data:
+            task.classroom_id = classroom_id
+        
+        if 'notes' in data:
+            task.notes = notes
+        
+        if 'recurrence_rule' in data:
+            task.recurrence_rule = recurrence_rule
+        
+        if expires_on is not None:
+            if expires_on:
+                task.expires_on = dt_date.fromisoformat(expires_on)
+            else:
+                task.expires_on = None
+        
+        db.session.commit()
+        return task.to_dict(), 200
+    
+    except ValueError as e:
+        db.session.rollback()
+        return {'error': str(e)}, 400
+    except Exception as e:
+        db.session.rollback()
+        return {'error': 'Invalid data format'}, 400
+
+
 @bp.get('/tasks/<int:task_id>/assignments')
 def list_task_assignments(task_id: int):
     task = db.session.get(Task, task_id)

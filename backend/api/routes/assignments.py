@@ -199,9 +199,18 @@ def update_assignment(assignment_id: int):
 
     # Update fields
     aide_id = data.get('aide_id', assignment.aide_id)
+    date_str = data.get('date')
     start_time = data.get('start_time')
     end_time = data.get('end_time')
     status = data.get('status', assignment.status)
+    
+    # Auto-update status based on aide_id change
+    if aide_id is not None and assignment.aide_id is None:
+        # Assigning an aide to an unassigned task
+        status = 'ASSIGNED'
+    elif aide_id is None and assignment.aide_id is not None:
+        # Unassigning a task
+        status = 'UNASSIGNED'
 
     # Validate status early to return 400 instead of raising
     if status and status.upper() not in ASSIGNMENT_STATUSES:
@@ -209,6 +218,7 @@ def update_assignment(assignment_id: int):
 
     s_t = assignment.start_time
     e_t = assignment.end_time
+    assign_date = assignment.date
 
     if start_time:
         s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
@@ -216,12 +226,17 @@ def update_assignment(assignment_id: int):
     if end_time:
         e_h, e_m = [int(x) for x in end_time.split(':')[:2]]
         e_t = dt_time(e_h, e_m)
+    if date_str:
+        try:
+            assign_date = dt_date.fromisoformat(date_str)
+        except Exception:
+            return {'error': 'Invalid date format'}, 400
 
     # Validate if aide assigned
     if aide_id is not None:
         validation = CollisionService.validate_assignment(
             aide_id=aide_id,
-            assignment_date=assignment.date,
+            assignment_date=assign_date,
             start_time=s_t,
             end_time=e_t,
             exclude_assignment_id=assignment.id
@@ -231,6 +246,7 @@ def update_assignment(assignment_id: int):
 
     # Apply updates
     assignment.aide_id = aide_id
+    assignment.date = assign_date
     assignment.start_time = s_t
     assignment.end_time = e_t
     assignment.status = status.upper() if isinstance(status, str) else status
@@ -243,7 +259,7 @@ def update_assignment(assignment_id: int):
 
 @bp.get('/assignments/unassigned')
 def get_unassigned_assignments():
-    """Get all unassigned assignments, optionally filtered by date"""
+    """Get all unassigned assignments, optionally filtered by date or week"""
     date_str = request.args.get('date')
     
     query = Assignment.query.filter(Assignment.status == 'UNASSIGNED')
@@ -251,7 +267,9 @@ def get_unassigned_assignments():
     if date_str:
         try:
             filter_date = dt_date.fromisoformat(date_str)
-            query = query.filter(Assignment.date == filter_date)
+            # Filter for entire week (Mon-Fri): date through date+4
+            end_date = filter_date + timedelta(days=4)
+            query = query.filter(Assignment.date >= filter_date, Assignment.date <= end_date)
         except Exception:
             return {'error': 'Invalid date format'}, 400
     

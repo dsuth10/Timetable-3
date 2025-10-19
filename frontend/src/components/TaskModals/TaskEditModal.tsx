@@ -13,23 +13,22 @@ import {
   Box,
   Alert,
   CircularProgress,
-  ToggleButtonGroup,
-  ToggleButton,
   FormControlLabel,
   Checkbox,
   FormGroup,
   FormLabel,
 } from '@mui/material';
-import { Add as AddIcon, Event as EventIcon, EventRepeat as EventRepeatIcon } from '@mui/icons-material';
-import { tasksApi } from '../../services/tasksApi';
+import { Edit as EditIcon } from '@mui/icons-material';
 import { classroomsApi } from '../../services/classroomsApi';
+import { useTasksStore } from '../../store/stores/tasks';
 import type { Task, TaskCategory, Classroom, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onCreated?: (task: Task) => void;
+  task: Task | null;
+  onUpdated?: (task: Task) => void;
 };
 
 const CATEGORIES: { value: TaskCategory; label: string }[] = [
@@ -39,8 +38,17 @@ const CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'INDIVIDUAL_SUPPORT', label: 'Individual Support' },
 ];
 
-export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
-  const [taskType, setTaskType] = useState<'one-off' | 'recurring'>('one-off');
+const WEEKDAY_MAP: Record<string, Weekday> = {
+  'MO': 'MO',
+  'TU': 'TU',
+  'WE': 'WE',
+  'TH': 'TH',
+  'FR': 'FR',
+};
+
+export default function TaskEditModal({ open, onClose, task, onUpdated }: Props) {
+  const { updateTask } = useTasksStore();
+  
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('CLASS_SUPPORT');
   const [start, setStart] = useState('09:00');
@@ -51,7 +59,8 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
   const [busy, setBusy] = useState(false);
   
   // Recurring task fields
-  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>(['MO', 'TU', 'WE', 'TH', 'FR']);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
   const [expiryDate, setExpiryDate] = useState('');
   
   // Classrooms
@@ -69,17 +78,38 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
     }
   }, [open]);
 
+  // Populate form when task changes
+  useEffect(() => {
+    if (task && open) {
+      setTitle(task.title);
+      setCategory(task.category);
+      setStart(task.start_time.slice(0, 5)); // HH:MM
+      setEnd(task.end_time.slice(0, 5)); // HH:MM
+      setClassroomId(task.classroom_id || null);
+      setNotes(task.notes || '');
+      
+      // Handle recurring task fields
+      if (task.recurrence_rule) {
+        setIsRecurring(true);
+        
+        // Parse BYDAY from recurrence rule
+        const byDayMatch = task.recurrence_rule.match(/BYDAY=([^;]+)/);
+        if (byDayMatch) {
+          const days = byDayMatch[1].split(',').filter(d => WEEKDAY_MAP[d]) as Weekday[];
+          setSelectedWeekdays(days);
+        }
+        
+        setExpiryDate(task.expires_on || '');
+      } else {
+        setIsRecurring(false);
+        setSelectedWeekdays([]);
+        setExpiryDate('');
+      }
+    }
+  }, [task, open]);
+
   const handleClose = () => {
     if (!busy) {
-      setTaskType('one-off');
-      setTitle('');
-      setCategory('CLASS_SUPPORT');
-      setStart('09:00');
-      setEnd('10:00');
-      setClassroomId(null);
-      setNotes('');
-      setSelectedWeekdays(['MO', 'TU', 'WE', 'TH', 'FR']);
-      setExpiryDate('');
       setError(undefined);
       onClose();
     }
@@ -94,23 +124,24 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
   };
 
   async function submit() {
+    if (!task) return;
+    
     setBusy(true);
     setError(undefined);
     
     try {
-      let task: Task;
+      // Build payload
+      const payload: any = {
+        title,
+        category,
+        start_time: start,
+        end_time: end,
+        classroom_id: classroomId,
+        notes: notes || null,
+      };
       
-      if (taskType === 'one-off') {
-        task = await tasksApi.createOneOff({ 
-          title, 
-          category, 
-          start_time: start, 
-          end_time: end, 
-          classroom_id: classroomId, 
-          notes: notes || null 
-        });
-      } else {
-        // Recurring task
+      // Handle recurring task fields
+      if (isRecurring) {
         if (selectedWeekdays.length === 0) {
           setError('Please select at least one weekday');
           setBusy(false);
@@ -122,29 +153,32 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
           return;
         }
         
-        // Build RRULE
-        const rrule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
-        
-        task = await tasksApi.createRecurring({ 
-          title, 
-          category, 
-          start_time: start, 
-          end_time: end, 
-          classroom_id: classroomId,
-          recurrence_rule: rrule,
-          expires_on: expiryDate,
-          notes: notes || null 
-        });
+        payload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
+        payload.expires_on = expiryDate;
+      } else {
+        payload.recurrence_rule = null;
+        payload.expires_on = null;
       }
       
-      onCreated?.(task);
+      const updatedTask = await updateTask(task.id, payload);
+      
+      // Dispatch success event for toast notification
+      try {
+        window.dispatchEvent(new CustomEvent('app:success', { 
+          detail: { message: 'Task updated successfully' } 
+        }));
+      } catch {}
+      
+      onUpdated?.(updatedTask);
       handleClose();
     } catch (e: any) {
-      setError(e.message || 'Failed to create task');
+      setError(e.message || 'Failed to update task');
     } finally {
       setBusy(false);
     }
   }
+
+  if (!task) return null;
 
   return (
     <Dialog 
@@ -155,40 +189,22 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AddIcon color="primary" />
-          Create New Task
+          <EditIcon color="primary" />
+          Edit Task
         </Box>
       </DialogTitle>
       <DialogContent>
+        {isRecurring && (
+          <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
+            Editing a recurring task will update the task template only. Existing assignments will not be affected.
+          </Alert>
+        )}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          {/* Task Type Toggle */}
-          <Box>
-            <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.875rem' }}>
-              Task Type
-            </FormLabel>
-            <ToggleButtonGroup
-              value={taskType}
-              exclusive
-              onChange={(_, newType) => newType && setTaskType(newType)}
-              fullWidth
-              size="small"
-            >
-              <ToggleButton value="one-off">
-                <EventIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
-                One-off
-              </ToggleButton>
-              <ToggleButton value="recurring">
-                <EventRepeatIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
-                Recurring
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
           <TextField
             label="Task Title"
             value={title}
@@ -266,7 +282,7 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
           </FormControl>
 
           {/* Recurring Task Fields */}
-          {taskType === 'recurring' && (
+          {isRecurring && (
             <>
               <Box>
                 <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.875rem' }}>
@@ -326,15 +342,12 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
           onClick={submit}
           disabled={busy || !title.trim()}
           variant="contained"
-          startIcon={busy ? <CircularProgress size={16} /> : <AddIcon />}
-          data-testid="open-create-task"
+          startIcon={busy ? <CircularProgress size={16} /> : <EditIcon />}
         >
-          Create Task
+          Save Changes
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
-
-
 

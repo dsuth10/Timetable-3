@@ -8,7 +8,7 @@ export const assignmentsApi = {
   get(id: ID): Promise<Assignment> {
     return api.get(`/assignments/${id}`).then((r) => r.data as Assignment);
   },
-  update(id: ID, payload: Partial<Pick<Assignment, 'aide_id' | 'start_time' | 'end_time' | 'status' | 'version'>>): Promise<Assignment> {
+  update(id: ID, payload: Partial<Pick<Assignment, 'aide_id' | 'date' | 'start_time' | 'end_time' | 'status' | 'version'>>): Promise<Assignment> {
     return api.put(`/assignments/${id}`, payload).then((r) => r.data as Assignment);
   },
   batch(payload: { task_id: ID; aide_id: ID | null; dates: string[]; start_time: string; end_time: string; }) {

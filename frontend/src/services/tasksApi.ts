@@ -15,6 +15,9 @@ export const tasksApi = {
   createRecurring(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { recurrence_rule: string; expires_on: string; notes?: string | null }): Promise<Task> {
     return api.post('/recurring-tasks', payload).then((r) => r.data as Task);
   },
+  update(id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>>): Promise<Task> {
+    return api.put(`/tasks/${id}`, payload).then((r) => r.data as Task);
+  },
   listAssignments(taskId: ID) {
     return api.get(`/tasks/${taskId}/assignments`).then((r) => r.data as any[]);
   },

@@ -10,16 +10,21 @@
 
 ## 📋 Overview
 
-The Teacher Aide Scheduler is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system operates completely offline using a local SQLite database, supports recurring tasks with iCal RRULE patterns, and provides real-time conflict detection with automatic resolution.
+The Teacher Aide Scheduler is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system features a modern Material Design UI with a weekly view that allows administrators to see individual aide schedules across Monday-Friday, supports cross-day task dragging, and operates completely offline using a local SQLite database with real-time conflict detection.
 
 ### Key Features
 
-✅ **Drag-and-Drop Interface** - Assign tasks by dragging them to aide time slots  
+✅ **Drag-and-Drop Interface** - Assign tasks by dragging them to aide time slots with real-time updates  
+✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
+✅ **Enhanced Week Navigation** - Navigate weeks with previous/next/today buttons plus date picker for jumping to specific weeks  
+✅ **Cross-Day Dragging** - Drag tasks between different days with automatic date updates and persistence  
 ✅ **Recurring Tasks** - Create weekly, daily, or custom recurring patterns using iCal RRULE  
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
+✅ **Material Design UI** - Modern, intuitive interface with consistent theming  
+✅ **Unified Single View** - All management functions accessible without page navigation  
 ✅ **Offline-First** - No internet required, all data stored locally in SQLite  
 ✅ **WCAG AA Compliant** - Full keyboard navigation and screen reader support  
 ✅ **Concurrent Editing** - Optimistic locking for multi-administrator use  
@@ -69,12 +74,12 @@ python app.py
 ```bash
 cd frontend
 npm run dev
-# Frontend runs on http://localhost:5173
+# Frontend runs on http://localhost:5173 (or alternative port like 3004)
 ```
 
 5. **Access Application**
 
-Open your browser to: **http://localhost:5173**
+Open your browser to: **http://localhost:5173** (or the port shown in terminal output)
 
 ---
 
@@ -129,9 +134,10 @@ Open your browser to: **http://localhost:5173**
 - **Language**: TypeScript (strict mode)
 - **Build Tool**: Vite
 - **UI Library**: Material-UI v5
-- **State Management**: Zustand
-- **Drag & Drop**: @hello-pangea/dnd
-- **HTTP Client**: Axios
+- **Date Picker**: @mui/x-date-pickers
+- **State Management**: Zustand with auto-refresh on updates
+- **Drag & Drop**: @hello-pangea/dnd with cross-day support
+- **HTTP Client**: Axios with optimistic locking
 - **Testing**: Vitest, React Testing Library, Cypress
 
 ---
@@ -160,16 +166,20 @@ timetable-scheduler/
 ├── frontend/                     # React TypeScript frontend
 │   ├── src/
 │   │   ├── components/           # React components
-│   │   │   ├── TimetableGrid/    # Timetable grid & slots
+│   │   │   ├── Layout/           # Layout components (AppBar, AideDrawer, ManagementPanel)
+│   │   │   ├── Management/       # Management components (Aides, Tasks, Requests)
+│   │   │   ├── common/           # Common UI components (LoadingState, EmptyState)
+│   │   │   ├── TimetableGrid/    # Timetable grid & slots (weekly view)
 │   │   │   ├── TaskModals/       # Task creation/editing modals
 │   │   │   ├── ConflictModal.tsx # Conflict resolution dialog
 │   │   │   ├── MultiDayDialog.tsx# Multi-day assignment dialog
 │   │   │   └── ...
-│   │   ├── pages/                # Route pages (Schedule, Aides, Tasks, Requests)
+│   │   ├── pages/                # Main pages (App, Schedule)
 │   │   ├── store/
 │   │   │   └── stores/           # Zustand stores (6 stores)
 │   │   ├── services/             # API client layer
 │   │   ├── hooks/                # Custom React hooks (useDragDrop)
+│   │   ├── theme/                # Material Design theme system
 │   │   ├── types/                # TypeScript type definitions
 │   │   └── main.tsx
 │   ├── tests/
@@ -221,19 +231,60 @@ See [data-model.md](specs/001-create-a-drag/data-model.md) for full entity defin
 
 ---
 
+## 🗓️ Weekly View Interface
+
+The application features a modern weekly view that allows administrators to:
+
+- **Select Individual Aides**: Use the dropdown to switch between different teacher aides
+- **View Full Week**: See Monday-Friday schedule for the selected aide
+- **Cross-Day Dragging**: Drag tasks between different days of the week
+- **Enhanced Week Navigation**: 
+  - Navigate backward/forward with arrow buttons
+  - Jump to current week with "Today" button
+  - Jump to any specific week with date picker calendar
+  - Visual week indicator showing week number (e.g., "Week 42")
+  - Full date range display (e.g., "Oct 13-17, 2025")
+- **Day Headers**: Clear day names and dates (e.g., "Monday - Oct 13")
+- **Time Slots**: 30-minute intervals from 8:00 AM to 5:00 PM
+- **Visual Feedback**: Color-coded headers and drag-over indicators
+
+### Weekly View Layout
+```
+┌─────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
+│ Time    │  Monday   │  Tuesday  │ Wednesday │ Thursday  │  Friday   │
+│         │  Oct 13   │  Oct 14   │  Oct 15   │  Oct 16   │  Oct 17   │
+├─────────┼───────────┼───────────┼───────────┼───────────┼───────────┤
+│ 08:00   │ [Task]    │           │           │  [Task]   │           │
+│ 08:30   │           │           │           │           │           │
+│ 09:00   │           │  [Task]   │  [Task]   │           │  [Task]   │
+│ ...     │           │           │           │           │           │
+└─────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+```
+
+---
+
 ## 🎯 Core Workflows
 
 ### 1. Drag-and-Drop Assignment
 
 ```
-1. View weekly timetable grid (5 days × time slots)
-2. See unassigned tasks in left panel
-3. Drag task to aide's time slot
-4. System checks for conflicts:
-   ✓ No conflict → Assign immediately
+1. Navigate to desired week using:
+   - Previous/Next week buttons
+   - "Today" button to jump to current week
+   - "Jump to Week" date picker for specific dates
+2. Select aide from dropdown to view their weekly schedule
+3. View weekly timetable grid (Monday-Friday × time slots)
+4. See unassigned tasks in right panel
+5. Drag task to aide's time slot:
+   - Same day: Updates aide assignment only
+   - Different day: Updates both aide and date automatically
+6. System checks for conflicts:
+   ✓ No conflict → Assign immediately with optimistic locking
    ⚠ Partial overlap → Auto-shorten first task
    ❌ Full overlap → Show replace/cancel modal
-5. Update reflected in grid with visual feedback
+7. Update reflected in grid immediately with automatic refresh
+8. All changes persisted to backend with version control
+9. Cross-day moves update task date and persist across page refreshes
 ```
 
 ### 2. Recurring Task Creation
@@ -335,11 +386,13 @@ npm run e2e:headless
 ```
 
 **Test Scenarios**:
-- ✅ Drag task to assign
+- ✅ Drag task to assign (same day and cross-day)
+- ✅ Aide switching and weekly view navigation
 - ✅ Conflict resolution flow
 - ✅ Absence handling
 - ✅ Recurring task multi-day assignment
 - ✅ Undo/redo actions
+- ✅ Enhanced week navigation (previous/next/today/date picker)
 
 ---
 
@@ -536,6 +589,16 @@ alembic upgrade head
 python seed.py
 ```
 
+**Drag-and-drop date issues**:
+```
+If tasks appear in wrong day columns after dragging:
+- The system uses UTC-based date calculations to avoid timezone issues
+- Week dates are calculated from Monday (first day of week)
+- Dates are persisted in YYYY-MM-DD format
+- Check browser console for any version conflict errors
+- Ensure frontend hot-reload completed after code changes
+```
+
 See [docs/deployment.md#troubleshooting](docs/deployment.md#troubleshooting) for more solutions.
 
 ---
@@ -591,12 +654,18 @@ Contributions are welcome! Please follow these steps:
 ## 📅 Roadmap
 
 ### Version 1.0 (MVP) ✅
-- [x] Drag-and-drop assignment
+- [x] Drag-and-drop assignment with real-time updates
+- [x] Weekly view with aide selector
+- [x] Enhanced week navigation with date picker
+- [x] Cross-day dragging with automatic date persistence
+- [x] Material Design UI
+- [x] Unified single-view architecture
 - [x] Recurring tasks (RRULE)
-- [x] Conflict detection
+- [x] Conflict detection with optimistic locking
 - [x] Absence management
-- [x] Undo/redo
+- [x] Undo/redo with version control
 - [x] WCAG AA compliance
+- [x] UTC-based date handling (timezone-safe)
 
 ### Version 1.1 (Planned)
 - [ ] User authentication & authorization
@@ -615,6 +684,27 @@ Contributions are welcome! Please follow these steps:
 
 **Made with ❤️ for Queensland Primary Schools**
 
-**Version**: 1.0.0  
-**Last Updated**: 2025-10-03
+---
+
+## 🔄 Recent Updates
+
+### Version 1.0.1 (2025-10-18)
+
+**Bug Fixes**:
+- ✅ Fixed drag-and-drop date updates not persisting to backend
+- ✅ Added version field support for optimistic locking in drag operations
+- ✅ Implemented automatic UI refresh after successful drag-and-drop
+- ✅ Fixed timezone bug causing one-day offset in week view dates
+- ✅ Enhanced cross-day dragging to properly update and persist task dates
+
+**Technical Improvements**:
+- Backend now properly handles date field updates in assignment endpoint
+- Frontend drag-drop hook fetches current version before updates
+- Week date calculations now use UTC to prevent timezone conversion issues
+- Added auto-refresh callback to keep UI synchronized with backend state
+
+---
+
+**Version**: 1.0.1  
+**Last Updated**: 2025-10-18
 

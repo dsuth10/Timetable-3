@@ -1,25 +1,111 @@
 import { Droppable } from '@hello-pangea/dnd';
+import { Box, Typography } from '@mui/material';
 import { memo } from 'react';
-import type { ID } from '../../types';
+import { SLOT_HEIGHT_PX } from './timeUtils';
 
 type TimetableSlotProps = {
-  droppableId: string;
+  aideId: number;
+  date: string;
+  timeSlot: string; // HH:MM format
   children?: React.ReactNode;
+  index: number; // Position index for visual guides
 };
 
-function TimetableSlotBase({ droppableId, children }: TimetableSlotProps) {
+function TimetableSlotBase({ aideId, date, timeSlot, children, index }: TimetableSlotProps) {
+  const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
+
   return (
     <Droppable droppableId={droppableId}>
-      {(provided) => (
-        <div ref={provided.innerRef} {...provided.droppableProps} style={{ minHeight: 40, border: '1px dashed #e5e7eb', borderRadius: 4, padding: 4 }}>
+      {(provided, snapshot) => (
+        <Box
+          ref={provided.innerRef}
+          {...provided.droppableProps}
+          sx={{
+            position: 'absolute',
+            top: index * SLOT_HEIGHT_PX,
+            left: 0,
+            right: 0,
+            height: SLOT_HEIGHT_PX,
+            borderBottom: '1px dashed',
+            borderColor: 'divider',
+            zIndex: 1,
+            backgroundColor: snapshot.isDraggingOver 
+              ? 'rgba(25, 118, 210, 0.12)' 
+              : 'transparent',
+            transition: 'background-color 0.2s ease',
+            overflow: 'visible', // Allow children to extend beyond slot
+            '&:hover': {
+              backgroundColor: snapshot.isDraggingOver 
+                ? 'rgba(25, 118, 210, 0.12)'
+                : 'rgba(0, 0, 0, 0.02)',
+              '& .time-label': {
+                opacity: 1,
+              },
+            },
+          }}
+        >
+          {/* Time label shown on hover */}
+          {index % 4 === 0 && ( // Show label every hour
+            <Typography
+              className="time-label"
+              variant="caption"
+              sx={{
+                position: 'absolute',
+                left: 4,
+                top: 2,
+                fontSize: '0.65rem',
+                color: 'text.secondary',
+                opacity: snapshot.isDraggingOver ? 1 : 0,
+                transition: 'opacity 0.2s ease',
+                pointerEvents: 'none',
+                bgcolor: 'background.paper',
+                px: 0.5,
+                borderRadius: 0.5,
+                zIndex: 10,
+              }}
+            >
+              {timeSlot}
+            </Typography>
+          )}
+          
+          {/* Border highlight during drag over */}
+          {snapshot.isDraggingOver && (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                border: '2px solid',
+                borderColor: 'primary.main',
+                borderRadius: 0.5,
+                pointerEvents: 'none',
+                zIndex: 5,
+                animation: 'pulse 1.5s ease-in-out infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': {
+                    opacity: 0.6,
+                  },
+                  '50%': {
+                    opacity: 1,
+                  },
+                },
+              }}
+            />
+          )}
+          
           {children}
           {provided.placeholder}
-        </div>
+        </Box>
       )}
     </Droppable>
   );
 }
 
-export const TimetableSlot = memo(TimetableSlotBase);
-
-
+export const TimetableSlot = memo(TimetableSlotBase, (prev, next) => {
+  return (
+    prev.aideId === next.aideId &&
+    prev.date === next.date &&
+    prev.timeSlot === next.timeSlot &&
+    prev.index === next.index &&
+    prev.children === next.children
+  );
+});

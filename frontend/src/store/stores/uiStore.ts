@@ -14,6 +14,8 @@ type UiState = {
   nextWeek: () => void;
   prevWeek: () => void;
   thisWeek: () => void;
+  getWeekNumber: (dateISO: string) => number;
+  getWeekDateRange: (dateISO: string) => string;
 };
 
 function getMonday(d: Date) {
@@ -26,6 +28,36 @@ function getMonday(d: Date) {
 
 function fmt(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+// Calculate ISO week number
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+// Format date range for the week (Monday - Friday)
+function formatWeekDateRange(mondayISO: string): string {
+  const monday = new Date(mondayISO + 'T00:00:00Z');
+  const friday = new Date(monday);
+  friday.setUTCDate(monday.getUTCDate() + 4);
+  
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const startMonth = monthNames[monday.getUTCMonth()];
+  const endMonth = monthNames[friday.getUTCMonth()];
+  const startDay = monday.getUTCDate();
+  const endDay = friday.getUTCDate();
+  const year = friday.getUTCFullYear();
+  
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay}-${endDay}, ${year}`;
+  } else {
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+  }
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
@@ -57,6 +89,13 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   thisWeek() {
     set({ selectedWeekStartISO: fmt(getMonday(new Date())) });
+  },
+  getWeekNumber(dateISO) {
+    const date = new Date(dateISO + 'T00:00:00Z');
+    return getWeekNumber(date);
+  },
+  getWeekDateRange(dateISO) {
+    return formatWeekDateRange(dateISO);
   },
 }));
 
