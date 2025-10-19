@@ -11,6 +11,7 @@ import {
   KeyboardArrowUp,
   KeyboardArrowDown,
 } from '@mui/icons-material';
+import ErrorBoundary from '../ErrorBoundary';
 
 type TabPanelProps = {
   children?: React.ReactNode;
@@ -111,13 +112,13 @@ export default function ManagementPanel({
           {/* Tab Content */}
           <Box sx={{ flex: 1, overflow: 'auto' }}>
             <TabPanel value={tabIndex} index={0}>
-              {aidesContent}
+              <ErrorBoundary>{aidesContent}</ErrorBoundary>
             </TabPanel>
             <TabPanel value={tabIndex} index={1}>
-              {tasksContent}
+              <ErrorBoundary>{tasksContent}</ErrorBoundary>
             </TabPanel>
             <TabPanel value={tabIndex} index={2}>
-              {requestsContent}
+              <ErrorBoundary>{requestsContent}</ErrorBoundary>
             </TabPanel>
           </Box>
         </Box>

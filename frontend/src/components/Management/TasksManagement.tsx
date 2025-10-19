@@ -16,7 +16,7 @@ import { categoryColors } from '../../theme/theme';
 import LoadingState from '../common/LoadingState';
 import TaskCreationModal from '../TaskModals/TaskCreationModal';
 import TaskEditModal from '../TaskModals/TaskEditModal';
-import type { Task, Assignment, TeacherAide } from '../../types';
+import { type Task, type Assignment, type TeacherAide } from '../../types';
 
 export default function TasksManagement() {
   const { tasks, loading, error, fetchTasks } = useTasksStore();
@@ -96,7 +96,7 @@ export default function TasksManagement() {
       </Box>
       <List>
         {tasks.map((task) => {
-          const categoryColor = categoryColors[task.category];
+          const categoryColor = categoryColors[task.category] || '#9E9E9E';
           const taskAssignments = getTaskAssignments(task.id);
           
           return (
