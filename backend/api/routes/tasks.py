@@ -39,6 +39,7 @@ def create_task():
     end_time = data.get('end_time')
     classroom_id = data.get('classroom_id')
     notes = data.get('notes')
+    assignment_date = data.get('assignment_date')  # Optional: specific date for assignment
 
     # Basic validation
     if not title:
@@ -69,6 +70,27 @@ def create_task():
             notes=notes
         )
         db.session.add(task)
+        db.session.flush()  # Get task.id
+        
+        # Create an unassigned assignment for this one-off task
+        # Use provided date or default to today
+        assign_date = dt_date.today()
+        if assignment_date:
+            try:
+                assign_date = dt_date.fromisoformat(assignment_date)
+            except Exception:
+                return {'error': 'Invalid assignment_date format'}, 400
+        
+        assignment = Assignment(
+            task_id=task.id,
+            aide_id=None,  # Unassigned
+            date=assign_date,
+            start_time=s_t,
+            end_time=e_t,
+            status='UNASSIGNED',
+            version=1
+        )
+        db.session.add(assignment)
         db.session.commit()
         return task.to_dict(), 201
     except ValueError as e:
@@ -227,3 +249,24 @@ def list_task_assignments(task_id: int):
         .all()
     )
     return [a.to_dict() for a in items], 200
+
+
+@bp.delete('/tasks/<int:task_id>')
+def delete_task(task_id: int):
+    """Delete a task and all its assignments"""
+    task = db.session.get(Task, task_id)
+    if not task:
+        return {'error': 'Task not found'}, 404
+    
+    try:
+        # Delete all assignments for this task
+        Assignment.query.filter(Assignment.task_id == task_id).delete()
+        
+        # Delete the task itself
+        db.session.delete(task)
+        db.session.commit()
+        
+        return {'message': 'Task deleted successfully'}, 200
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to delete task: {str(e)}'}, 500

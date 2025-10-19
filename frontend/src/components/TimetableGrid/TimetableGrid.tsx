@@ -9,9 +9,10 @@ type TimetableGridProps = {
   assignmentsByDay: Record<string, Assignment[]>; // key: date string (YYYY-MM-DD)
   weekDates: string[]; // array of 5 date strings (Mon-Fri)
   tasks: Task[];
+  onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
 };
 
-export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks }: TimetableGridProps) {
+export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick }: TimetableGridProps) {
   // Day names for headers
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   
@@ -74,6 +75,7 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                 assignments={assignments}
                 tasks={tasks}
                 aideColor={selectedAide.colour_hex}
+                onTaskDoubleClick={onTaskDoubleClick}
               />
             </Box>
           );

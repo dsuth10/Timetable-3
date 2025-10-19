@@ -21,6 +21,9 @@ import {
   FormLabel,
 } from '@mui/material';
 import { Add as AddIcon, Event as EventIcon, EventRepeat as EventRepeatIcon } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { tasksApi } from '../../services/tasksApi';
 import { classroomsApi } from '../../services/classroomsApi';
 import type { Task, TaskCategory, Classroom, Weekday } from '../../types';
@@ -47,6 +50,7 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
   const [end, setEnd] = useState('10:00');
   const [classroomId, setClassroomId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [assignmentDate, setAssignmentDate] = useState<string>('');
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   
@@ -78,6 +82,7 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
       setEnd('10:00');
       setClassroomId(null);
       setNotes('');
+      setAssignmentDate('');
       setSelectedWeekdays(['MO', 'TU', 'WE', 'TH', 'FR']);
       setExpiryDate('');
       setError(undefined);
@@ -101,13 +106,19 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
       let task: Task;
       
       if (taskType === 'one-off') {
+        if (!assignmentDate) {
+          setError('Assignment date is required for one-off tasks');
+          setBusy(false);
+          return;
+        }
         task = await tasksApi.createOneOff({ 
           title, 
           category, 
           start_time: start, 
           end_time: end, 
           classroom_id: classroomId, 
-          notes: notes || null 
+          notes: notes || null,
+          assignment_date: assignmentDate
         });
       } else {
         // Recurring task
@@ -264,6 +275,24 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
               ))}
             </Select>
           </FormControl>
+
+          {/* Assignment Date for One-off Tasks */}
+          {taskType === 'one-off' && (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Assignment Date"
+                value={assignmentDate ? new Date(assignmentDate) : null}
+                onChange={(newValue) => {
+                  if (newValue) {
+                    setAssignmentDate(newValue.toISOString().slice(0, 10));
+                  }
+                }}
+                slotProps={{
+                  textField: { fullWidth: true, required: true }
+                }}
+              />
+            </LocalizationProvider>
+          )}
 
           {/* Recurring Task Fields */}
           {taskType === 'recurring' && (

@@ -101,13 +101,13 @@ class Request(db.Model):
     
     @validates('preferred_time')
     def validate_preferred_time(self, key, value):
-        """Validate preferred_time is in 30-minute increments"""
+        """Validate preferred_time is in 15-minute increments"""
         if not isinstance(value, dt_time):
             raise ValueError("preferred_time must be a time object")
         
-        # Check 30-minute increments
-        if value.minute not in [0, 30]:
-            raise ValueError("preferred_time must be in 30-minute increments (00 or 30)")
+        # Check 15-minute increments
+        if value.minute not in [0, 15, 30, 45]:
+            raise ValueError("preferred_time must be in 15-minute increments (00, 15, 30, or 45)")
         
         return value
     

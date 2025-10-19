@@ -12,6 +12,7 @@ type TimeSlottedColumnProps = {
   assignments: Assignment[];
   tasks: Task[];
   aideColor?: string;
+  onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
 };
 
 export function TimeSlottedColumn({ 
@@ -19,7 +20,8 @@ export function TimeSlottedColumn({
   date, 
   assignments, 
   tasks, 
-  aideColor 
+  aideColor,
+  onTaskDoubleClick
 }: TimeSlottedColumnProps) {
   const taskMap = useMemo(() => {
     const map = new Map<number, Task>();
@@ -88,6 +90,7 @@ export function TimeSlottedColumn({
                     task={task}
                     aideColor={aideColor}
                     isPositioned={true}
+                    onDoubleClick={onTaskDoubleClick}
                   />
                 </Box>
               );

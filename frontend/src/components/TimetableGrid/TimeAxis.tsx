@@ -33,6 +33,9 @@ export default function TimeAxis({
         backgroundColor: 'background.paper',
       }}
     >
+      {/* Spacer to align with day headers */}
+      <Box sx={{ height: 72, mb: 1 }} />
+      
       {timeSlots.map((time, index) => (
         <Box
           key={time}

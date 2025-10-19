@@ -59,6 +59,7 @@ export interface Assignment {
   version: number;
   created_at?: string;
   updated_at?: string;
+  aide?: TeacherAide; // Included when fetching with relationships
 }
 
 export interface Absence {

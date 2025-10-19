@@ -11,10 +11,11 @@ type TaskCardProps = {
   task?: Task;
   aideColor?: string;
   onContextMenu?: (event: React.MouseEvent, assignment: Assignment) => void;
+  onDoubleClick?: (assignment: Assignment, task?: Task) => void;
   isPositioned?: boolean; // When true, card is positioned absolutely and doesn't need margin
 };
 
-function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, isPositioned = false }: TaskCardProps) {
+function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false }: TaskCardProps) {
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
 
@@ -26,6 +27,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, isPos
           {...dragProvided.draggableProps}
           data-testid={`assignment-card-${assignment.id}`}
           onContextMenu={(e) => onContextMenu?.(e, assignment)}
+          onDoubleClick={() => onDoubleClick?.(assignment, task)}
           sx={{
             mb: isPositioned ? 0 : 1,
             borderLeft: `4px solid ${aideColor || categoryColor}`,
@@ -115,7 +117,8 @@ export const TaskCard = memo(TaskCardBase, (prev, next) => {
     prev.index === next.index &&
     prev.task?.id === next.task?.id &&
     prev.aideColor === next.aideColor &&
-    prev.isPositioned === next.isPositioned
+    prev.isPositioned === next.isPositioned &&
+    prev.onDoubleClick === next.onDoubleClick
   );
 });
 

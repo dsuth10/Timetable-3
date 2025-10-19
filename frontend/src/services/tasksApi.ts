@@ -9,7 +9,7 @@ export const tasksApi = {
   get(id: ID): Promise<Task> {
     return api.get(`/tasks/${id}`).then((r) => r.data as Task);
   },
-  createOneOff(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { notes?: string | null }): Promise<Task> {
+  createOneOff(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { notes?: string | null; assignment_date?: string }): Promise<Task> {
     return api.post('/tasks', payload).then((r) => r.data as Task);
   },
   createRecurring(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { recurrence_rule: string; expires_on: string; notes?: string | null }): Promise<Task> {
@@ -20,6 +20,9 @@ export const tasksApi = {
   },
   listAssignments(taskId: ID) {
     return api.get(`/tasks/${taskId}/assignments`).then((r) => r.data as any[]);
+  },
+  delete(id: ID): Promise<void> {
+    return api.delete(`/tasks/${id}`).then(() => undefined);
   },
 };
 

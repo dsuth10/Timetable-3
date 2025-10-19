@@ -10,7 +10,12 @@ type UseDragDropOptions = {
 };
 
 export function useDragDrop(options?: UseDragDropOptions) {
-  const [conflicts, setConflicts] = useState<any[] | null>(null);
+  const [conflicts, setConflicts] = useState<{
+    conflicts: any[];
+    assignmentId: number;
+    destAideId: number | null;
+    updatePayload: any;
+  } | null>(null);
   const { execute } = useUndoStore();
 
   // Debounce map for drag-triggered updates (per-assignment key)
@@ -170,7 +175,12 @@ export function useDragDrop(options?: UseDragDropOptions) {
           options?.onSuccess?.();
         } catch (e: any) {
           if (e?.status === 409 && e?.data?.conflicts) {
-            setConflicts(e.data.conflicts);
+            setConflicts({
+              conflicts: e.data.conflicts,
+              assignmentId: assignmentId,
+              destAideId: destAideId,
+              updatePayload: updatePayload
+            });
           } else {
             throw e;
           }
@@ -206,24 +216,24 @@ export function useDragDrop(options?: UseDragDropOptions) {
   const ConflictUI = conflicts ? (
     <ConflictModal
       open={true}
-      conflicts={(conflicts as any).conflicts || conflicts}
+      conflicts={conflicts.conflicts}
       onReplace={async () => {
-        const details = conflicts as any;
-        const list = (details.conflicts || []) as Array<{ existing_assignment_id: number }>;
-        // Unassign conflicting assignments, then retry update
-        for (const c of list) {
+        // Unassign conflicting assignments
+        for (const c of conflicts.conflicts) {
           const conflictingAssignment = await assignmentsApi.get(c.existing_assignment_id);
           await assignmentsApi.update(c.existing_assignment_id, { 
             aide_id: null,
             version: conflictingAssignment.version 
           });
         }
-        const targetAssignment = await assignmentsApi.get(details.assignmentId);
-        await assignmentsApi.update(details.assignmentId, { 
-          aide_id: details.destAideId,
+        // Retry the original assignment update
+        const targetAssignment = await assignmentsApi.get(conflicts.assignmentId);
+        await assignmentsApi.update(conflicts.assignmentId, { 
+          ...conflicts.updatePayload,
           version: targetAssignment.version
         });
         setConflicts(null);
+        options?.onSuccess?.();
       }}
       onCancel={() => setConflicts(null)}
       onClose={() => setConflicts(null)}

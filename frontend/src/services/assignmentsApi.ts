@@ -31,6 +31,12 @@ export const assignmentsApi = {
     }
     return (maybe as any).then((r: any) => (r?.data ?? []) as Assignment[]);
   },
+  assigned(): Promise<Assignment[]> {
+    return api.get('/assignments/assigned').then((r) => r.data as Assignment[]);
+  },
+  delete(id: ID): Promise<void> {
+    return api.delete(`/assignments/${id}`).then(() => undefined);
+  },
 };
 
 

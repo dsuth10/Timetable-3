@@ -9,6 +9,7 @@ type TasksState = {
   error?: string;
   fetchTasks: (opts?: { category?: Task['category'] }) => Promise<void>;
   updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>>) => Promise<Task>;
+  deleteTask: (id: ID) => Promise<void>;
 };
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -41,6 +42,20 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       return updatedTask;
     } catch (e: any) {
       set({ error: e.message || 'Failed to update task', loading: false });
+      throw e;
+    }
+  },
+  async deleteTask(id) {
+    try {
+      set({ loading: true, error: undefined });
+      await tasksApi.delete(id);
+      
+      // Remove the task from local state
+      const tasks = get().tasks;
+      const updatedTasks = tasks.filter(task => task.id !== id);
+      set({ tasks: updatedTasks, loading: false });
+    } catch (e: any) {
+      set({ error: e.message || 'Failed to delete task', loading: false });
       throw e;
     }
   },

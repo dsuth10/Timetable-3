@@ -22,11 +22,12 @@ import EmptyState from './common/EmptyState';
 type Props = {
   dateISO?: string;
   refreshTrigger?: number; // Add refresh trigger prop
+  onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
 };
 
 const DRAWER_WIDTH = 320;
 
-export default function UnassignedPanel({ dateISO, refreshTrigger }: Props) {
+export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleClick }: Props) {
   const [items, setItems] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -37,9 +38,16 @@ export default function UnassignedPanel({ dateISO, refreshTrigger }: Props) {
     setLoading(true);
     setError(undefined);
     assignmentsApi
-      .unassigned(dateISO)
-      .then((res) => setItems(res))
-      .catch((e: any) => setError(e.message || 'Failed to load unassigned'))
+      .unassigned() // Remove date parameter to show all unassigned tasks
+      .then((res) => {
+        console.log('[UnassignedPanel] Received assignments from API:', res);
+        console.log('[UnassignedPanel] Number of items:', res.length);
+        setItems(res);
+      })
+      .catch((e: any) => {
+        console.error('[UnassignedPanel] Error loading unassigned:', e);
+        setError(e.message || 'Failed to load unassigned');
+      })
       .finally(() => setLoading(false));
   }, [dateISO, refreshTrigger]); // Add refreshTrigger as dependency
 
@@ -51,12 +59,17 @@ export default function UnassignedPanel({ dateISO, refreshTrigger }: Props) {
 
   // Filter and group by date
   const groupedItems = useMemo(() => {
+    console.log('[UnassignedPanel] Processing items:', items.length);
+    console.log('[UnassignedPanel] TaskMap size:', taskMap.size);
+    
     const filtered = items.filter(item => {
       if (!searchQuery) return true;
       const task = taskMap.get(item.task_id);
       return task?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
              task?.category.toLowerCase().includes(searchQuery.toLowerCase());
     });
+
+    console.log('[UnassignedPanel] Filtered items:', filtered.length);
 
     const groups = new Map<string, Assignment[]>();
     filtered.forEach(item => {
@@ -67,7 +80,13 @@ export default function UnassignedPanel({ dateISO, refreshTrigger }: Props) {
       groups.get(date)!.push(item);
     });
 
-    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    const result = Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    console.log('[UnassignedPanel] Grouped by date:', result.length, 'groups');
+    result.forEach(([date, assignments]) => {
+      console.log(`  - ${date}: ${assignments.length} assignments`);
+    });
+    
+    return result;
   }, [items, searchQuery, taskMap]);
 
   return (
@@ -163,6 +182,7 @@ export default function UnassignedPanel({ dateISO, refreshTrigger }: Props) {
                               assignment={assignment}
                               index={idx}
                               task={task}
+                              onDoubleClick={onTaskDoubleClick}
                             />
                           </Box>
                         );

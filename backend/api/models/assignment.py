@@ -56,25 +56,25 @@ class Assignment(db.Model):
     
     @validates('start_time')
     def validate_start_time(self, key, value):
-        """Validate start_time is in 30-minute increments"""
+        """Validate start_time is in 15-minute increments"""
         if not isinstance(value, dt_time):
             raise ValueError("start_time must be a time object")
         
-        # Check 30-minute increments
-        if value.minute not in [0, 30]:
-            raise ValueError("start_time must be in 30-minute increments (00 or 30)")
+        # Check 15-minute increments
+        if value.minute not in [0, 15, 30, 45]:
+            raise ValueError("start_time must be in 15-minute increments (00, 15, 30, or 45)")
         
         return value
     
     @validates('end_time')
     def validate_end_time(self, key, value):
-        """Validate end_time is in 30-minute increments and after start_time"""
+        """Validate end_time is in 15-minute increments and after start_time"""
         if not isinstance(value, dt_time):
             raise ValueError("end_time must be a time object")
         
-        # Check 30-minute increments
-        if value.minute not in [0, 30]:
-            raise ValueError("end_time must be in 30-minute increments (00 or 30)")
+        # Check 15-minute increments
+        if value.minute not in [0, 15, 30, 45]:
+            raise ValueError("end_time must be in 15-minute increments (00, 15, 30, or 45)")
         
         # Check end_time > start_time
         if hasattr(self, 'start_time') and self.start_time:

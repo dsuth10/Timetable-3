@@ -182,6 +182,22 @@ def batch_assignments():
     }, status_code
 
 
+@bp.delete('/assignments/<int:assignment_id>')
+def delete_assignment(assignment_id: int):
+    """Delete a specific assignment instance"""
+    assignment = Assignment.query.get(assignment_id)
+    if not assignment:
+        return {'error': 'Assignment not found'}, 404
+    
+    try:
+        db.session.delete(assignment)
+        db.session.commit()
+        return {'message': 'Assignment deleted successfully'}, 200
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to delete assignment: {str(e)}'}, 500
+
+
 @bp.put('/assignments/<int:assignment_id>')
 def update_assignment(assignment_id: int):
     assignment = Assignment.query.get(assignment_id)
@@ -242,7 +258,12 @@ def update_assignment(assignment_id: int):
             exclude_assignment_id=assignment.id
         )
         if not validation['valid']:
-            return {'error': validation['error'], 'conflicts': [c.to_dict() for c in validation['conflicts']]}, 409
+            return {
+                'error': validation['error'], 
+                'conflicts': [c.to_dict() for c in validation['conflicts']],
+                'assignment_id': assignment_id,
+                'requested_aide_id': aide_id
+            }, 409
 
     # Apply updates
     assignment.aide_id = aide_id
@@ -259,22 +280,29 @@ def update_assignment(assignment_id: int):
 
 @bp.get('/assignments/unassigned')
 def get_unassigned_assignments():
-    """Get all unassigned assignments, optionally filtered by date or week"""
-    date_str = request.args.get('date')
-    
+    """Get all unassigned assignments regardless of date"""
+    # Remove date filtering - show all unassigned tasks
     query = Assignment.query.filter(Assignment.status == 'UNASSIGNED')
-    
-    if date_str:
-        try:
-            filter_date = dt_date.fromisoformat(date_str)
-            # Filter for entire week (Mon-Fri): date through date+4
-            end_date = filter_date + timedelta(days=4)
-            query = query.filter(Assignment.date >= filter_date, Assignment.date <= end_date)
-        except Exception:
-            return {'error': 'Invalid date format'}, 400
     
     assignments = query.order_by(Assignment.date, Assignment.start_time).all()
     return [a.to_dict() for a in assignments], 200
+
+
+@bp.get('/assignments/assigned')
+def get_assigned_assignments():
+    """Get all assigned assignments from today forward"""
+    today = dt_date.today()
+    query = (
+        Assignment.query
+        .options(joinedload(Assignment.aide))
+        .filter(
+            Assignment.aide_id.isnot(None),
+            Assignment.date >= today
+        )
+        .order_by(Assignment.date, Assignment.start_time)
+    )
+    assignments = query.all()
+    return [a.to_dict(include_relationships=True) for a in assignments], 200
 
 
 @bp.get('/assignments/weekly-matrix')
@@ -294,10 +322,10 @@ def weekly_matrix():
     aides = TeacherAide.query.order_by(TeacherAide.id).all()
     aides_json = [a.to_dict() for a in aides]
 
-    # Time slots 08:00..17:00 per 30 min
+    # Time slots 08:00..17:00 per 15 min
     time_slots = []
     for h in range(8, 18):
-        for m in (0, 30):
+        for m in (0, 15, 30, 45):
             time_slots.append({'time': f"{h:02d}:{m:02d}:00"})
 
     # Build matrix: aide_id -> {date -> [assignments/conflicts info]}

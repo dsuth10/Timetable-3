@@ -35,7 +35,8 @@ def require_json(keys: list[str]):
 
 def validate_time_30min(field_names: list[str]):
     """
-    Validate time fields are in HH:MM with minutes in {00,30}.
+    Validate time fields are in HH:MM with minutes in {00, 15, 30, 45}.
+    Note: Despite the function name, this now validates 15-minute increments.
     """
 
     def decorator(func):
@@ -54,8 +55,8 @@ def validate_time_30min(field_names: list[str]):
                 if not (hh.isdigit() and mm.isdigit()):
                     return {"error": "Bad request", "message": f"{field} must be numeric time"}, 400
                 h, m = int(hh), int(mm)
-                if h < 0 or h > 23 or m not in (0, 30):
-                    return {"error": "Bad request", "message": f"{field} must be 30-min increment"}, 400
+                if h < 0 or h > 23 or m not in (0, 15, 30, 45):
+                    return {"error": "Bad request", "message": f"{field} must be 15-min increment (00, 15, 30, or 45)"}, 400
             return func(*args, **kwargs)
         return wrapper
     return decorator

@@ -18,17 +18,20 @@ import {
   FormGroup,
   FormLabel,
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { classroomsApi } from '../../services/classroomsApi';
 import { useTasksStore } from '../../store/stores/tasks';
-import type { Task, TaskCategory, Classroom, Weekday } from '../../types';
+import type { Task, TaskCategory, Classroom, Weekday, Assignment } from '../../types';
 import { categoryColors } from '../../theme/theme';
+import TaskDeleteDialog from './TaskDeleteDialog';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   task: Task | null;
+  assignment?: Assignment | null;
   onUpdated?: (task: Task) => void;
+  onDeleted?: () => void;
 };
 
 const CATEGORIES: { value: TaskCategory; label: string }[] = [
@@ -46,7 +49,7 @@ const WEEKDAY_MAP: Record<string, Weekday> = {
   'FR': 'FR',
 };
 
-export default function TaskEditModal({ open, onClose, task, onUpdated }: Props) {
+export default function TaskEditModal({ open, onClose, task, assignment, onUpdated, onDeleted }: Props) {
   const { updateTask } = useTasksStore();
   
   const [title, setTitle] = useState('');
@@ -66,6 +69,9 @@ export default function TaskEditModal({ open, onClose, task, onUpdated }: Props)
   // Classrooms
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
+  
+  // Delete dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Load classrooms when modal opens
   useEffect(() => {
@@ -334,19 +340,42 @@ export default function TaskEditModal({ open, onClose, task, onUpdated }: Props)
           />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} disabled={busy}>
-          Cancel
-        </Button>
-        <Button
-          onClick={submit}
-          disabled={busy || !title.trim()}
-          variant="contained"
-          startIcon={busy ? <CircularProgress size={16} /> : <EditIcon />}
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
+        <Button 
+          onClick={() => setShowDeleteDialog(true)} 
+          disabled={busy}
+          color="error"
+          startIcon={<DeleteIcon />}
         >
-          Save Changes
+          Delete
         </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button onClick={handleClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={busy || !title.trim()}
+            variant="contained"
+            startIcon={busy ? <CircularProgress size={16} /> : <EditIcon />}
+          >
+            Save Changes
+          </Button>
+        </Box>
       </DialogActions>
+
+      {/* Delete Confirmation Dialog */}
+      <TaskDeleteDialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        task={task}
+        assignment={assignment || null}
+        onDeleted={() => {
+          setShowDeleteDialog(false);
+          handleClose();
+          onDeleted?.();
+        }}
+      />
     </Dialog>
   );
 }

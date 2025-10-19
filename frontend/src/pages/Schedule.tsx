@@ -8,8 +8,9 @@ import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import AppDragDropContext from '../components/DragDropContext';
 import UnassignedPanel from '../components/UnassignedPanel';
 import { useDragDrop } from '../hooks/useDragDrop';
-import type { Assignment } from '../types';
+import type { Assignment, Task } from '../types';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
+import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import MultiDayDialog from '../components/MultiDayDialog';
 import AppBar from '../components/Layout/AppBar';
 import AideDrawer from '../components/Layout/AideDrawer';
@@ -30,6 +31,9 @@ export default function Schedule() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [showEditTask, setShowEditTask] = useState(false);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
+  const [selectedAssignmentForEdit, setSelectedAssignmentForEdit] = useState<Assignment | null>(null);
   const [showMultiDay, setShowMultiDay] = useState(false);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
   const [showAideFormModal, setShowAideFormModal] = useState(false);
@@ -185,6 +189,14 @@ export default function Schedule() {
     onSuccess: refreshData
   });
 
+  const handleTaskDoubleClick = (assignment: Assignment, task?: Task) => {
+    if (task) {
+      setSelectedTaskForEdit(task);
+      setSelectedAssignmentForEdit(assignment);
+      setShowEditTask(true);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Top App Bar */}
@@ -253,13 +265,18 @@ export default function Schedule() {
                 assignmentsByDay={assignmentsByDay}
                 weekDates={weekDates}
                 tasks={tasks}
+                onTaskDoubleClick={handleTaskDoubleClick}
               />
             )}
             {ConflictUI}
           </Box>
 
           {/* Right: Unassigned Panel */}
-          <UnassignedPanel dateISO={selectedWeekStartISO} refreshTrigger={refreshTrigger} />
+          <UnassignedPanel 
+            dateISO={selectedWeekStartISO} 
+            refreshTrigger={refreshTrigger}
+            onTaskDoubleClick={handleTaskDoubleClick}
+          />
         </Box>
       </AppDragDropContext>
 
@@ -336,6 +353,30 @@ export default function Schedule() {
           fetchAides({ includeAvailability: true });
           // Add the new aide to visible set
           setVisibleAideIds(prev => new Set([...prev, aide.id]));
+        }}
+      />
+      <TaskEditModal
+        open={showEditTask}
+        task={selectedTaskForEdit}
+        assignment={selectedAssignmentForEdit}
+        onClose={() => {
+          setShowEditTask(false);
+          setSelectedTaskForEdit(null);
+          setSelectedAssignmentForEdit(null);
+        }}
+        onUpdated={() => {
+          setShowEditTask(false);
+          setSelectedTaskForEdit(null);
+          setSelectedAssignmentForEdit(null);
+          refreshData();
+          fetchTasks();
+        }}
+        onDeleted={() => {
+          setShowEditTask(false);
+          setSelectedTaskForEdit(null);
+          setSelectedAssignmentForEdit(null);
+          refreshData();
+          fetchTasks();
         }}
       />
     </Box>
