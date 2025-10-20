@@ -70,6 +70,39 @@ def test_get_tasks_filter_by_category(client, sample_task, sample_classroom):
     assert response.json[0]['category'] == "CLASS_SUPPORT"
 
 
+def test_get_tasks_filter_by_category_case_insensitive(client, sample_task, sample_classroom):
+    """Test GET /api/tasks?category=X handles mixed-case input"""
+    from api.models.task import Task
+    from api.models import db
+    
+    playground_task = Task(
+        title="Playground Duty",
+        category="PLAYGROUND",
+        start_time=time(12, 0),
+        end_time=time(12, 30),
+        classroom_id=sample_classroom.id
+    )
+    db.session.add(playground_task)
+    db.session.commit()
+    
+    # Test lowercase query parameter
+    response = client.get('/api/tasks?category=playground')
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    assert response.json[0]['category'] == "PLAYGROUND"
+    
+    # Test mixed-case query parameter
+    response = client.get('/api/tasks?category=PlayGround')
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    assert response.json[0]['category'] == "PLAYGROUND"
+    
+    # Verify uppercase still works
+    response = client.get('/api/tasks?category=PLAYGROUND')
+    assert response.status_code == 200
+    assert len(response.json) == 1
+
+
 def test_get_tasks_includes_classroom(client, sample_task):
     """Test GET /api/tasks includes classroom details"""
     response = client.get('/api/tasks')

@@ -16,6 +16,7 @@ def list_tasks():
     category = request.args.get('category')
     q = Task.query
     if category:
+        category = category.strip().upper()
         q = q.filter(Task.category == category)
     tasks = q.order_by(Task.id).all()
     return [t.to_dict() for t in tasks], 200
