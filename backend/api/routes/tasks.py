@@ -219,7 +219,7 @@ def update_task(task_id: int):
         if 'recurrence_rule' in data:
             task.recurrence_rule = recurrence_rule
         
-        if expires_on is not None:
+        if 'expires_on' in data:
             if expires_on:
                 task.expires_on = dt_date.fromisoformat(expires_on)
             else:
