@@ -18,7 +18,11 @@ import TaskCreationModal from '../TaskModals/TaskCreationModal';
 import TaskEditModal from '../TaskModals/TaskEditModal';
 import { type Task, type Assignment, type TeacherAide } from '../../types';
 
-export default function TasksManagement() {
+type Props = {
+  refreshTrigger?: number;
+};
+
+export default function TasksManagement({ refreshTrigger }: Props) {
   const { tasks, loading, error, fetchTasks } = useTasksStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -31,6 +35,14 @@ export default function TasksManagement() {
       .then(setAssignments)
       .catch(() => undefined);
   }, [fetchTasks]);
+
+  // Refetch assigned list whenever the schedule refresh trigger changes
+  useEffect(() => {
+    if (refreshTrigger === undefined) return;
+    assignmentsApi.assigned()
+      .then(setAssignments)
+      .catch(() => undefined);
+  }, [refreshTrigger]);
 
   // Helper function to format dates
   const formatDate = (dateStr: string) => {

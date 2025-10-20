@@ -107,10 +107,10 @@ python app.py
 ```bash
 cd frontend
 npm run dev
-# Frontend runs on http://localhost:5173
+# Frontend runs on http://localhost:3000
 ```
 
-**Access Application**: Open browser to `http://localhost:5173`
+**Access Application**: Open browser to `http://localhost:3000`
 
 ---
 
@@ -222,7 +222,7 @@ function createWindow() {
 
   // Wait for backend to start, then load frontend
   setTimeout(() => {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL('http://localhost:3000');
   }, 2000);
 
   mainWindow.on('closed', function () {
@@ -426,7 +426,7 @@ SECRET_KEY=your-secret-key-here
 DATABASE_URL=sqlite:///instance/timetable.db
 
 # CORS (for web deployment)
-CORS_ORIGINS=http://localhost:5173,http://timetable.local
+CORS_ORIGINS=http://localhost:3000,http://timetable.local
 
 # Scheduler
 SCHEDULER_HORIZON_WEEKS=4

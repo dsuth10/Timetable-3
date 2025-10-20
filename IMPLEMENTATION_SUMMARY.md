@@ -394,7 +394,7 @@ npm install  # If needed
 npm run dev
 ```
 
-Navigate to `http://localhost:5173` - you'll immediately see the new unified interface.
+Navigate to `http://localhost:3000` - you'll immediately see the new unified interface.
 
 ---
 

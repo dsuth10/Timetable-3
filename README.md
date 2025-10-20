@@ -74,12 +74,12 @@ python app.py
 ```bash
 cd frontend
 npm run dev
-# Frontend runs on http://localhost:5173 (or alternative port like 3004)
+# Frontend runs on http://localhost:3000
 ```
 
 5. **Access Application**
 
-Open your browser to: **http://localhost:5173** (or the port shown in terminal output)
+Open your browser to: **http://localhost:3000**
 
 ---
 
@@ -407,7 +407,7 @@ FLASK_ENV=production
 FLASK_DEBUG=0
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=sqlite:///instance/timetable.db
-CORS_ORIGINS=http://localhost:5173
+CORS_ORIGINS=http://localhost:3000
 SCHEDULER_HORIZON_WEEKS=4
 LOG_LEVEL=INFO
 ```

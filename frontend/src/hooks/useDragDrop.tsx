@@ -12,6 +12,7 @@ type UseDragDropOptions = {
 export function useDragDrop(options?: UseDragDropOptions) {
   const [conflicts, setConflicts] = useState<{
     conflicts: any[];
+    errorMessage?: string | null;
     assignmentId: number;
     destAideId: number | null;
     updatePayload: any;
@@ -174,9 +175,10 @@ export function useDragDrop(options?: UseDragDropOptions) {
           // Refresh data after successful update
           options?.onSuccess?.();
         } catch (e: any) {
-          if (e?.status === 409 && e?.data?.conflicts) {
+          if (e?.status === 409) {
             setConflicts({
-              conflicts: e.data.conflicts,
+              conflicts: e?.data?.conflicts || [],
+              errorMessage: e?.data?.error || null,
               assignmentId: assignmentId,
               destAideId: destAideId,
               updatePayload: updatePayload
@@ -217,6 +219,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
     <ConflictModal
       open={true}
       conflicts={conflicts.conflicts}
+      errorMessage={conflicts.errorMessage}
       onReplace={async () => {
         // Unassign conflicting assignments
         for (const c of conflicts.conflicts) {

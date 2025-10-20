@@ -283,7 +283,7 @@ export default function Schedule() {
       {/* Bottom Management Panel */}
       <ManagementPanel
         aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} />}
-        tasksContent={<TasksManagement />}
+        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
         requestsContent={<RequestsManagement />}
       />
 
