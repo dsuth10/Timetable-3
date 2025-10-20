@@ -28,7 +28,9 @@ type Props = {
 
 export default function TaskDeleteDialog({ open, onClose, task, assignment, onDeleted }: Props) {
   const { deleteTask } = useTasksStore();
-  const [deleteOption, setDeleteOption] = useState<'instance' | 'all'>('instance');
+  const [deleteOption, setDeleteOption] = useState<'instance' | 'all'>(
+    assignment ? 'instance' : 'all'
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -36,20 +38,26 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
 
   const handleClose = () => {
     if (!busy) {
-      setDeleteOption('instance');
+      setDeleteOption(assignment ? 'instance' : 'all');
       setError(undefined);
       onClose();
     }
   };
 
   const handleDelete = async () => {
-    if (!task || !assignment) return;
+    if (!task) return;
 
     setBusy(true);
     setError(undefined);
 
     try {
       if (isRecurring && deleteOption === 'instance') {
+        // Validate assignment exists for single-instance deletion
+        if (!assignment) {
+          setError('Cannot delete single instance without an assignment');
+          setBusy(false);
+          return;
+        }
         // Delete only this assignment instance
         await assignmentsApi.delete(assignment.id);
         
@@ -119,19 +127,24 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
               >
                 <FormControlLabel
                   value="instance"
-                  control={<Radio />}
+                  control={<Radio disabled={!assignment} />}
+                  disabled={!assignment}
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
                         Delete only this instance
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Remove the assignment for {assignment?.date ? new Date(assignment.date + 'T00:00:00').toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        }) : 'this date'} only. The task template will remain.
+                        {assignment ? (
+                          <>Remove the assignment for {assignment.date ? new Date(assignment.date + 'T00:00:00').toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          }) : 'this date'} only. The task template will remain.</>
+                        ) : (
+                          'This option is only available when deleting from a specific assignment.'
+                        )}
                       </Typography>
                     </Box>
                   }
