@@ -110,7 +110,7 @@ export default function AvailabilityEditor({
       } else {
         // Delete existing availability
         if (day.availabilityId) {
-          await aidesApi.availability.delete(day.availabilityId);
+          await aidesApi.availability.delete(aideId, day.availabilityId);
         }
 
         // Update local state
@@ -161,7 +161,7 @@ export default function AvailabilityEditor({
     try {
       // Delete existing and create new (since we can only have one per day)
       if (day.availabilityId) {
-        await aidesApi.availability.delete(day.availabilityId);
+        await aidesApi.availability.delete(aideId, day.availabilityId);
       }
 
       const newAvailability = await aidesApi.availability.create(aideId, {
@@ -193,12 +193,27 @@ export default function AvailabilityEditor({
     }
   };
 
-  const getDayStatus = (day: DayAvailability) => {
-    if (!day.enabled) {
+  const getDayStatus = (day: DayAvailability | undefined) => {
+    if (!day || !day.enabled) {
       return { label: 'Unavailable', color: 'default' as const };
     }
     return { label: 'Available', color: 'success' as const };
   };
+
+  // Don't render until dayAvailability is properly initialized
+  if (dayAvailability.length === 0) {
+    return (
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Schedule color="primary" />
+          <Typography variant="h6">Weekly Availability</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -216,6 +231,9 @@ export default function AvailabilityEditor({
       <Grid container spacing={2}>
         {WEEKDAYS.map((day, index) => {
           const dayData = dayAvailability[index];
+          if (!dayData) {
+            return null; // Skip rendering if data not yet loaded
+          }
           const status = getDayStatus(dayData);
 
           return (

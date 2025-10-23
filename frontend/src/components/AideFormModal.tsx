@@ -172,12 +172,14 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
 
         <Divider sx={{ my: 3 }} />
 
-        <AvailabilityEditor
-          aideId={aide?.id || 0}
-          initialAvailability={availability}
-          onAvailabilityChange={handleAvailabilityChange}
-          disabled={busy || loadingAvailability}
-        />
+        {aide && (
+          <AvailabilityEditor
+            aideId={aide.id}
+            initialAvailability={availability}
+            onAvailabilityChange={handleAvailabilityChange}
+            disabled={busy || loadingAvailability}
+          />
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={handleClose} disabled={busy}>

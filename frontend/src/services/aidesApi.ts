@@ -21,8 +21,8 @@ export const aidesApi = {
     create(aideId: ID, payload: Pick<Availability, 'weekday' | 'start_time' | 'end_time'>): Promise<Availability> {
       return api.post(`/aides/${aideId}/availability`, payload).then((r) => r.data as Availability);
     },
-    delete(id: ID): Promise<void> {
-      return api.delete(`/availability/${id}`).then(() => {});
+    delete(aideId: ID, id: ID): Promise<void> {
+      return api.delete(`/aides/${aideId}/availability/${id}`).then(() => {});
     },
   },
 };

@@ -70,12 +70,16 @@ def list_availability(aide_id: int):
     return [a.to_dict() for a in items], 200
 
 
-@bp.delete('/api/availability/<int:availability_id>')
-def delete_availability(availability_id: int):
+@bp.delete('/<int:aide_id>/availability/<int:availability_id>')
+def delete_availability(aide_id: int, availability_id: int):
     """Delete a specific availability record"""
     availability = db.session.get(Availability, availability_id)
     if not availability:
         return {'error': 'Availability not found'}, 404
+    
+    # Verify the availability belongs to the specified aide
+    if availability.aide_id != aide_id:
+        return {'error': 'Availability not found for this aide'}, 404
 
     try:
         db.session.delete(availability)
