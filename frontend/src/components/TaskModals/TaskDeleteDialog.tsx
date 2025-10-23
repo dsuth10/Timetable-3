@@ -71,6 +71,10 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
         // Delete the entire task (and all its assignments)
         await deleteTask(task.id);
         
+        // Refresh tasks to ensure UI is updated
+        const { fetchTasks } = useTasksStore.getState();
+        await fetchTasks();
+        
         // Dispatch success event for toast notification
         try {
           window.dispatchEvent(new CustomEvent('app:success', { 

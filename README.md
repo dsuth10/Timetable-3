@@ -18,6 +18,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
 ✅ **Enhanced Week Navigation** - Navigate weeks with previous/next/today buttons plus date picker for jumping to specific weeks  
 ✅ **Cross-Day Dragging** - Drag tasks between different days with automatic date updates and persistence  
+✅ **Aide Availability Management** - Set weekly availability patterns with visual grid editor and time slot management  
 ✅ **Recurring Tasks** - Create weekly, daily, or custom recurring patterns using iCal RRULE  
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
@@ -220,7 +221,7 @@ The application manages 7 core entities:
 | Entity | Description | Key Relationships |
 |--------|-------------|-------------------|
 | **TeacherAide** | Staff member providing support | Has Availability, Assignments, Absences |
-| **Availability** | Weekly availability pattern | Belongs to TeacherAide |
+| **Availability** | Weekly availability pattern (Monday-Friday time windows) | Belongs to TeacherAide, one per weekday |
 | **Task** | Support duty definition (one-off or recurring) | Has Assignments, optional Classroom |
 | **Assignment** | Specific task occurrence assigned to aide | Belongs to Task and TeacherAide |
 | **Absence** | Aide unavailability record | Belongs to TeacherAide |
@@ -327,6 +328,172 @@ Option 3: Auto-Shorten (Partial Overlap)
   → First task end time adjusted
   → New task assigned to remaining slot
 ```
+
+---
+
+## 👥 Aide Availability Management
+
+The system includes comprehensive availability management that allows administrators to set weekly availability patterns for teacher aides, ensuring proper scheduling and conflict prevention.
+
+### Key Features
+
+✅ **Weekly Availability Grid** - Visual Monday-Friday availability editor with toggle switches  
+✅ **Time Slot Management** - Set start/end times with 15-minute increment validation  
+✅ **Real-time Updates** - Changes saved immediately with optimistic locking  
+✅ **Visual Indicators** - Clear available/unavailable day status with color coding  
+✅ **Default Times** - Smart defaults (08:00-17:00) matching school hours  
+✅ **Conflict Prevention** - Unavailable days prevent task assignment  
+✅ **Intuitive Interface** - Toggle days on/off with time picker dropdowns  
+
+### How Availability Works
+
+#### Setting Up Aide Availability
+
+1. **Open Aide Management**: Click "Aides" in the management panel
+2. **Edit Aide**: Click the edit button for any aide
+3. **Availability Section**: Scroll to the "Weekly Availability" section
+4. **Configure Days**: 
+   - Toggle each day on/off using the switch
+   - Set start/end times using the dropdown selectors
+   - Times are automatically validated for 15-minute increments
+5. **Save Changes**: Availability is saved immediately to the backend
+
+#### Making an Aide Unavailable on Specific Days
+
+**To make an aide unavailable on Monday (or any day)**:
+1. Open the aide's edit form
+2. Find the "Monday" section in the availability grid
+3. Toggle the "Available" switch to OFF
+4. The day will show as "Unavailable" with a gray indicator
+5. Changes are saved automatically
+
+**Result**: The aide will not appear as available for task assignment on that day, and the timetable grid will show a gray overlay indicating unavailability.
+
+#### Availability Display in Timetable
+
+- **Available Days**: Show normal time slots for task assignment
+- **Unavailable Days**: Display gray overlay with "No availability set" tooltip
+- **Absent Days**: Show red diagonal pattern overlay (separate from availability)
+- **Time Slots**: Only available time windows are highlighted for assignment
+
+### Technical Implementation
+
+#### Backend API Endpoints
+
+```bash
+# Get aide availability
+GET /api/aides/{id}/availability
+
+# Create availability window
+POST /api/aides/{id}/availability
+{
+  "weekday": "MO",
+  "start_time": "09:00:00", 
+  "end_time": "15:00:00"
+}
+
+# Delete availability window
+DELETE /api/availability/{id}
+```
+
+#### Data Model
+
+**Availability Entity**:
+- `id`: Primary key
+- `aide_id`: Foreign key to TeacherAide
+- `weekday`: Day of week (MO, TU, WE, TH, FR)
+- `start_time`: Time in HH:MM:SS format
+- `end_time`: Time in HH:MM:SS format
+- **Constraint**: Only one availability window per aide per weekday
+
+#### Validation Rules
+
+- **Time Format**: Must be in HH:MM:SS format
+- **Time Increments**: Must be in 15-minute increments (00, 15, 30, 45)
+- **Time Logic**: End time must be after start time
+- **Weekday Range**: Only Monday-Friday (MO, TU, WE, TH, FR)
+- **Uniqueness**: One availability window per aide per weekday
+
+#### Frontend Components
+
+**AvailabilityEditor.tsx**:
+- Weekly grid with Monday-Friday toggles
+- Time picker dropdowns with 15-minute slots
+- Real-time API integration
+- Visual status indicators
+- Error handling and loading states
+
+**Integration with AideFormModal**:
+- Loads existing availability when editing
+- Saves changes immediately
+- Handles both create and edit modes
+- Proper state management
+
+### User Experience
+
+#### Visual Design
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Weekly Availability                   │
+├─────────────┬─────────────┬─────────────┬─────────────┤
+│   Monday    │   Tuesday   │  Wednesday  │  Thursday   │
+│  Available  │ Unavailable │  Available  │  Available  │
+│ 08:00-17:00 │      —      │ 09:00-15:00 │ 08:00-17:00 │
+│     ✓       │      ✗      │      ✓      │      ✓      │
+└─────────────┴─────────────┴─────────────┴─────────────┘
+```
+
+#### Status Indicators
+
+- **🟢 Available**: Green background, time range displayed
+- **⚪ Unavailable**: Gray background, "Unavailable" label
+- **⏰ Time Display**: Shows start and end times when available
+- **🔄 Loading**: Spinner during API operations
+- **❌ Error**: Red alert for failed operations
+
+#### Interaction Patterns
+
+1. **Toggle Day**: Click switch to enable/disable availability
+2. **Set Times**: Use dropdown selectors for start/end times
+3. **Auto-save**: Changes saved immediately (no "Save" button needed)
+4. **Validation**: Invalid times show error messages
+5. **Feedback**: Visual confirmation of successful changes
+
+### Best Practices
+
+#### For Administrators
+
+- **Set Realistic Hours**: Use actual aide availability (e.g., 08:30-15:30)
+- **Consider Breaks**: Account for lunch breaks in availability windows
+- **Regular Updates**: Update availability when aide schedules change
+- **Document Changes**: Use absence management for temporary unavailability
+
+#### For System Usage
+
+- **Default Times**: New aides get 08:00-17:00 availability by default
+- **Conflict Prevention**: Unavailable days prevent task assignment
+- **Visual Clarity**: Always show availability status in timetable
+- **Error Handling**: Clear messages for validation failures
+
+### Troubleshooting Availability Issues
+
+**Aide shows as unavailable when they should be available**:
+1. Check aide's availability settings in management panel
+2. Verify the day is toggled ON with correct times
+3. Ensure times are in 15-minute increments
+4. Check for conflicting absence records
+
+**Time picker shows wrong options**:
+- System uses 15-minute increments (08:00, 08:15, 08:30, etc.)
+- Times are validated against backend constraints
+- Invalid times will show error messages
+
+**Changes not saving**:
+- Check network connection
+- Verify backend is running
+- Look for error messages in the interface
+- Try refreshing the page and re-entering changes
 
 ---
 
@@ -688,6 +855,22 @@ Contributions are welcome! Please follow these steps:
 
 ## 🔄 Recent Updates
 
+### Version 1.0.2 (2025-10-23)
+
+**New Features**:
+- ✅ **Aide Availability Management** - Complete weekly availability system with visual grid editor
+- ✅ **Time Slot Management** - Set start/end times with 15-minute increment validation
+- ✅ **Real-time Updates** - Availability changes saved immediately with optimistic locking
+- ✅ **Visual Indicators** - Clear available/unavailable day status with color coding
+- ✅ **Conflict Prevention** - Unavailable days prevent task assignment in timetable
+
+**Technical Improvements**:
+- Added DELETE endpoint for availability management (`DELETE /api/availability/{id}`)
+- Created AvailabilityEditor component with Material-UI time pickers
+- Integrated availability management into AideFormModal with load/save logic
+- Enhanced timetable grid to show availability overlays for unavailable days
+- Proper TypeScript typing with Weekday union type for type safety
+
 ### Version 1.0.1 (2025-10-18)
 
 **Bug Fixes**:
@@ -705,6 +888,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.1  
-**Last Updated**: 2025-10-18
+**Version**: 1.0.2  
+**Last Updated**: 2025-10-23
 

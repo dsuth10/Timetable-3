@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Box, 
   List, 
@@ -10,17 +10,24 @@ import {
   Typography,
   Paper,
   Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit } from '@mui/icons-material';
 import { useAidesStore } from '../../store/stores/aides';
 import LoadingState from '../common/LoadingState';
+import AideFormModal from '../AideFormModal';
+import type { TeacherAide } from '../../types';
 
 type AidesManagementProps = {
   onAddAide?: () => void;
 };
 
 export default function AidesManagement({ onAddAide }: AidesManagementProps) {
-  const { aides, loading, error, fetchAides } = useAidesStore();
+  const { aides, loading, error, fetchAides, updateAide } = useAidesStore();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedAide, setSelectedAide] = useState<TeacherAide | null>(null);
 
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
@@ -48,7 +55,7 @@ export default function AidesManagement({ onAddAide }: AidesManagementProps) {
           variant="contained" 
           startIcon={<AddIcon />} 
           size="small"
-          onClick={onAddAide}
+          onClick={() => setShowCreateModal(true)}
         >
           Add Aide
         </Button>
@@ -56,7 +63,14 @@ export default function AidesManagement({ onAddAide }: AidesManagementProps) {
       <List>
         {aides.map((aide) => (
           <Paper key={aide.id} sx={{ mb: 1 }}>
-            <ListItem>
+            <ListItem
+              sx={{
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+                transition: 'background-color 0.2s',
+              }}
+            >
               <ListItemAvatar>
                 <Avatar 
                   sx={{ 
@@ -87,10 +101,49 @@ export default function AidesManagement({ onAddAide }: AidesManagementProps) {
                   </Box>
                 }
               />
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Tooltip title="Edit Aide">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedAide(aide);
+                      setShowEditModal(true);
+                    }}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </ListItem>
           </Paper>
         ))}
       </List>
+
+      {/* Create Aide Modal */}
+      <AideFormModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          setShowCreateModal(false);
+          fetchAides({ includeAvailability: true }).catch(() => undefined);
+        }}
+      />
+
+      {/* Edit Aide Modal */}
+      <AideFormModal
+        open={showEditModal}
+        aide={selectedAide}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedAide(null);
+        }}
+        onUpdated={() => {
+          setShowEditModal(false);
+          setSelectedAide(null);
+          fetchAides({ includeAvailability: true }).catch(() => undefined);
+        }}
+      />
     </Box>
   );
 }

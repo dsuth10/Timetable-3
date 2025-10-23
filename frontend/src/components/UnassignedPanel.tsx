@@ -62,7 +62,15 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
     console.log('[UnassignedPanel] Processing items:', items.length);
     console.log('[UnassignedPanel] TaskMap size:', taskMap.size);
     
-    const filtered = items.filter(item => {
+    // First filter out assignments with missing tasks (orphaned assignments)
+    const validItems = items.filter(item => {
+      const task = taskMap.get(item.task_id);
+      return task !== undefined; // Only show assignments with valid tasks
+    });
+    
+    console.log('[UnassignedPanel] Valid items after filtering orphaned:', validItems.length);
+    
+    const filtered = validItems.filter(item => {
       if (!searchQuery) return true;
       const task = taskMap.get(item.task_id);
       return task?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

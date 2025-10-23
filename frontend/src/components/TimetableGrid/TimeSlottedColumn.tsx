@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { Box } from '@mui/material';
-import type { Assignment, Task } from '../../types';
+import { Box, Chip, Tooltip } from '@mui/material';
+import type { Assignment, Task, Absence, Availability } from '../../types';
 import { generateTimeSlots, SLOT_HEIGHT_PX, START_HOUR, END_HOUR } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';
 import { TaskCard } from './TaskCard';
 import { TimetableSlot } from './TimetableSlot';
+import AvailabilityOverlay from './AvailabilityOverlay';
 
 type TimeSlottedColumnProps = {
   aideId: number;
@@ -13,6 +14,8 @@ type TimeSlottedColumnProps = {
   tasks: Task[];
   aideColor?: string;
   onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
+  availability?: Availability[];
+  absences?: Absence[];
 };
 
 export function TimeSlottedColumn({ 
@@ -21,7 +24,9 @@ export function TimeSlottedColumn({
   assignments, 
   tasks, 
   aideColor,
-  onTaskDoubleClick
+  onTaskDoubleClick,
+  availability = [],
+  absences = []
 }: TimeSlottedColumnProps) {
   const taskMap = useMemo(() => {
     const map = new Map<number, Task>();
@@ -58,6 +63,14 @@ export function TimeSlottedColumn({
         backgroundColor: 'background.default',
       }}
     >
+      {/* Availability / Absence overlay (non-blocking) */}
+      <AvailabilityOverlay
+        aideId={aideId}
+        availability={availability}
+        absences={absences}
+        date={date}
+      />
+
       {/* Time slot droppables with their task cards */}
       {timeSlots.map((timeSlot, index) => {
         const slotTasks = tasksBySlot.get(timeSlot) || [];

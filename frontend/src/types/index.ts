@@ -9,6 +9,8 @@ export interface TeacherAide {
   name: string;
   qualifications?: string | null;
   colour_hex: string;
+  // When fetched with include=availability, this is populated
+  availability?: Availability[];
   created_at?: string;
 }
 

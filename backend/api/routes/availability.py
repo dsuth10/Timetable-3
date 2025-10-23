@@ -68,3 +68,19 @@ def list_availability(aide_id: int):
 
     items = Availability.query.filter_by(aide_id=aide.id).order_by(Availability.weekday).all()
     return [a.to_dict() for a in items], 200
+
+
+@bp.delete('/api/availability/<int:availability_id>')
+def delete_availability(availability_id: int):
+    """Delete a specific availability record"""
+    availability = db.session.get(Availability, availability_id)
+    if not availability:
+        return {'error': 'Availability not found'}, 404
+
+    try:
+        db.session.delete(availability)
+        db.session.commit()
+        return '', 204
+    except Exception as e:
+        db.session.rollback()
+        return {'error': 'Failed to delete availability'}, 500

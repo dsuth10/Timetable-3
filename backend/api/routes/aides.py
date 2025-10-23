@@ -67,16 +67,17 @@ def update_aide(aide_id: int):
         return {'error': 'Aide not found'}, 404
 
     data = request.get_json(silent=True) or {}
-    if 'name' in data and data['name'] is not None:
-        aide.name = data['name']
-    if 'qualifications' in data:
-        aide.qualifications = data['qualifications']
-    if 'colour_hex' in data and data['colour_hex'] is not None:
-        if not re.match(r'^#[0-9A-Fa-f]{6}$', data['colour_hex']):
-            return {'error': 'colour_hex must match #RRGGBB'}, 400
-        aide.colour_hex = data['colour_hex']
-
+    
     try:
+        if 'name' in data and data['name'] is not None:
+            aide.name = data['name']
+        if 'qualifications' in data:
+            aide.qualifications = data['qualifications']
+        if 'colour_hex' in data and data['colour_hex'] is not None:
+            if not re.match(r'^#[0-9A-Fa-f]{6}$', data['colour_hex']):
+                return {'error': 'colour_hex must match #RRGGBB'}, 400
+            aide.colour_hex = data['colour_hex']
+
         db.session.add(aide)
         db.session.commit()
     except ValueError as e:

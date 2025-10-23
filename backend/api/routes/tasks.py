@@ -260,10 +260,7 @@ def delete_task(task_id: int):
         return {'error': 'Task not found'}, 404
     
     try:
-        # Delete all assignments for this task
-        Assignment.query.filter(Assignment.task_id == task_id).delete()
-        
-        # Delete the task itself
+        # Delete the task itself - SQLAlchemy cascade will handle assignments
         db.session.delete(task)
         db.session.commit()
         

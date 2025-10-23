@@ -11,6 +11,9 @@ export const aidesApi = {
   get(id: ID): Promise<TeacherAide> {
     return api.get(`/aides/${id}`).then((r) => r.data as TeacherAide);
   },
+  update(id: ID, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'qualifications'>>): Promise<TeacherAide> {
+    return api.put(`/aides/${id}`, payload).then((r) => r.data as TeacherAide);
+  },
   availability: {
     list(aideId: ID): Promise<Availability[]> {
       return api.get(`/aides/${aideId}/availability`).then((r) => r.data as Availability[]);

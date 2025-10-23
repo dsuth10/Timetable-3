@@ -8,7 +8,8 @@ import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import AppDragDropContext from '../components/DragDropContext';
 import UnassignedPanel from '../components/UnassignedPanel';
 import { useDragDrop } from '../hooks/useDragDrop';
-import type { Assignment, Task } from '../types';
+import type { Assignment, Task, Absence } from '../types';
+import { useAbsencesStore } from '../store/stores/absences';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import MultiDayDialog from '../components/MultiDayDialog';
@@ -50,6 +51,7 @@ export default function Schedule() {
   const [selectedAideId, setSelectedAideId] = useState<number | null>(null);
   const [selectedTaskId] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { byAide: absencesByAide, listForAide } = useAbsencesStore();
 
   // Initialize visible aides when aides are loaded
   useEffect(() => {
@@ -97,6 +99,17 @@ export default function Schedule() {
       .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
       .finally(() => setLoading(false));
   }, [selectedWeekStartISO]);
+
+  // Preload absences for all visible aides to enable fast switching
+  useEffect(() => {
+    if (!aides.length || visibleAideIds.size === 0) return;
+    const visible = aides.filter(a => visibleAideIds.has(a.id));
+    visible.forEach(aide => {
+      if (!absencesByAide[aide.id]) {
+        listForAide(aide.id).catch(() => undefined);
+      }
+    });
+  }, [aides, visibleAideIds, listForAide, absencesByAide]);
 
   const weekLabel = useMemo(() => selectedWeekStartISO, [selectedWeekStartISO]);
 
@@ -186,7 +199,8 @@ export default function Schedule() {
   };
 
   const { onDragEnd, ConflictUI } = useDragDrop({
-    onSuccess: refreshData
+    onSuccess: refreshData,
+    aides: aides
   });
 
   const handleTaskDoubleClick = (assignment: Assignment, task?: Task) => {
@@ -266,6 +280,7 @@ export default function Schedule() {
                 weekDates={weekDates}
                 tasks={tasks}
                 onTaskDoubleClick={handleTaskDoubleClick}
+                absences={absencesByAide[selectedAide.id] as Absence[] || []}
               />
             )}
             {ConflictUI}

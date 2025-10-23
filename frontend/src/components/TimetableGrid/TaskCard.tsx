@@ -62,9 +62,10 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    color: task ? 'text.primary' : 'error.main',
                   }}
                 >
-                  {task?.title || `Task #${assignment.task_id}`}
+                  {task?.title || `Missing Task #${assignment.task_id}`}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                   {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
@@ -92,6 +93,17 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                       color: 'white',
                     }}
                   />
+                  {task?.classroom && (
+                    <Chip
+                      label={task.classroom.name}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.65rem',
+                      }}
+                    />
+                  )}
                   {task?.recurrence_rule && (
                     <Repeat sx={{ fontSize: 16, color: 'text.secondary' }} />
                   )}

@@ -8,14 +8,17 @@ import {
   Typography,
   Paper,
   Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Add as AddIcon, Repeat, Person } from '@mui/icons-material';
+import { Add as AddIcon, Repeat, Person, CalendarMonth, Edit } from '@mui/icons-material';
 import { useTasksStore } from '../../store/stores/tasks';
 import { assignmentsApi } from '../../services/assignmentsApi';
 import { categoryColors } from '../../theme/theme';
 import LoadingState from '../common/LoadingState';
 import TaskCreationModal from '../TaskModals/TaskCreationModal';
 import TaskEditModal from '../TaskModals/TaskEditModal';
+import TaskScheduleModal from '../TaskModals/TaskScheduleModal';
 import { type Task, type Assignment, type TeacherAide } from '../../types';
 
 type Props = {
@@ -26,6 +29,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
   const { tasks, loading, error, fetchTasks } = useTasksStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
@@ -114,13 +118,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           return (
             <Paper key={task.id} sx={{ mb: 1 }}>
               <ListItem
-                button
-                onClick={() => {
-                  setSelectedTask(task);
-                  setShowEditModal(true);
-                }}
                 sx={{
-                  cursor: 'pointer',
                   '&:hover': {
                     bgcolor: 'action.hover',
                   },
@@ -198,6 +196,33 @@ export default function TasksManagement({ refreshTrigger }: Props) {
                     </Box>
                   }
                 />
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <Tooltip title="Schedule Task">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTask(task);
+                        setShowScheduleModal(true);
+                      }}
+                      sx={{ color: 'primary.main' }}
+                    >
+                      <CalendarMonth fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit Task">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTask(task);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </ListItem>
             </Paper>
           );
@@ -240,6 +265,24 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           setSelectedTask(null);
           fetchTasks(); // Refresh task list after deletion
           // Refresh assignments as related assignments may have been deleted
+          assignmentsApi.assigned()
+            .then(setAssignments)
+            .catch(() => undefined);
+        }}
+      />
+
+      {/* Task Schedule Modal */}
+      <TaskScheduleModal
+        open={showScheduleModal}
+        task={selectedTask}
+        onClose={() => {
+          setShowScheduleModal(false);
+          setSelectedTask(null);
+        }}
+        onScheduled={() => {
+          setShowScheduleModal(false);
+          setSelectedTask(null);
+          // Refresh assignments to show new ones
           assignmentsApi.assigned()
             .then(setAssignments)
             .catch(() => undefined);

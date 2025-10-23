@@ -9,15 +9,19 @@ import {
   Box,
   Alert,
   CircularProgress,
+  Divider,
 } from '@mui/material';
-import { PersonAdd, Save } from '@mui/icons-material';
+import { PersonAdd, Save, Edit } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
-import type { TeacherAide } from '../types';
+import AvailabilityEditor from './AvailabilityEditor';
+import type { TeacherAide, Availability } from '../types';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onCreated?: (aide: TeacherAide) => void;
+  onUpdated?: (aide: TeacherAide) => void;
+  aide?: TeacherAide | null;
 };
 
 // Generate a random color hex
@@ -31,21 +35,50 @@ const generateRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export default function AideFormModal({ open, onClose, onCreated }: Props) {
+export default function AideFormModal({ open, onClose, onCreated, onUpdated, aide }: Props) {
   const [name, setName] = useState('');
   const [qualifications, setQualifications] = useState('');
   const [colourHex, setColourHex] = useState(generateRandomColor());
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+  const [availability, setAvailability] = useState<Availability[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  const isEditMode = !!aide;
 
   useEffect(() => {
     if (open) {
-      setName('');
-      setQualifications('');
-      setColourHex(generateRandomColor());
+      if (aide) {
+        // Edit mode - populate with existing data
+        setName(aide.name);
+        setQualifications(aide.qualifications || '');
+        setColourHex(aide.colour_hex);
+        
+        // Load availability for existing aide
+        loadAvailability(aide.id);
+      } else {
+        // Create mode - reset to defaults
+        setName('');
+        setQualifications('');
+        setColourHex(generateRandomColor());
+        setAvailability([]);
+      }
       setError(undefined);
     }
-  }, [open]);
+  }, [open, aide]);
+
+  const loadAvailability = async (aideId: number) => {
+    setLoadingAvailability(true);
+    try {
+      const availabilityData = await aidesApi.availability.list(aideId);
+      setAvailability(availabilityData);
+    } catch (err: any) {
+      console.error('Failed to load availability:', err);
+      setAvailability([]);
+    } finally {
+      setLoadingAvailability(false);
+    }
+  };
 
   const handleClose = () => {
     if (!busy) {
@@ -57,18 +90,33 @@ export default function AideFormModal({ open, onClose, onCreated }: Props) {
     setBusy(true);
     setError(undefined);
     try {
-      const aide = await aidesApi.create({
-        name,
-        qualifications: qualifications || null,
-        colour_hex: colourHex,
-      });
-      onCreated?.(aide);
+      if (isEditMode && aide) {
+        // Update existing aide
+        const updatedAide = await aidesApi.update(aide.id, {
+          name,
+          qualifications: qualifications || undefined,
+          colour_hex: colourHex,
+        });
+        onUpdated?.(updatedAide);
+      } else {
+        // Create new aide
+        const newAide = await aidesApi.create({
+          name,
+          qualifications: qualifications || undefined,
+          colour_hex: colourHex,
+        });
+        onCreated?.(newAide);
+      }
       handleClose();
     } catch (e: any) {
-      setError(e.message || 'Failed to create aide');
+      setError(e.message || `Failed to ${isEditMode ? 'update' : 'create'} aide`);
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleAvailabilityChange = (newAvailability: Availability[]) => {
+    setAvailability(newAvailability);
   };
 
   return (
@@ -80,8 +128,8 @@ export default function AideFormModal({ open, onClose, onCreated }: Props) {
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonAdd color="primary" />
-          Add New Aide
+          {isEditMode ? <Edit color="primary" /> : <PersonAdd color="primary" />}
+          {isEditMode ? 'Edit Aide' : 'Add New Aide'}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -121,6 +169,15 @@ export default function AideFormModal({ open, onClose, onCreated }: Props) {
             />
           </Box>
         </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <AvailabilityEditor
+          aideId={aide?.id || 0}
+          initialAvailability={availability}
+          onAvailabilityChange={handleAvailabilityChange}
+          disabled={busy || loadingAvailability}
+        />
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={handleClose} disabled={busy}>
@@ -132,7 +189,7 @@ export default function AideFormModal({ open, onClose, onCreated }: Props) {
           variant="contained"
           startIcon={busy ? <CircularProgress size={16} /> : <Save />}
         >
-          Add Aide
+          {isEditMode ? 'Save Changes' : 'Add Aide'}
         </Button>
       </DialogActions>
     </Dialog>

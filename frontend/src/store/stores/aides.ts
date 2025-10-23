@@ -8,6 +8,7 @@ type AidesState = {
   error?: string;
   fetchAides: (opts?: { includeAvailability?: boolean }) => Promise<void>;
   createAide: (payload: Pick<TeacherAide, 'name' | 'colour_hex'> & { qualifications?: string }) => Promise<TeacherAide>;
+  updateAide: (id: number, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'qualifications'>>) => Promise<TeacherAide>;
   getAvailability: (aideId: number) => Promise<Availability[]>;
 };
 
@@ -31,6 +32,14 @@ export const useAidesStore = create<AidesState>((set, get) => ({
     const aide = res.data as TeacherAide;
     set({ aides: [...get().aides, aide] });
     return aide;
+  },
+  async updateAide(id, payload) {
+    const res = await api.put(`/aides/${id}`, payload);
+    const updatedAide = res.data as TeacherAide;
+    set({ 
+      aides: get().aides.map(aide => aide.id === id ? updatedAide : aide)
+    });
+    return updatedAide;
   },
   async getAvailability(aideId: number) {
     const res = await api.get(`/aides/${aideId}/availability`);

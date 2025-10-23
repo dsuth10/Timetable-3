@@ -3,10 +3,13 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import ConflictModal from '../components/ConflictModal';
 import { useUndoStore } from '../store/stores/undoStore';
+import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
+import type { TeacherAide } from '../types';
 import { calculateDuration, addMinutesToTime, timeToMinutes, END_HOUR } from '../components/TimetableGrid/timeUtils';
 
 type UseDragDropOptions = {
   onSuccess?: () => void;
+  aides?: TeacherAide[];
 };
 
 export function useDragDrop(options?: UseDragDropOptions) {
@@ -18,6 +21,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
     updatePayload: any;
   } | null>(null);
   const { execute } = useUndoStore();
+  const aides = options?.aides || [];
 
   // Debounce map for drag-triggered updates (per-assignment key)
   const pendingTimersRef = useRef<Record<string, any>>({});
@@ -119,6 +123,58 @@ export function useDragDrop(options?: UseDragDropOptions) {
     
     // Skip if dropped in same location
     if (sourceDroppableId === destDroppableId) return;
+
+    // Validate availability if assigning to an aide
+    if (destAideId !== null && destDate) {
+      console.log('Validating availability for aide:', destAideId, 'date:', destDate, 'time:', destTime);
+      const aide = aides.find(a => a.id === destAideId);
+      if (!aide) {
+        console.error('Aide not found:', destAideId);
+        return;
+      }
+      
+      const availability = aide.availability || [];
+      console.log('Aide availability:', availability);
+      
+      // For validation, we need to check if the aide has any availability for this day
+      // If no availability is set, prevent assignment
+      if (availability.length === 0) {
+        const weekday = new Date(destDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+        const errorMessage = `Cannot assign: No availability set for ${aide.name} on ${weekday}`;
+        console.warn(errorMessage);
+        // TODO: Show toast notification to user
+        return;
+      }
+      
+      // If we have a specific time, validate it
+      if (destTime) {
+        const isAvailable = isAideAvailable(
+          availability,
+          destDate,
+          destTime + ':00', // Convert HH:MM to HH:MM:SS
+          destTime + ':00'  // Will be updated with actual end time below
+        );
+        
+        if (!isAvailable) {
+          const availabilityInfo = getAvailabilityInfo(availability, destDate);
+          const aideName = aide.name;
+          const weekday = availabilityInfo.weekday;
+          
+          let errorMessage: string;
+          if (!availabilityInfo.hasAvailability) {
+            errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
+          } else if (availabilityInfo.timeWindow) {
+            errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
+          } else {
+            errorMessage = `Cannot assign: ${aideName} is not available at this time`;
+          }
+          
+          console.warn(errorMessage);
+          // TODO: Show toast notification to user
+          return;
+        }
+      }
+    }
 
     // Fetch the current assignment to get its version
     let currentAssignment;
