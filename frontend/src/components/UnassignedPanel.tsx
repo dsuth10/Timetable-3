@@ -11,7 +11,7 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import { Search, ExpandMore, AssignmentLate } from '@mui/icons-material';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { Droppable } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { useTasksStore } from '../store/stores/tasks';
 import type { Assignment, Task } from '../types';
@@ -39,7 +39,7 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
     setError(undefined);
     assignmentsApi
       .unassigned() // Remove date parameter to show all unassigned tasks
-      .then((res) => {
+      .then((res: any) => {
         console.log('[UnassignedPanel] Received assignments from API:', res);
         console.log('[UnassignedPanel] Number of items:', res.length);
         setItems(res);

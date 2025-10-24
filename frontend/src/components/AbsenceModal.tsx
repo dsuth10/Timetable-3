@@ -61,7 +61,7 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
     }
   };
 
-  const selectedAide = aides.find(a => a.id === Number(aideId));
+  // const selectedAide = aides.find(a => a.id === Number(aideId));
 
   return (
     <Dialog 

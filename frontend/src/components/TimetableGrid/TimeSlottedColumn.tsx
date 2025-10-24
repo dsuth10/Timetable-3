@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Box, Chip, Tooltip } from '@mui/material';
+import { Box } from '@mui/material';
 import type { Assignment, Task, Absence, Availability } from '../../types';
 import { generateTimeSlots, SLOT_HEIGHT_PX, START_HOUR, END_HOUR } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';

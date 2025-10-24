@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Box, Paper, Typography, Chip, Tooltip, IconButton, Collapse, Alert, Stack } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import type { TeacherAide, Assignment, Task, Absence } from '../../types';

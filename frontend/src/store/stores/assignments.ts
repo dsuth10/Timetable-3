@@ -18,7 +18,7 @@ export const useAssignmentsStore = create<AssignmentsState>((set, get) => ({
   async fetchWeek(startDateISO) {
     try {
       set({ loading: true, error: undefined });
-      const res = await api.get(`/assignments/weekly-matrix?start_date=${startDateISO}`);
+      await api.get(`/assignments/weekly-matrix?start_date=${startDateISO}`);
       // Store not only matrix; keep flat assignments list for simplicity here
       // Matrix will be consumed directly by TimetableGrid via API if needed
       set({});

@@ -1,7 +1,7 @@
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
 import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
-import { DragIndicator, Repeat, Warning } from '@mui/icons-material';
+import { DragIndicator, Repeat } from '@mui/icons-material';
 import type { Assignment, Task } from '../../types';
 import { categoryColors, statusColors } from '../../theme/theme';
 
