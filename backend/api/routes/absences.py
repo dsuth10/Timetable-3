@@ -50,6 +50,7 @@ def create_absence():
     db.session.add(absence)
     # Flush triggers after_insert hook that unassigns
     db.session.flush()
+    db.session.commit()
 
     released = [a.to_dict() for a in to_release]
 

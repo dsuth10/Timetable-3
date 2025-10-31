@@ -357,8 +357,13 @@ export default function Schedule() {
         onClose={() => {
           setShowAbsenceModal(false);
           setSelectedAbsenceAideId(null);
-          refreshData();
-        }} 
+        }}
+        onCreated={async (aideId) => {
+          // Refresh absences for the aide that was just created
+          await listForAide(aideId);
+          // Also refresh assignments since absences can release assignments
+          await refreshData();
+        }}
       />
       <AideFormModal
         open={showAideFormModal}

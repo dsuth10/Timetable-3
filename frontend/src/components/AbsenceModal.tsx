@@ -17,6 +17,9 @@ import {
   ListItemText,
 } from '@mui/material';
 import { EventBusy, Save } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { absencesApi } from '../services/absencesApi';
 import type { TeacherAide } from '../types';
 
@@ -24,12 +27,12 @@ type Props = {
   open: boolean;
   aides: TeacherAide[];
   onClose: () => void;
-  onCreated?: () => void;
+  onCreated?: (aideId: number) => void;
 };
 
 export default function AbsenceModal({ open, aides, onClose, onCreated }: Props) {
   const [aideId, setAideId] = useState<string>('');
-  const [dateISO, setDateISO] = useState<string>('');
+  const [dateValue, setDateValue] = useState<Date | null>(null);
   const [reason, setReason] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -37,22 +40,30 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
   useEffect(() => {
     if (open) {
       setAideId('');
-      setDateISO('');
+      setDateValue(null);
       setReason('');
       setError(undefined);
     }
   }, [open]);
 
   const handleSubmit = async () => {
+    if (!dateValue) return;
+    
     setSubmitting(true);
     setError(undefined);
     try {
+      // Format date using local time components to avoid timezone issues
+      // Use local date methods instead of toISOString() which converts to UTC
+      const year = dateValue.getFullYear();
+      const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+      const day = String(dateValue.getDate()).padStart(2, '0');
+      const dateISO = `${year}-${month}-${day}`;
       await absencesApi.create({ 
         aide_id: Number(aideId), 
         date: dateISO, 
         reason: reason || null 
       });
-      onCreated?.();
+      onCreated?.(Number(aideId));
       onClose();
     } catch (e: any) {
       setError(e.message || 'Failed to record absence');
@@ -109,16 +120,21 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
             </Select>
           </FormControl>
 
-          <TextField
-            label="Date"
-            type="date"
-            value={dateISO}
-            onChange={(e) => setDateISO(e.target.value)}
-            fullWidth
-            required
-            InputLabelProps={{ shrink: true }}
-            data-testid="absence-date"
-          />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Date"
+              value={dateValue}
+              onChange={(newValue) => setDateValue(newValue)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  required: true,
+                  InputLabelProps: { shrink: true },
+                  'data-testid': 'absence-date',
+                },
+              }}
+            />
+          </LocalizationProvider>
 
           <TextField
             label="Reason (Optional)"
@@ -144,7 +160,7 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={!aideId || !dateISO || submitting}
+          disabled={!aideId || !dateValue || submitting}
           variant="contained"
           startIcon={submitting ? <CircularProgress size={16} /> : <Save />}
           data-testid="absence-submit"

@@ -21,8 +21,10 @@ export default function AvailabilityOverlay({
     absence => absence.aide_id === aideId && absence.date === date
   );
 
-  // Get day of week from date
-  const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+  // Get day of week from date (using UTC to avoid timezone issues)
+  const [year, month, day] = date.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dateObj.getUTCDay();
   const weekdayMap: Record<number, string> = {
     0: 'SU',
     1: 'MO',
