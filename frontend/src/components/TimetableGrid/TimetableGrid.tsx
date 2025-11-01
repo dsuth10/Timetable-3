@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Box, Paper, Typography, Chip, Tooltip, IconButton, Collapse, Alert, Stack } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import type { TeacherAide, Assignment, Task, Absence } from '../../types';
 import TimeAxis from './TimeAxis';
 import { TimeSlottedColumn } from './TimeSlottedColumn';
@@ -12,9 +14,11 @@ type TimetableGridProps = {
   tasks: Task[];
   onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
   absences?: Absence[];
+  onAddAbsence?: (aideId: number, date: string) => void;
+  onRemoveAbsence?: (absenceId: number) => void;
 };
 
-export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [] }: TimetableGridProps) {
+export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence }: TimetableGridProps) {
   // Day names for headers
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   
@@ -68,6 +72,8 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
           const dayName = dayNames[dayIndex];
           const formattedDate = formatDate(date);
           const assignments = assignmentsByDay[date] || [];
+          const absenceForDate = absences.find(a => a.aide_id === selectedAide.id && a.date === date);
+          const hasAbsence = !!absenceForDate;
           
           return (
             <Box key={date} sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -78,8 +84,9 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                   p: 1.5,
                   mb: 1,
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   bgcolor: selectedAide.colour_hex,
                   color: 'white',
                   position: 'sticky',
@@ -87,17 +94,58 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                   zIndex: 10,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                  {dayName}
-                </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                  {formattedDate}
-                </Typography>
-                {/* Absence banner */}
-                {absences.some(a => a.aide_id === selectedAide.id && a.date === date) && (
-                  <Tooltip title={absences.find(a => a.aide_id === selectedAide.id && a.date === date)?.reason || ''}>
-                    <Chip size="small" color="error" label={`Absent${absences.find(a => a.aide_id === selectedAide.id && a.date === date)?.reason ? ` (${absences.find(a => a.aide_id === selectedAide.id && a.date === date)?.reason})` : ''}`} sx={{ mt: 0.5, bgcolor: 'error.light', color: 'white' }} />
-                  </Tooltip>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                    {dayName}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                    {formattedDate}
+                  </Typography>
+                  {/* Absence banner */}
+                  {hasAbsence && absenceForDate && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                      <Chip size="small" color="error" label="Absent" sx={{ bgcolor: 'error.light', color: 'white' }} />
+                      {absenceForDate.reason && (
+                        <Tooltip title={absenceForDate.reason}>
+                          <InfoOutlinedIcon sx={{ fontSize: '0.875rem', color: 'white', cursor: 'help', opacity: 0.9 }} />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+                {/* Absence action buttons */}
+                {onAddAbsence && onRemoveAbsence && (
+                  <Box sx={{ ml: 1 }}>
+                    {hasAbsence && absenceForDate ? (
+                      <Tooltip title="Remove absence">
+                        <IconButton
+                          size="small"
+                          onClick={() => onRemoveAbsence(absenceForDate.id)}
+                          sx={{
+                            color: 'white',
+                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+                          }}
+                          aria-label="Remove absence"
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Add absence">
+                        <IconButton
+                          size="small"
+                          onClick={() => onAddAbsence(selectedAide.id, date)}
+                          sx={{
+                            color: 'white',
+                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+                          }}
+                          aria-label="Add absence"
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
                 )}
               </Paper>
 

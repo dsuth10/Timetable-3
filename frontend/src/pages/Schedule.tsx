@@ -38,7 +38,7 @@ export default function Schedule() {
   const [showMultiDay, setShowMultiDay] = useState(false);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
   const [showAideFormModal, setShowAideFormModal] = useState(false);
-  const [, setSelectedAbsenceAideId] = useState<number | null>(null);
+  const [selectedAbsenceAideId, setSelectedAbsenceAideId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visibleAideIds, setVisibleAideIds] = useState<Set<number>>(new Set());
   const [multiDayState, setMultiDayState] = useState([
@@ -51,7 +51,8 @@ export default function Schedule() {
   const [selectedAideId, setSelectedAideId] = useState<number | null>(null);
   const [selectedTaskId] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { byAide: absencesByAide, listForAide } = useAbsencesStore();
+  const { byAide: absencesByAide, listForAide, delete: deleteAbsence } = useAbsencesStore();
+  const [selectedAbsenceDate, setSelectedAbsenceDate] = useState<string | null>(null);
 
   // Initialize visible aides when aides are loaded
   useEffect(() => {
@@ -166,8 +167,24 @@ export default function Schedule() {
 
   const handleMarkAbsence = (aideId: number) => {
     setSelectedAbsenceAideId(aideId);
+    setSelectedAbsenceDate(null);
     setShowAbsenceModal(true);
     setDrawerOpen(false);
+  };
+
+  const handleAddAbsence = (aideId: number, date: string) => {
+    setSelectedAbsenceAideId(aideId);
+    setSelectedAbsenceDate(date);
+    setShowAbsenceModal(true);
+  };
+
+  const handleRemoveAbsence = async (absenceId: number) => {
+    try {
+      await deleteAbsence(absenceId);
+      await refreshData();
+    } catch (e: any) {
+      setError(e.message || 'Failed to remove absence');
+    }
   };
 
   const refreshData = async () => {
@@ -281,6 +298,8 @@ export default function Schedule() {
                 tasks={tasks}
                 onTaskDoubleClick={handleTaskDoubleClick}
                 absences={absencesByAide[selectedAide.id] as Absence[] || []}
+                onAddAbsence={handleAddAbsence}
+                onRemoveAbsence={handleRemoveAbsence}
               />
             )}
             {ConflictUI}
@@ -357,7 +376,10 @@ export default function Schedule() {
         onClose={() => {
           setShowAbsenceModal(false);
           setSelectedAbsenceAideId(null);
+          setSelectedAbsenceDate(null);
         }}
+        initialAideId={selectedAbsenceAideId || undefined}
+        initialDate={selectedAbsenceDate || undefined}
         onCreated={async (aideId) => {
           // Refresh absences for the aide that was just created
           await listForAide(aideId);

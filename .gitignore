@@ -87,5 +87,15 @@ coverage/
 *.temp
 .cache/
 
+# Windows reserved names (cannot be indexed by git)
+nul
+NUL
+con
+CON
+prn
+PRN
+aux
+AUX
+
 
 

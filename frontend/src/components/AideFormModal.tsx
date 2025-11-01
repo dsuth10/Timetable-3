@@ -132,7 +132,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
           {isEditMode ? 'Edit Aide' : 'Add New Aide'}
         </Box>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflow: 'visible' }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}

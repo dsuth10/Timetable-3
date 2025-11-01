@@ -28,9 +28,11 @@ type Props = {
   aides: TeacherAide[];
   onClose: () => void;
   onCreated?: (aideId: number) => void;
+  initialAideId?: number;
+  initialDate?: string;
 };
 
-export default function AbsenceModal({ open, aides, onClose, onCreated }: Props) {
+export default function AbsenceModal({ open, aides, onClose, onCreated, initialAideId, initialDate }: Props) {
   const [aideId, setAideId] = useState<string>('');
   const [dateValue, setDateValue] = useState<Date | null>(null);
   const [reason, setReason] = useState<string>('');
@@ -39,12 +41,13 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
 
   useEffect(() => {
     if (open) {
-      setAideId('');
-      setDateValue(null);
+      // Use initial values if provided, otherwise reset
+      setAideId(initialAideId ? String(initialAideId) : '');
+      setDateValue(initialDate ? new Date(initialDate + 'T00:00:00') : null);
       setReason('');
       setError(undefined);
     }
-  }, [open]);
+  }, [open, initialAideId, initialDate]);
 
   const handleSubmit = async () => {
     if (!dateValue) return;
@@ -130,9 +133,9 @@ export default function AbsenceModal({ open, aides, onClose, onCreated }: Props)
                   fullWidth: true,
                   required: true,
                   InputLabelProps: { shrink: true },
-                  'data-testid': 'absence-date',
                 },
               }}
+              data-testid="absence-date"
             />
           </LocalizationProvider>
 

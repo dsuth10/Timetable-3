@@ -228,7 +228,7 @@ export default function AvailabilityEditor({
         </Alert>
       )}
 
-      <Grid container spacing={2}>
+      <Grid container spacing={1.5}>
         {WEEKDAYS.map((day, index) => {
           const dayData = dayAvailability[index];
           if (!dayData) {
@@ -240,10 +240,13 @@ export default function AvailabilityEditor({
             <Grid item xs={12} sm={6} md={4} key={day.key}>
               <Paper
                 sx={{
-                  p: 2,
+                  p: 1.5,
                   border: 1,
                   borderColor: dayData.enabled ? 'success.main' : 'divider',
                   backgroundColor: dayData.enabled ? 'success.50' : 'background.paper',
+                  overflow: 'hidden',
+                  width: '100%',
+                  boxSizing: 'border-box',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -270,51 +273,70 @@ export default function AvailabilityEditor({
                 />
 
                 {dayData.enabled && (
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
-                      <AccessTime fontSize="small" color="action" />
-                      <TextField
-                        select
-                        size="small"
-                        value={dayData.startTime}
-                        onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
-                        disabled={disabled || loading}
-                        SelectProps={{
-                          native: true,
-                        }}
-                        sx={{ minWidth: 80 }}
-                      >
-                        {timeSlots.map(time => (
-                          <option key={time} value={time}>
-                            {time}
-                          </option>
-                        ))}
-                      </TextField>
-                    </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 1.5, 
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
+                        <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
+                        <TextField
+                          select
+                          size="small"
+                          label="Start"
+                          value={dayData.startTime}
+                          onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
+                          disabled={disabled || loading}
+                          SelectProps={{
+                            native: true,
+                          }}
+                          sx={{ width: '100%', minWidth: 100 }}
+                        >
+                          {timeSlots.map(time => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </TextField>
+                      </Box>
 
-                    <Typography variant="body2" color="text.secondary">
-                      to
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
-                      <AccessTime fontSize="small" color="action" />
-                      <TextField
-                        select
-                        size="small"
-                        value={dayData.endTime}
-                        onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
-                        disabled={disabled || loading}
-                        SelectProps={{
-                          native: true,
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          alignSelf: 'center',
+                          display: { xs: 'none', sm: 'block' }
                         }}
-                        sx={{ minWidth: 80 }}
                       >
-                        {timeSlots.map(time => (
-                          <option key={time} value={time}>
-                            {time}
-                          </option>
-                        ))}
-                      </TextField>
+                        to
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
+                        <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
+                        <TextField
+                          select
+                          size="small"
+                          label="End"
+                          value={dayData.endTime}
+                          onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
+                          disabled={disabled || loading}
+                          SelectProps={{
+                            native: true,
+                          }}
+                          sx={{ width: '100%', minWidth: 100 }}
+                        >
+                          {timeSlots.map(time => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </TextField>
+                      </Box>
                     </Box>
                   </Box>
                 )}
