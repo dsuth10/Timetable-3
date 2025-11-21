@@ -122,10 +122,33 @@ class CollisionService:
             return False, f"Aide not available on {weekday}"
 
         # Enforce time window coverage
-        for slot in weekday_slots:
-            if slot.start_time <= start_time and slot.end_time >= end_time:
-                return True, None
+        # Sort slots by start time to handle contiguous/overlapping intervals
+        weekday_slots.sort(key=lambda x: x.start_time)
 
+        current_needed_start = start_time
+        
+        for slot in weekday_slots:
+            # If we've covered everything, break
+            if current_needed_start >= end_time:
+                return True, None
+            
+            # If this slot ends before we need it, skip
+            if slot.end_time <= current_needed_start:
+                continue
+                
+            # If this slot starts after we need it, there's a gap
+            if slot.start_time > current_needed_start:
+                return False, f"Aide not available on {weekday} between {current_needed_start} and {slot.start_time}"
+            
+            # This slot covers some or all of the remaining time
+            # Advance our needed start to the end of this slot
+            # Use min/max to handle time comparisons correctly
+            current_needed_start = max(current_needed_start, slot.end_time)
+            
+        # Check final coverage
+        if current_needed_start >= end_time:
+            return True, None
+            
         return False, f"Aide not available on {weekday} from {start_time} to {end_time}"
     
     @staticmethod

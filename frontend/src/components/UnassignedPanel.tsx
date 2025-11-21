@@ -10,92 +10,44 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import { Search, ExpandMore, AssignmentLate } from '@mui/icons-material';
+import { Search, ExpandMore, AssignmentLate, Inventory } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
-import { assignmentsApi } from '../services/assignmentsApi';
 import { useTasksStore } from '../store/stores/tasks';
-import type { Assignment, Task } from '../types';
-import { TaskCard } from './TimetableGrid/TaskCard';
+import type { Task, Assignment } from '../types';
+import { TaskTemplateCard } from './TaskTemplateCard';
 import LoadingState from './common/LoadingState';
 import EmptyState from './common/EmptyState';
 
 type Props = {
   dateISO?: string;
-  refreshTrigger?: number; // Add refresh trigger prop
-  onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
+  refreshTrigger?: number;
+  onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void; // We might want to change this signature later
 };
 
 const DRAWER_WIDTH = 320;
 
 export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleClick }: Props) {
-  const [items, setItems] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
-  const { tasks } = useTasksStore();
+  const { tasks, loading, error } = useTasksStore();
 
-  useEffect(() => {
-    setLoading(true);
-    setError(undefined);
-    assignmentsApi
-      .unassigned() // Remove date parameter to show all unassigned tasks
-      .then((res: any) => {
-        console.log('[UnassignedPanel] Received assignments from API:', res);
-        console.log('[UnassignedPanel] Number of items:', res.length);
-        setItems(res);
-      })
-      .catch((e: any) => {
-        console.error('[UnassignedPanel] Error loading unassigned:', e);
-        setError(e.message || 'Failed to load unassigned');
-      })
-      .finally(() => setLoading(false));
-  }, [dateISO, refreshTrigger]); // Add refreshTrigger as dependency
-
-  const taskMap = useMemo(() => {
-    const map = new Map<number, Task>();
-    tasks.forEach(task => map.set(task.id, task));
-    return map;
-  }, [tasks]);
-
-  // Filter and group by date
-  const groupedItems = useMemo(() => {
-    console.log('[UnassignedPanel] Processing items:', items.length);
-    console.log('[UnassignedPanel] TaskMap size:', taskMap.size);
-    
-    // First filter out assignments with missing tasks (orphaned assignments)
-    const validItems = items.filter(item => {
-      const task = taskMap.get(item.task_id);
-      return task !== undefined; // Only show assignments with valid tasks
-    });
-    
-    console.log('[UnassignedPanel] Valid items after filtering orphaned:', validItems.length);
-    
-    const filtered = validItems.filter(item => {
+  // Group tasks by category
+  const groupedTasks = useMemo(() => {
+    const filtered = tasks.filter(task => {
       if (!searchQuery) return true;
-      const task = taskMap.get(item.task_id);
-      return task?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             task?.category.toLowerCase().includes(searchQuery.toLowerCase());
+      return task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             task.category.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-    console.log('[UnassignedPanel] Filtered items:', filtered.length);
-
-    const groups = new Map<string, Assignment[]>();
-    filtered.forEach(item => {
-      const date = item.date;
-      if (!groups.has(date)) {
-        groups.set(date, []);
+    const groups = new Map<string, Task[]>();
+    filtered.forEach(task => {
+      if (!groups.has(task.category)) {
+        groups.set(task.category, []);
       }
-      groups.get(date)!.push(item);
+      groups.get(task.category)!.push(task);
     });
 
-    const result = Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    console.log('[UnassignedPanel] Grouped by date:', result.length, 'groups');
-    result.forEach(([date, assignments]) => {
-      console.log(`  - ${date}: ${assignments.length} assignments`);
-    });
-    
-    return result;
-  }, [items, searchQuery, taskMap]);
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [tasks, searchQuery]);
 
   return (
     <Drawer
@@ -116,8 +68,8 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
         {/* Header */}
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AssignmentLate color="primary" />
-            Unassigned Tasks
+            <Inventory color="primary" />
+            Task Bank
           </Typography>
           <TextField
             fullWidth
@@ -144,64 +96,69 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
               {error}
             </Typography>
           )}
-          {!loading && !error && items.length === 0 && (
+          {!loading && !error && tasks.length === 0 && (
             <EmptyState
               icon={<AssignmentLate />}
-              title="All Clear!"
-              description="No unassigned tasks at the moment."
+              title="No Tasks"
+              description="Create tasks to see them here."
             />
           )}
-          {!loading && !error && groupedItems.length === 0 && searchQuery && (
+          {!loading && !error && groupedTasks.length === 0 && searchQuery && (
             <EmptyState
               title="No Results"
               description={`No tasks found matching "${searchQuery}"`}
             />
           )}
-          {!loading && !error && groupedItems.map(([date, assignments]) => (
-            <Accordion key={date} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="body2" fontWeight={600}>
-                  {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </Typography>
-                <Typography 
-                  variant="caption" 
-                  sx={{ ml: 1, color: 'text.secondary' }}
-                >
-                  ({assignments.length})
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 0 }}>
-                <Droppable droppableId="unassigned">
-                  {(provided) => (
-                    <Box
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{ p: 1 }}
-                    >
-                      {assignments.map((assignment, idx) => {
-                        const task = taskMap.get(assignment.task_id);
-                        return (
-                          <Box key={assignment.id} data-testid={`unassigned-item-${assignment.id}`}>
-                            <TaskCard
-                              assignment={assignment}
-                              index={idx}
-                              task={task}
-                              onDoubleClick={onTaskDoubleClick}
-                            />
-                          </Box>
-                        );
-                      })}
-                      {provided.placeholder}
-                    </Box>
-                  )}
-                </Droppable>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+          
+          {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
+          <Droppable droppableId="unassigned">
+            {(provided, snapshot) => (
+              <Box
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                sx={{ 
+                  minHeight: '100%',
+                  bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
+                  transition: 'background-color 0.2s',
+                  borderRadius: 1,
+                }}
+              >
+                {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
+                  <Accordion key={category} defaultExpanded>
+                    <AccordionSummary expandIcon={<ExpandMore />}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {category.replace(/_/g, ' ')}
+                      </Typography>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ ml: 1, color: 'text.secondary' }}
+                      >
+                        ({categoryTasks.length})
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ p: 1 }}>
+                      {categoryTasks.map((task, idx) => (
+                        <Box key={task.id}>
+                          <TaskTemplateCard
+                            task={task}
+                            index={idx}
+                            onDoubleClick={(t) => {
+                              // For double click on template, maybe create a new assignment on today?
+                              // Or just edit the task?
+                              // Existing prop is onTaskDoubleClick(assignment, task)
+                              // We don't have an assignment here.
+                              // Let's ignore for now or allow editing task
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
         </Box>
       </Box>
     </Drawer>

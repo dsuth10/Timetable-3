@@ -38,35 +38,28 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, index }: Timetabl
               backgroundColor: snapshot.isDraggingOver 
                 ? 'rgba(25, 118, 210, 0.12)'
                 : 'rgba(0, 0, 0, 0.02)',
-              '& .time-label': {
-                opacity: 1,
-              },
             },
           }}
         >
-          {/* Time label shown on hover */}
-          {index % 4 === 0 && ( // Show label every hour
-            <Typography
-              className="time-label"
-              variant="caption"
-              sx={{
-                position: 'absolute',
-                left: 4,
-                top: 2,
-                fontSize: '0.65rem',
-                color: 'text.secondary',
-                opacity: snapshot.isDraggingOver ? 1 : 0,
-                transition: 'opacity 0.2s ease',
-                pointerEvents: 'none',
-                bgcolor: 'background.paper',
-                px: 0.5,
-                borderRadius: 0.5,
-                zIndex: 10,
-              }}
-            >
-              {timeSlot}
-            </Typography>
-          )}
+          {/* Time label always shown */}
+          <Typography
+            className="time-label"
+            variant="caption"
+            sx={{
+              position: 'absolute',
+              left: 4,
+              top: 2,
+              fontSize: '0.65rem',
+              color: 'text.secondary',
+              opacity: 0.6, // Subtle greyed out look
+              pointerEvents: 'none',
+              // Remove background to be less intrusive when shown on every slot
+              px: 0.5,
+              zIndex: 10,
+            }}
+          >
+            {timeSlot}
+          </Typography>
           
           {/* Border highlight during drag over */}
           {snapshot.isDraggingOver && (

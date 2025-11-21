@@ -101,6 +101,28 @@ export default function TaskCreationModal({ open, onClose, onCreated }: Props) {
   async function submit() {
     setBusy(true);
     setError(undefined);
+
+    // Validate 15-minute increments
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+    
+    if (startM % 15 !== 0) {
+      setError('Start time must be in 15-minute increments (00, 15, 30, 45)');
+      setBusy(false);
+      return;
+    }
+    
+    if (endM % 15 !== 0) {
+      setError('End time must be in 15-minute increments (00, 15, 30, 45)');
+      setBusy(false);
+      return;
+    }
+
+    if (start >= end) {
+      setError('End time must be after start time');
+      setBusy(false);
+      return;
+    }
     
     try {
       let task: Task;

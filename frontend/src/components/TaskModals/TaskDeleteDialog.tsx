@@ -51,7 +51,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
     setError(undefined);
 
     try {
-      if (isRecurring && deleteOption === 'instance') {
+      if (deleteOption === 'instance') {
         // Validate assignment exists for single-instance deletion
         if (!assignment) {
           setError('Cannot delete single instance without an assignment');
@@ -119,10 +119,12 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
             {task.title}
           </Typography>
           
-          {isRecurring ? (
+          {isRecurring || assignment ? (
             <>
               <Alert severity="warning" sx={{ mb: 1 }}>
-                This is a recurring task. Choose how you want to delete it:
+                {isRecurring 
+                  ? "This is a recurring task. Choose how you want to delete it:" 
+                  : "Choose how you want to delete this task:"}
               </Alert>
               
               <RadioGroup
@@ -159,10 +161,12 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        Delete all instances
+                        {isRecurring ? "Delete all instances" : "Delete task"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Delete the entire recurring task and all its assignments (past and future).
+                        {isRecurring 
+                          ? "Delete the entire recurring task and all its assignments (past and future)."
+                          : "Delete the task template and all its assignments from the system."}
                       </Typography>
                     </Box>
                   }

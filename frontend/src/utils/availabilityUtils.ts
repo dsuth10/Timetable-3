@@ -40,9 +40,9 @@ export function isAideAvailable(
   startTime: string,
   endTime: string
 ): boolean {
-  // If no availability configured, treat as unavailable
+  // If no availability configured, treat as available (consistent with backend)
   if (!availability || availability.length === 0) {
-    return false;
+    return true;
   }
 
   // Get weekday from date
@@ -85,7 +85,7 @@ export function getAvailabilityInfo(
   
   if (!availability || availability.length === 0) {
     return {
-      isAvailable: false,
+      isAvailable: true,
       hasAvailability: false,
       weekday
     };

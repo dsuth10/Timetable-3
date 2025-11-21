@@ -35,6 +35,9 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
             opacity: dragSnapshot.isDragging ? 0.8 : 1,
             transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',
             transition: 'all 0.2s ease',
+            height: isPositioned ? '100%' : 'auto',
+            display: 'flex',
+            flexDirection: 'column',
             '&:hover': {
               boxShadow: 3,
               transform: 'translateY(-2px)',
@@ -45,7 +48,20 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
             ...dragProvided.draggableProps.style,
           }}
         >
-          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+          <CardContent
+            sx={{
+              p: 1.5,
+              '&:last-child': { pb: 1.5 },
+              ...(isPositioned
+                ? {
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }
+                : {}),
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
               <IconButton
                 size="small"

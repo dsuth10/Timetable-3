@@ -21,6 +21,8 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Aide Availability Management** - Set weekly availability patterns with visual grid editor and time slot management  
 ✅ **Recurring Tasks** - Create weekly, daily, or custom recurring patterns using iCal RRULE  
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
+✅ **Task Editing** - Edit task details and recurring patterns with smart updates  
+✅ **Granular Deletion** - Delete individual assignments or entire task series  
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
@@ -327,6 +329,22 @@ Option 2: Cancel
 Option 3: Auto-Shorten (Partial Overlap)
   → First task end time adjusted
   → New task assigned to remaining slot
+```
+
+### 5. Task Management
+
+```
+Editing Tasks:
+1. Double-click any task on the calendar OR click a task in the sidebar
+2. Update title, category, times, or recurrence settings
+3. For recurring tasks, changes update the template (future generation)
+
+Deleting Tasks:
+1. Click "Delete" in the task edit dialog
+2. Choose deletion scope:
+   → "Delete only this instance": Removes just this specific assignment
+   → "Delete task": Removes the task and all assignments from system
+   → "Delete all instances": (For recurring) Removes entire series
 ```
 
 ---
@@ -855,6 +873,20 @@ Contributions are welcome! Please follow these steps:
 
 ## 🔄 Recent Updates
 
+### Version 1.0.3 (2025-11-21)
+
+**New Features**:
+- ✅ **Task Editing** - Double-click tasks on calendar or click in sidebar to edit all details
+- ✅ **Granular Deletion** - Delete single instances of tasks without removing the entire series
+- ✅ **Smart Recurrence Updates** - Editing recurring tasks safely updates the template for future use
+- ✅ **Enhanced Task Management** - Improved sidebar interface for managing task definitions
+
+**Technical Improvements**:
+- Implemented `TaskEditModal` for unified editing experience
+- Updated `TaskDeleteDialog` to support instance-level deletion for all task types
+- Added `PUT /api/tasks/{id}` endpoint for full task updates
+- Enhanced toast notifications for task operations
+
 ### Version 1.0.2 (2025-10-23)
 
 **New Features**:
@@ -888,6 +920,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.2  
-**Last Updated**: 2025-10-23
+**Version**: 1.0.3  
+**Last Updated**: 2025-11-21
 

@@ -68,7 +68,11 @@ export default function AppBar({
   const handleDateChange = (date: Date | null) => {
     if (date) {
       const monday = getMonday(date);
-      const mondayISO = monday.toISOString().slice(0, 10);
+      // Use local time components to avoid timezone shifts
+      const year = monday.getFullYear();
+      const month = String(monday.getMonth() + 1).padStart(2, '0');
+      const day = String(monday.getDate()).padStart(2, '0');
+      const mondayISO = `${year}-${month}-${day}`;
       setWeekStart(mondayISO);
       handleDatePickerClose();
     }
