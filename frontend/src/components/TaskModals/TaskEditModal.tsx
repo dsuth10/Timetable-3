@@ -84,13 +84,15 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
     }
   }, [open]);
 
+  const toHHMM = (time?: string | null) => (time ? time.slice(0, 5) : '');
+
   // Populate form when task changes
   useEffect(() => {
     if (task && open) {
       setTitle(task.title);
       setCategory(task.category);
-      setStart(task.start_time.slice(0, 5)); // HH:MM
-      setEnd(task.end_time.slice(0, 5)); // HH:MM
+      setStart(toHHMM(assignment?.start_time ?? task.start_time)); // HH:MM
+      setEnd(toHHMM(assignment?.end_time ?? task.end_time)); // HH:MM
       setClassroomId(task.classroom_id || null);
       setNotes(task.notes || '');
       
@@ -112,7 +114,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
         setExpiryDate('');
       }
     }
-  }, [task, open]);
+  }, [task, assignment, open]);
 
   const handleClose = () => {
     if (!busy) {
