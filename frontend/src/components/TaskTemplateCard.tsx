@@ -14,10 +14,8 @@ type TaskTemplateCardProps = {
 function TaskTemplateCardBase({ task, index, onDoubleClick }: TaskTemplateCardProps) {
   const categoryColor = categoryColors[task.category] || '#9E9E9E';
   
-  // Calculate duration string
-  const start = task.start_time.slice(0, 5);
-  const end = task.end_time.slice(0, 5);
-  const durationText = `${start} - ${end}`;
+  // Tasks in Task Bank are not scheduled yet
+  const durationText = 'Not scheduled';
 
   return (
     <Draggable draggableId={`task-${task.id}`} index={index}>
@@ -63,8 +61,8 @@ function TaskTemplateCardBase({ task, index, onDoubleClick }: TaskTemplateCardPr
                 >
                   {task.title}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  Default: {durationText}
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                  {durationText}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
                   <Chip

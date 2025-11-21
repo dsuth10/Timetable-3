@@ -8,7 +8,7 @@ type TasksState = {
   loading: boolean;
   error?: string;
   fetchTasks: (opts?: { category?: Task['category'] }) => Promise<void>;
-  updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>>) => Promise<Task>;
+  updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }) => Promise<Task>;
   deleteTask: (id: ID) => Promise<void>;
 };
 

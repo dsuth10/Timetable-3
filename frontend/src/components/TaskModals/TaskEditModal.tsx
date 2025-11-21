@@ -64,7 +64,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   // Recurring task fields
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
-  const [expiryDate, setExpiryDate] = useState('');
+  const [numWeeks, setNumWeeks] = useState<number>(4);
   
   // Classrooms
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -107,11 +107,20 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           setSelectedWeekdays(days);
         }
         
-        setExpiryDate(task.expires_on || '');
+        // Calculate number of weeks from expires_on if available
+        if (task.expires_on && assignment?.date) {
+          const startDate = new Date(assignment.date);
+          const expiryDate = new Date(task.expires_on);
+          const diffTime = expiryDate.getTime() - startDate.getTime();
+          const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+          setNumWeeks(diffWeeks > 0 ? diffWeeks : 4);
+        } else {
+          setNumWeeks(4);
+        }
       } else {
         setIsRecurring(false);
         setSelectedWeekdays([]);
-        setExpiryDate('');
+        setNumWeeks(4);
       }
     }
   }, [task, assignment, open]);
@@ -177,14 +186,35 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           setBusy(false);
           return;
         }
-        if (!expiryDate) {
-          setError('Please select an expiry date for recurring tasks');
+        if (!numWeeks || numWeeks < 1) {
+          setError('Please enter a valid number of weeks (at least 1)');
           setBusy(false);
           return;
         }
         
         payload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
-        payload.expires_on = expiryDate;
+        
+        // Calculate expiry date based on number of weeks from assignment date
+        if (assignment?.date) {
+          const startDate = new Date(assignment.date);
+          startDate.setDate(startDate.getDate() + (numWeeks * 7));
+          payload.expires_on = startDate.toISOString().split('T')[0];
+        } else {
+          // Fallback to weeks from today if no assignment date
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() + (numWeeks * 7));
+          payload.expires_on = startDate.toISOString().split('T')[0];
+        }
+        
+        // Include aide_id if this assignment is currently assigned to an aide
+        if (assignment?.aide_id) {
+          payload.aide_id = assignment.aide_id;
+        }
+        
+        // Include the existing assignment's date to exclude it from generation
+        if (assignment?.date) {
+          payload.existing_assignment_date = assignment.date;
+        }
       } else {
         payload.recurrence_rule = null;
         payload.expires_on = null;
@@ -311,6 +341,17 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
             </Select>
           </FormControl>
 
+          {/* Recurring Task Toggle */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+              />
+            }
+            label="Make this a recurring task"
+          />
+
           {/* Recurring Task Fields */}
           {isRecurring && (
             <>
@@ -341,14 +382,14 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
               </Box>
 
               <TextField
-                label="Expiry Date"
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
+                label="Number of Weeks"
+                type="number"
+                value={numWeeks}
+                onChange={(e) => setNumWeeks(Number(e.target.value))}
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }}
-                helperText="Task will recur until this date"
+                inputProps={{ min: 1, max: 52 }}
+                helperText="How many weeks this task should recur"
               />
             </>
           )}

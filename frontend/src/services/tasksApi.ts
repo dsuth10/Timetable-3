@@ -9,13 +9,11 @@ export const tasksApi = {
   get(id: ID): Promise<Task> {
     return api.get(`/tasks/${id}`).then((r) => r.data as Task);
   },
-  createOneOff(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { notes?: string | null; assignment_date?: string }): Promise<Task> {
+  createOneOff(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { notes?: string | null }): Promise<Task> {
     return api.post('/tasks', payload).then((r) => r.data as Task);
   },
-  createRecurring(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { recurrence_rule: string; expires_on: string; notes?: string | null }): Promise<Task> {
-    return api.post('/recurring-tasks', payload).then((r) => r.data as Task);
-  },
-  update(id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>>): Promise<Task> {
+  // Old createRecurring removed - recurring tasks are now created by editing an assigned task
+  update(id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }): Promise<Task> {
     return api.put(`/tasks/${id}`, payload).then((r) => r.data as Task);
   },
   listAssignments(taskId: ID) {

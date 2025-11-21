@@ -32,23 +32,20 @@ def get_task(task_id: int):
 
 @bp.post('/tasks')
 def create_task():
-    """Create a one-off (non-recurring) task"""
+    """Create a task template (no assignment until dragged to calendar)"""
     data = request.get_json(silent=True) or {}
     title = (data.get('title') or '').strip()
     category = (data.get('category') or '').strip()
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+    start_time = data.get('start_time', '09:00')  # Default placeholder
+    end_time = data.get('end_time', '10:00')      # Default placeholder
     classroom_id = data.get('classroom_id')
     notes = data.get('notes')
-    assignment_date = data.get('assignment_date')  # Optional: specific date for assignment
 
     # Basic validation
     if not title:
         return {'error': 'title is required'}, 400
     if not category:
         return {'error': 'category is required'}, 400
-    if not start_time or not end_time:
-        return {'error': 'start_time and end_time are required'}, 400
 
     try:
         s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
@@ -58,40 +55,19 @@ def create_task():
     except Exception:
         return {'error': 'Invalid time format'}, 400
 
-    # Create task
+    # Create task template (no assignment - stays in Task Bank)
     try:
         task = Task(
             title=title,
             category=category,
             start_time=s_t,
             end_time=e_t,
-            recurrence_rule=None,  # One-off task
+            recurrence_rule=None,
             expires_on=None,
             classroom_id=classroom_id,
             notes=notes
         )
         db.session.add(task)
-        db.session.flush()  # Get task.id
-        
-        # Create an unassigned assignment for this one-off task
-        # Use provided date or default to today
-        assign_date = dt_date.today()
-        if assignment_date:
-            try:
-                assign_date = dt_date.fromisoformat(assignment_date)
-            except Exception:
-                return {'error': 'Invalid assignment_date format'}, 400
-        
-        assignment = Assignment(
-            task_id=task.id,
-            aide_id=None,  # Unassigned
-            date=assign_date,
-            start_time=s_t,
-            end_time=e_t,
-            status='UNASSIGNED',
-            version=1
-        )
-        db.session.add(assignment)
         db.session.commit()
         return task.to_dict(), 201
     except ValueError as e:
@@ -99,81 +75,8 @@ def create_task():
         return {'error': str(e)}, 400
 
 
-@bp.post('/recurring-tasks')
-def create_recurring_task():
-    data = request.get_json(silent=True) or {}
-    title = (data.get('title') or '').strip()
-    category = (data.get('category') or '').strip()
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
-    recurrence_rule = data.get('recurrence_rule')
-    expires_on = data.get('expires_on')
-    classroom_id = data.get('classroom_id')
-    notes = data.get('notes')
-
-    # Basic validation
-    if not title:
-        return {'error': 'title is required'}, 400
-    if not category:
-        return {'error': 'category is required'}, 400
-    if not start_time or not end_time:
-        return {'error': 'start_time and end_time are required'}, 400
-    if not recurrence_rule:
-        return {'error': 'recurrence_rule is required for recurring tasks'}, 400
-    if not expires_on:
-        return {'error': 'expires_on is required for recurring tasks'}, 400
-
-    try:
-        s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
-        e_h, e_m = [int(x) for x in end_time.split(':')[:2]]
-        s_t = dt_time(s_h, s_m)
-        e_t = dt_time(e_h, e_m)
-        exp_d = dt_date.fromisoformat(expires_on)
-    except Exception as e:
-        return {'error': 'Invalid time/date format'}, 400
-
-    # Create task
-    try:
-        task = Task(
-            title=title,
-            category=category,
-            start_time=s_t,
-            end_time=e_t,
-            recurrence_rule=recurrence_rule,
-            expires_on=exp_d,
-            classroom_id=classroom_id,
-            notes=notes
-        )
-        db.session.add(task)
-        db.session.flush()  # get task.id
-    except ValueError as e:
-        db.session.rollback()
-        return {'error': str(e)}, 400
-
-    # Generate unassigned assignments within horizon
-    assignments_data = RecurrenceService.generate_assignments_for_task(
-        task_id=task.id,
-        rrule_string=recurrence_rule,
-        task_start_time=s_t,
-        task_end_time=e_t,
-        expires_on=exp_d
-    )
-
-    for a in assignments_data:
-        db.session.add(
-            Assignment(
-                task_id=a['task_id'],
-                aide_id=a['aide_id'],
-                date=a['date'],
-                start_time=a['start_time'],
-                end_time=a['end_time'],
-                status=a['status'],
-                version=a['version']
-            )
-        )
-
-    db.session.commit()
-    return task.to_dict(), 201
+# Old /recurring-tasks endpoint removed - recurring tasks are now created
+# by editing an assigned task and enabling recurrence in the Edit Task dialog
 
 
 @bp.put('/tasks/<int:task_id>')
@@ -194,6 +97,12 @@ def update_task(task_id: int):
     notes = data.get('notes')
     recurrence_rule = data.get('recurrence_rule')
     expires_on = data.get('expires_on')
+    aide_id = data.get('aide_id')  # Optional aide to assign recurring tasks to
+    existing_assignment_date = data.get('existing_assignment_date')  # Date to exclude from generation
+    
+    # Track if we're converting to recurring
+    was_recurring = task.recurrence_rule is not None
+    is_now_recurring = recurrence_rule is not None
     
     # Update fields if provided
     try:
@@ -225,6 +134,43 @@ def update_task(task_id: int):
                 task.expires_on = dt_date.fromisoformat(expires_on)
             else:
                 task.expires_on = None
+        
+        db.session.flush()  # Flush to get updated task data
+        
+        # If task is being converted to recurring (or recurrence settings changed)
+        if is_now_recurring and not was_recurring:
+            # Parse existing assignment date if provided
+            exclude_date = None
+            if existing_assignment_date:
+                try:
+                    exclude_date = dt_date.fromisoformat(existing_assignment_date)
+                except Exception:
+                    pass
+            
+            # Generate recurring assignments
+            assignments_data = RecurrenceService.generate_assignments_for_task(
+                task_id=task.id,
+                rrule_string=task.recurrence_rule,
+                task_start_time=task.start_time,
+                task_end_time=task.end_time,
+                expires_on=task.expires_on,
+                aide_id=aide_id,  # Pass the aide_id if provided
+                exclude_date=exclude_date  # Exclude the existing assignment's date
+            )
+            
+            # Create all the assignments
+            for a in assignments_data:
+                db.session.add(
+                    Assignment(
+                        task_id=a['task_id'],
+                        aide_id=a['aide_id'],
+                        date=a['date'],
+                        start_time=a['start_time'],
+                        end_time=a['end_time'],
+                        status=a['status'],
+                        version=a['version']
+                    )
+                )
         
         db.session.commit()
         return task.to_dict(), 200

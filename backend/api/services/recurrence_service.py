@@ -113,10 +113,12 @@ class RecurrenceService:
         task_start_time: dt_time,
         task_end_time: dt_time,
         expires_on: date,
-        horizon_weeks: int = DEFAULT_HORIZON_WEEKS
+        horizon_weeks: int = DEFAULT_HORIZON_WEEKS,
+        aide_id: Optional[int] = None,
+        exclude_date: Optional[date] = None
     ) -> List[dict]:
         """
-        Generate unassigned assignment instances for a recurring task.
+        Generate assignment instances for a recurring task.
         
         Args:
             task_id: Task ID
@@ -125,6 +127,8 @@ class RecurrenceService:
             task_end_time: Task end time
             expires_on: Task expiration date
             horizon_weeks: How many weeks ahead to generate (default: 12)
+            aide_id: Optional aide ID to assign to (if None, assignments will be unassigned)
+            exclude_date: Optional date to exclude from generation (e.g., existing assignment)
         
         Returns:
             List of assignment data dictionaries ready for database insertion
@@ -144,15 +148,19 @@ class RecurrenceService:
             task_end_time=task_end_time
         )
         
+        # Filter out the excluded date if provided
+        if exclude_date:
+            occurrences = [occ for occ in occurrences if occ['date'] != exclude_date]
+        
         # Convert to assignment dictionaries
         assignments = [
             {
                 'task_id': task_id,
-                'aide_id': None,  # Unassigned
+                'aide_id': aide_id,  # Use provided aide_id or None for unassigned
                 'date': occ['date'],
                 'start_time': occ['start_time'],
                 'end_time': occ['end_time'],
-                'status': 'UNASSIGNED',
+                'status': 'ASSIGNED' if aide_id is not None else 'UNASSIGNED',
                 'version': 1
             }
             for occ in occurrences
@@ -168,7 +176,8 @@ class RecurrenceService:
         task_end_time: dt_time,
         expires_on: date,
         current_latest_date: date,
-        horizon_weeks: int = DEFAULT_HORIZON_WEEKS
+        horizon_weeks: int = DEFAULT_HORIZON_WEEKS,
+        aide_id: Optional[int] = None
     ) -> List[dict]:
         """
         Extend assignment generation horizon for an existing recurring task.
@@ -183,6 +192,7 @@ class RecurrenceService:
             expires_on: Task expiration date
             current_latest_date: Latest date currently in assignments table
             horizon_weeks: How many weeks ahead to maintain
+            aide_id: Optional aide ID to assign to (if None, assignments will be unassigned)
         
         Returns:
             List of new assignment dictionaries to create
@@ -209,11 +219,11 @@ class RecurrenceService:
         assignments = [
             {
                 'task_id': task_id,
-                'aide_id': None,
+                'aide_id': aide_id,
                 'date': occ['date'],
                 'start_time': occ['start_time'],
                 'end_time': occ['end_time'],
-                'status': 'UNASSIGNED',
+                'status': 'ASSIGNED' if aide_id is not None else 'UNASSIGNED',
                 'version': 1
             }
             for occ in occurrences

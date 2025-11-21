@@ -15,11 +15,14 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ### Key Features
 
 ✅ **Drag-and-Drop Interface** - Assign tasks by dragging them to aide time slots with real-time updates  
+✅ **Simplified Task Creation** - Create task templates with just title, category, classroom, and notes  
+✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
+✅ **Automatic Time Assignment** - Times set automatically based on where task is dropped  
 ✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
 ✅ **Enhanced Week Navigation** - Navigate weeks with previous/next/today buttons plus date picker for jumping to specific weeks  
 ✅ **Cross-Day Dragging** - Drag tasks between different days with automatic date updates and persistence  
 ✅ **Aide Availability Management** - Set weekly availability patterns with visual grid editor and time slot management  
-✅ **Recurring Tasks** - Create weekly, daily, or custom recurring patterns using iCal RRULE  
+✅ **Recurring Tasks** - Convert assigned tasks to recurring with simple weekday selection and week count  
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
 ✅ **Task Editing** - Edit task details and recurring patterns with smart updates  
 ✅ **Granular Deletion** - Delete individual assignments or entire task series  
@@ -224,7 +227,7 @@ The application manages 7 core entities:
 |--------|-------------|-------------------|
 | **TeacherAide** | Staff member providing support | Has Availability, Assignments, Absences |
 | **Availability** | Weekly availability pattern (Monday-Friday time windows) | Belongs to TeacherAide, one per weekday |
-| **Task** | Support duty definition (one-off or recurring) | Has Assignments, optional Classroom |
+| **Task** | Support duty template (title, category, classroom, notes) | Has Assignments, optional Classroom |
 | **Assignment** | Specific task occurrence assigned to aide | Belongs to Task and TeacherAide |
 | **Absence** | Aide unavailability record | Belongs to TeacherAide |
 | **Classroom** | Physical learning space | Has Tasks |
@@ -290,14 +293,33 @@ The application features a modern weekly view that allows administrators to:
 9. Cross-day moves update task date and persist across page refreshes
 ```
 
-### 2. Recurring Task Creation
+### 2. Task Creation & Scheduling
 
 ```
-1. Create task with RRULE pattern (e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR")
-2. Set expiration date
-3. System generates assignments for 4-week horizon
-4. Assignments appear in weekly grid as unassigned
-5. Background scheduler extends horizon weekly
+Creating Tasks:
+1. Click "Create Task" button
+2. Enter essential information:
+   - Task Title (required)
+   - Category (required) - Playground, Class Support, etc.
+   - Classroom (optional)
+   - Notes (optional)
+3. Task created and appears in Task Bank as "Not scheduled"
+4. No times or dates set yet - those come when assigned
+
+Assigning Tasks:
+1. Drag task from Task Bank to calendar time slot
+2. Times automatically set based on drop location
+3. Assignment created for that specific aide and date
+4. Task can be reassigned by dragging to different slots
+
+Making Tasks Recurring:
+1. Drag task to calendar (creates first assignment)
+2. Double-click the assignment to edit
+3. Check "Make this a recurring task"
+4. Select weekdays (Mon-Fri checkboxes)
+5. Enter number of weeks to recur
+6. Save - system generates all future instances for same aide
+7. No duplicates on first day (existing assignment preserved)
 ```
 
 ### 3. Absence Management
@@ -334,16 +356,26 @@ Option 3: Auto-Shorten (Partial Overlap)
 ### 5. Task Management
 
 ```
-Editing Tasks:
-1. Double-click any task on the calendar OR click a task in the sidebar
-2. Update title, category, times, or recurrence settings
-3. For recurring tasks, changes update the template (future generation)
+Editing Task Templates (Task Bank):
+1. Tasks in Task Bank are templates without assigned times/dates
+2. Display as "Not scheduled" until dragged to calendar
+3. Can edit title, category, classroom, notes at any time
+
+Editing Assignments (Calendar):
+1. Double-click any assignment on the calendar
+2. Update title, category, times, classroom, notes
+3. Toggle "Make this a recurring task" to enable recurrence
+4. For recurring tasks:
+   - Select weekdays to repeat on
+   - Enter number of weeks to continue
+   - System auto-generates future instances for same aide
+5. Changes to recurring tasks update template only (not existing instances)
 
 Deleting Tasks:
 1. Click "Delete" in the task edit dialog
 2. Choose deletion scope:
    → "Delete only this instance": Removes just this specific assignment
-   → "Delete task": Removes the task and all assignments from system
+   → "Delete task": Removes the task template and all assignments
    → "Delete all instances": (For recurring) Removes entire series
 ```
 
@@ -873,6 +905,35 @@ Contributions are welcome! Please follow these steps:
 
 ## 🔄 Recent Updates
 
+### Version 1.0.4 (2025-11-21)
+
+**Major Improvements**:
+- ✅ **Simplified Task Creation** - Task creation now only requires 4 fields (title, category, classroom, notes)
+- ✅ **Template-Based Workflow** - Tasks created as templates in Task Bank, showing "Not scheduled"
+- ✅ **Drag-to-Schedule** - Times automatically assigned when dragging task to calendar
+- ✅ **Deferred Complexity** - Recurring options only available after task is scheduled
+- ✅ **Number of Weeks Input** - Replaced confusing expiry date with simple "number of weeks" field
+- ✅ **No Duplicate Instances** - Fixed bug where converting to recurring created duplicate on first day
+
+**Removed Complexity**:
+- Removed time selection from task creation (set automatically on assignment)
+- Removed assignment date from task creation (set by drag location)
+- Removed recurring options from creation dialog (moved to edit after assignment)
+- Removed old `/recurring-tasks` endpoint (obsolete paradigm)
+
+**Technical Changes**:
+- Simplified `TaskCreationModal` to 4 essential fields
+- Updated `TaskTemplateCard` to display "Not scheduled" instead of placeholder times
+- Modified `POST /tasks` endpoint to create templates without assignments
+- Added `exclude_date` parameter to prevent duplicate recurring instances
+- Removed `createRecurring` API method (no longer needed)
+
+**User Experience**:
+- 📊 Cleaner, more intuitive task creation interface
+- 🎯 Clear separation between creation (simple) and scheduling (complex)
+- 🔄 Recurring tasks now assigned to same aide automatically
+- ✨ Better mental model: Templates → Schedule → Make Recurring
+
 ### Version 1.0.3 (2025-11-21)
 
 **New Features**:
@@ -920,6 +981,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.3  
+**Version**: 1.0.4  
 **Last Updated**: 2025-11-21
 
