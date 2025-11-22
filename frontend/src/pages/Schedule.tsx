@@ -215,7 +215,7 @@ export default function Schedule() {
     }
   };
 
-  const { onDragEnd, ConflictUI } = useDragDrop({
+  const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
     onSuccess: refreshData,
     aides: aides
   });
@@ -303,6 +303,7 @@ export default function Schedule() {
               />
             )}
             {ConflictUI}
+            {DurationModal}
           </Box>
 
           {/* Right: Unassigned Panel */}

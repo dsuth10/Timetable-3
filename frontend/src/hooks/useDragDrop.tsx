@@ -2,15 +2,34 @@ import { useCallback, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import ConflictModal from '../components/ConflictModal';
+import AssignmentDurationModal from '../components/TaskModals/AssignmentDurationModal';
 import { useUndoStore } from '../store/stores/undoStore';
 import { useTasksStore } from '../store/stores/tasks'; // Import tasks store
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
-import type { TeacherAide } from '../types';
+import type { TeacherAide, Task } from '../types';
 import { calculateDuration, addMinutesToTime, timeToMinutes, END_HOUR } from '../components/TimetableGrid/timeUtils';
 
 type UseDragDropOptions = {
   onSuccess?: () => void;
   aides?: TeacherAide[];
+};
+
+type PendingAssignment = {
+  type: 'create' | 'update';
+  task: Task;
+  assignmentId?: number;
+  currentAssignment?: any;
+  initialData: {
+    aideId: number | null;
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
+  sourceData?: {
+    aideId: number | null;
+    date: string | null;
+    time: string | null;
+  };
 };
 
 export function useDragDrop(options?: UseDragDropOptions) {
@@ -23,6 +42,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
     updatePayload?: any;
     createPayload?: any; // Add create payload
   } | null>(null);
+  const [pendingAssignment, setPendingAssignment] = useState<PendingAssignment | null>(null);
   const { execute } = useUndoStore();
   const { tasks } = useTasksStore(); // Get tasks from store
   const aides = options?.aides || [];
@@ -177,86 +197,37 @@ export function useDragDrop(options?: UseDragDropOptions) {
         // If dropped back to unassigned, do nothing
         if (destDroppableId === 'unassigned') return;
 
-        if (!destDate || !destAideId) {
+        if (!destDate || destAideId === null) {
             return; // Must have date and aide
         }
 
         const task = tasks.find(t => t.id === taskId);
         if (!task) return;
 
-        // Calculate times
-        let startTime = task.start_time;
-        let endTime = task.end_time;
+        // Calculate default times - always use 30 minutes as default duration
+        let startTime: string;
+        let endTime: string;
 
         if (destTime) {
             // Dropped on specific time slot
-            const duration = calculateDuration(task.start_time, task.end_time);
             startTime = destTime + ':00';
-            endTime = addMinutesToTime(destTime, duration) + ':00';
-
-            if (timeToMinutes(endTime.slice(0, 5)) > END_HOUR * 60) {
-                 window.dispatchEvent(new CustomEvent('app:error', { 
-                  detail: { message: 'Cannot drop task: end time would exceed working hours (17:00)' } 
-                }));
-                return;
-            }
+            endTime = addMinutesToTime(destTime, 30) + ':00'; // Default 30 minutes
+        } else {
+            // No specific time, use current task times or defaults
+            startTime = '09:00:00';
+            endTime = '09:30:00';
         }
 
-        const createPayload = {
-            task_id: taskId,
-            aide_id: destAideId,
-            date: destDate,
-            start_time: startTime,
-            end_time: endTime,
-            status: 'ASSIGNED',
-            version: 1 // Not used for create but good for consistency
-        };
-
-        await execute({
-            id: `create-assignment-${taskId}-${destAideId}-${Date.now()}`,
-            description: `Assign ${task.title} to ${destAideId} on ${destDate}`,
-            async do() {
-                try {
-                    await assignmentsApi.create(createPayload);
-                    options?.onSuccess?.();
-                } catch (e: any) {
-                    if (e?.status === 409) {
-                        setConflicts({
-                            conflicts: e?.data?.conflicts || [],
-                            errorMessage: e?.data?.error || null,
-                            taskId: taskId,
-                            destAideId: destAideId,
-                            createPayload: createPayload
-                        });
-                    } else {
-                        throw e;
-                    }
-                }
+        // Show modal for user to confirm/edit times
+        setPendingAssignment({
+            type: 'create',
+            task: task,
+            initialData: {
+                aideId: destAideId,
+                date: destDate,
+                startTime: startTime,
+                endTime: endTime,
             },
-            async undo() {
-                // Undo creation = delete?
-                // We don't have the ID of the created assignment here easily unless we return it.
-                // But 'execute' doesn't support returning values to undo.
-                // For now, we might skip undo for creation or refresh entire list.
-                // Ideally we should capture the ID.
-                // Since this is a complex op, maybe just refresh?
-                // Or we can rely on the fact that we can find it by unique constraints if any?
-                // Actually, `assignmentsApi.create` returns the created assignment.
-                // But `execute` interface handles async do/undo.
-                // We can store state in closure.
-                // But this runs in a different scope.
-                // Simplified: just refresh for now, or implement better undo later.
-                // Wait, if I can't undo, that's bad.
-                // Let's wrap the create call to capture ID.
-                // ... 
-                // Implementation detail: We can't easily undo creation without the ID.
-                // I'll implement a "best effort" undo by finding the assignment matching params.
-                // Or I can accept that Creation is not undoable in this version without more plumbing.
-                // Given the complexity, I'll skip rigorous Undo for Creation for this step, 
-                // but I'll add a comment.
-                console.warn("Undo for creation not fully implemented (missing ID capture)");
-                options?.onSuccess?.();
-            }
         });
         return;
     }
@@ -290,25 +261,9 @@ export function useDragDrop(options?: UseDragDropOptions) {
       sourceAideId = Number(sourceDroppableId);
     }
 
-    // If dropped on Unassigned/Task Bank -> DELETE
+    // If dropped on Unassigned/Task Bank -> DELETE (no modal needed)
     if (destDroppableId === 'unassigned') {
-        // Confirm? Or just delete. "Task Bank" implies deleting instance.
-        await execute({
-            id: `delete-assignment-${assignmentId}-${Date.now()}`,
-            description: `Delete assignment ${assignmentId}`,
-            async do() {
-                await assignmentsApi.delete(assignmentId);
-                options?.onSuccess?.();
-            },
-            async undo() {
-                // Restore logic... needs all previous data.
-                // For now, just refresh.
-                // To support undo properly, we'd need to fetch assignment first.
-                // Let's fetch it.
-            }
-        });
-        
-        // Actually, to make Undo work, I should fetch before delete.
+        // Fetch before delete for undo support
         const currentAssignment = await assignmentsApi.get(assignmentId);
         await execute({
             id: `delete-assignment-${assignmentId}-${Date.now()}`,
@@ -333,7 +288,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
         return;
     }
 
-    // Fetch the current assignment to get its version
+    // Fetch the current assignment to get its details
     let currentAssignment;
     try {
       currentAssignment = await assignmentsApi.get(assignmentId);
@@ -342,122 +297,205 @@ export function useDragDrop(options?: UseDragDropOptions) {
       return;
     }
 
-    // Prepare update payload with version for optimistic locking
-    const updatePayload: any = { 
-      aide_id: destAideId,
-      status: destAideId !== null ? 'ASSIGNED' : 'UNASSIGNED',
-      version: currentAssignment.version 
-    };
-    
-    // If date changed, include date in update
-    if (destDate && sourceDate && destDate !== sourceDate) {
-      updatePayload.date = destDate;
-    }
-    
-    // Calculate new times if dropped in a time slot
-    if (destTime) {
-      // Calculate duration in minutes
-      const duration = calculateDuration(currentAssignment.start_time, currentAssignment.end_time);
-      
-      // Set new start time (convert HH:MM to HH:MM:SS)
-      updatePayload.start_time = destTime + ':00';
-      
-      // Calculate new end time by adding duration
-      const newEndTime = addMinutesToTime(destTime, duration);
-      updatePayload.end_time = newEndTime + ':00';
-      
-      // Validate end time doesn't exceed working hours (17:00)
-      if (timeToMinutes(newEndTime) > END_HOUR * 60) {
-        window.dispatchEvent(new CustomEvent('app:error', { 
-          detail: { message: 'Cannot drop task: end time would exceed working hours (17:00)' } 
-        }));
-        return;
-      }
-      
-      // Also validate availability here for the assignment since we now have the duration
-      if (destAideId && destDate) {
-          const aide = aides.find(a => a.id === destAideId);
-           if (aide && aide.availability) {
-              const isAvailable = isAideAvailable(
-                  aide.availability,
-                  destDate,
-                  updatePayload.start_time,
-                  updatePayload.end_time
-              );
-               if (!isAvailable) {
-                   // ... error handling ...
-                    const availabilityInfo = getAvailabilityInfo(aide.availability, destDate);
-                     // ... (construct error msg) ...
-                     const aideName = aide.name;
-                      const weekday = availabilityInfo.weekday;
-                      let errorMessage: string;
-                      if (!availabilityInfo.hasAvailability) {
-                        errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
-                      } else if (availabilityInfo.timeWindow) {
-                        errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
-                      } else {
-                        errorMessage = `Cannot assign: ${aideName} is not available at this time`;
-                      }
-                     window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
-                   return;
-               }
-           }
-      }
+    // Find the task for this assignment
+    const task = tasks.find(t => t.id === currentAssignment.task_id);
+    if (!task) {
+      console.error('Task not found for assignment:', currentAssignment.task_id);
+      return;
     }
 
-    // Wrap as undoable command
-    const timeDescription = destTime ? ` at ${destTime}` : '';
-    await execute({
-      id: `move-${assignmentId}-${sourceAideId || 'unassigned'}-${sourceDate || 'any'}-${sourceTime || 'any'}-to-${destAideId || 'unassigned'}-${destDate || 'any'}-${destTime || 'any'}-${Date.now()}`,
-      description: `Move assignment ${assignmentId} from ${sourceAideId || 'unassigned'} to ${destAideId || 'unassigned'}${destDate ? ` on ${destDate}` : ''}${timeDescription}`,
-      async do() {
-        try {
-          // Debounce drag-triggered update to reduce API chatter
-          await debouncedUpdate(`asg-${assignmentId}`, async () => {
-            await assignmentsApi.update(assignmentId, updatePayload);
-          });
-          // Refresh data after successful update
-          options?.onSuccess?.();
-        } catch (e: any) {
-          if (e?.status === 409) {
-            setConflicts({
-              conflicts: e?.data?.conflicts || [],
-              errorMessage: e?.data?.error || null,
-              assignmentId: assignmentId,
-              destAideId: destAideId,
-              updatePayload: updatePayload
-            });
-          } else {
-            throw e;
-          }
-        }
+    // Calculate default times for modal
+    let startTime: string;
+    let endTime: string;
+
+    if (destTime) {
+      // Dropped on specific time slot - default to 30 minutes
+      startTime = destTime + ':00';
+      endTime = addMinutesToTime(destTime, 30) + ':00';
+    } else {
+      // No specific time slot, preserve current duration
+      const currentDuration = calculateDuration(currentAssignment.start_time, currentAssignment.end_time);
+      startTime = currentAssignment.start_time;
+      endTime = currentAssignment.end_time;
+    }
+
+    // Use destDate if available, otherwise keep current date
+    const targetDate = destDate || currentAssignment.date;
+
+    // Show modal for user to confirm/edit times
+    setPendingAssignment({
+      type: 'update',
+      task: task,
+      assignmentId: assignmentId,
+      currentAssignment: currentAssignment,
+      initialData: {
+        aideId: destAideId,
+        date: targetDate,
+        startTime: startTime,
+        endTime: endTime,
       },
-      async undo() {
-        // Fetch the latest version for undo
-        const latestAssignment = await assignmentsApi.get(assignmentId);
-        const undoPayload: any = { 
-          aide_id: sourceAideId,
-          status: sourceAideId !== null ? 'ASSIGNED' : 'UNASSIGNED',
-          version: latestAssignment.version
-        };
-        
-        // Restore original date if it changed
-        if (sourceDate && destDate && sourceDate !== destDate) {
-          undoPayload.date = sourceDate;
-        }
-        
-        // Restore original times if they changed
-        if (destTime) {
-          undoPayload.start_time = currentAssignment.start_time;
-          undoPayload.end_time = currentAssignment.end_time;
-        }
-        
-        await assignmentsApi.update(assignmentId, undoPayload);
-        // Refresh data after undo
-        options?.onSuccess?.();
+      sourceData: {
+        aideId: sourceAideId,
+        date: sourceDate,
+        time: sourceTime,
       },
     });
   }, [execute, debouncedUpdate, options, aides, tasks]); // Add aides and tasks to dependencies
+
+  // Handle modal confirmation
+  const handleModalConfirm = useCallback(async (data: {
+    aideId: number | null;
+    date: string;
+    startTime: string;
+    endTime: string;
+  }) => {
+    if (!pendingAssignment) return;
+
+    const { type, task, assignmentId, currentAssignment, sourceData } = pendingAssignment;
+
+    // Validate end time doesn't exceed working hours
+    if (timeToMinutes(data.endTime.slice(0, 5)) > END_HOUR * 60) {
+      window.dispatchEvent(new CustomEvent('app:error', { 
+        detail: { message: 'Cannot assign task: end time would exceed working hours (17:00)' } 
+      }));
+      return;
+    }
+
+    // Validate availability if assigning to an aide
+    if (data.aideId !== null && data.date) {
+      const aide = aides.find(a => a.id === data.aideId);
+      if (!aide) {
+        console.error('Aide not found:', data.aideId);
+        return;
+      }
+      
+      const availability = aide.availability || [];
+      
+      if (availability.length === 0) {
+        const weekday = new Date(data.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+        const errorMessage = `Cannot assign: No availability set for ${aide.name} on ${weekday}`;
+        window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+        return;
+      }
+      
+      const isAvailable = isAideAvailable(
+        availability,
+        data.date,
+        data.startTime,
+        data.endTime
+      );
+      
+      if (!isAvailable) {
+        const availabilityInfo = getAvailabilityInfo(availability, data.date);
+        const aideName = aide.name;
+        const weekday = availabilityInfo.weekday;
+        
+        let errorMessage: string;
+        if (!availabilityInfo.hasAvailability) {
+          errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
+        } else if (availabilityInfo.timeWindow) {
+          errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
+        } else {
+          errorMessage = `Cannot assign: ${aideName} is not available at this time`;
+        }
+        
+        window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+        return;
+      }
+    }
+
+    // All validations passed - now clear pending state to dismiss modal
+    setPendingAssignment(null);
+
+    // Execute the operation
+    if (type === 'create') {
+      const createPayload = {
+        task_id: task.id,
+        aide_id: data.aideId,
+        date: data.date,
+        start_time: data.startTime,
+        end_time: data.endTime,
+        status: 'ASSIGNED' as const,
+        version: 1,
+      };
+
+      await execute({
+        id: `create-assignment-${task.id}-${data.aideId}-${Date.now()}`,
+        description: `Assign ${task.title} to ${data.aideId} on ${data.date}`,
+        async do() {
+          try {
+            await assignmentsApi.create(createPayload);
+            options?.onSuccess?.();
+          } catch (e: any) {
+            if (e?.status === 409) {
+              setConflicts({
+                conflicts: e?.data?.conflicts || [],
+                errorMessage: e?.data?.error || null,
+                taskId: task.id,
+                destAideId: data.aideId,
+                createPayload: createPayload
+              });
+            } else {
+              throw e;
+            }
+          }
+        },
+        async undo() {
+          console.warn("Undo for creation not fully implemented (missing ID capture)");
+          options?.onSuccess?.();
+        }
+      });
+    } else if (type === 'update' && assignmentId && currentAssignment) {
+      const updatePayload: any = { 
+        aide_id: data.aideId,
+        date: data.date,
+        start_time: data.startTime,
+        end_time: data.endTime,
+        status: data.aideId !== null ? 'ASSIGNED' : 'UNASSIGNED',
+        version: currentAssignment.version 
+      };
+
+      const timeDescription = data.startTime ? ` at ${data.startTime.slice(0, 5)}` : '';
+      await execute({
+        id: `move-${assignmentId}-${sourceData?.aideId ?? 'unassigned'}-${sourceData?.date ?? 'any'}-${sourceData?.time ?? 'any'}-to-${data.aideId ?? 'unassigned'}-${data.date ?? 'any'}-${data.startTime.slice(0, 5) ?? 'any'}-${Date.now()}`,
+        description: `Move assignment ${assignmentId} from ${sourceData?.aideId ?? 'unassigned'} to ${data.aideId ?? 'unassigned'}${data.date ? ` on ${data.date}` : ''}${timeDescription}`,
+        async do() {
+          try {
+            await debouncedUpdate(`asg-${assignmentId}`, async () => {
+              await assignmentsApi.update(assignmentId, updatePayload);
+            });
+            options?.onSuccess?.();
+          } catch (e: any) {
+            if (e?.status === 409) {
+              setConflicts({
+                conflicts: e?.data?.conflicts || [],
+                errorMessage: e?.data?.error || null,
+                assignmentId: assignmentId,
+                destAideId: data.aideId,
+                updatePayload: updatePayload
+              });
+            } else {
+              throw e;
+            }
+          }
+        },
+        async undo() {
+          const latestAssignment = await assignmentsApi.get(assignmentId);
+          const undoPayload: any = { 
+            aide_id: sourceData?.aideId ?? null,
+            date: sourceData?.date ?? currentAssignment.date,
+            start_time: currentAssignment.start_time,
+            end_time: currentAssignment.end_time,
+            status: (sourceData?.aideId ?? null) !== null ? 'ASSIGNED' : 'UNASSIGNED',
+            version: latestAssignment.version
+          };
+          
+          await assignmentsApi.update(assignmentId, undoPayload);
+          options?.onSuccess?.();
+        },
+      });
+    }
+  }, [pendingAssignment, aides, execute, debouncedUpdate, options]);
 
   const ConflictUI = conflicts ? (
     <ConflictModal
@@ -495,7 +533,18 @@ export function useDragDrop(options?: UseDragDropOptions) {
     />
   ) : null;
 
-  return { onDragEnd, ConflictUI };
+  const DurationModal = pendingAssignment ? (
+    <AssignmentDurationModal
+      open={true}
+      onClose={() => setPendingAssignment(null)}
+      onConfirm={handleModalConfirm}
+      task={pendingAssignment.task}
+      aides={aides}
+      initialData={pendingAssignment.initialData}
+    />
+  ) : null;
+
+  return { onDragEnd, ConflictUI, DurationModal };
 }
 
 
