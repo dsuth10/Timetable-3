@@ -13,7 +13,9 @@ import {
 import { Search, ExpandMore, AssignmentLate, Inventory } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
 import { useTasksStore } from '../store/stores/tasks';
-import type { Task, Assignment } from '../types';
+import { useAidesStore } from '../store/stores/aides';
+import { assignmentsApi } from '../services/assignmentsApi';
+import type { Task, Assignment, TeacherAide } from '../types';
 import { TaskTemplateCard } from './TaskTemplateCard';
 import LoadingState from './common/LoadingState';
 import EmptyState from './common/EmptyState';
@@ -29,6 +31,33 @@ const DRAWER_WIDTH = 320;
 export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleClick }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const { tasks, loading, error } = useTasksStore();
+  const { aides } = useAidesStore();
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+
+  // Fetch assignments for the current week
+  useEffect(() => {
+    if (!dateISO) return;
+    
+    assignmentsApi.weeklyMatrix(dateISO)
+      .then((matrix: any) => {
+        const allAssignments: Assignment[] = [];
+        
+        if (matrix?.matrix) {
+          Object.entries(matrix.matrix).forEach(([, days]) => {
+            Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
+              if (Array.isArray(assignments)) {
+                allAssignments.push(...assignments);
+              }
+            });
+          });
+        }
+        
+        setAssignments(allAssignments);
+      })
+      .catch(() => {
+        setAssignments([]);
+      });
+  }, [dateISO, refreshTrigger]);
 
   // Group tasks by category
   const groupedTasks = useMemo(() => {
@@ -142,6 +171,8 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
                           <TaskTemplateCard
                             task={task}
                             index={idx}
+                            assignments={assignments}
+                            aides={aides}
                             onDoubleClick={(t) => {
                               // For double click on template, maybe create a new assignment on today?
                               // Or just edit the task?

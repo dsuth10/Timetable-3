@@ -68,8 +68,8 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
           }));
         } catch {}
       } else {
-        // Delete the entire task (and all its assignments)
-        await deleteTask(task.id);
+        // Reset the task back to task bank (remove all assignments but keep task)
+        await deleteTask(task.id, true);
         
         // Refresh tasks to ensure UI is updated
         const { fetchTasks } = useTasksStore.getState();
@@ -78,7 +78,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
         // Dispatch success event for toast notification
         try {
           window.dispatchEvent(new CustomEvent('app:success', { 
-            detail: { message: 'Task deleted successfully' } 
+            detail: { message: 'Task reset successfully and returned to task bank' } 
           }));
         } catch {}
       }
@@ -161,12 +161,12 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        {isRecurring ? "Delete all instances" : "Delete task"}
+                        {isRecurring ? "Delete all assignments and reset task" : "Delete all assignments and reset task"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {isRecurring 
-                          ? "Delete the entire recurring task and all its assignments (past and future)."
-                          : "Delete the task template and all its assignments from the system."}
+                          ? "Remove all assignments and reset the task back to the task bank. The task will keep its basic info (title, category, classroom, notes) and times from the last assignment, but lose recurring settings."
+                          : "Remove all assignments and reset the task back to the task bank. The task will keep its basic info and times."}
                       </Typography>
                     </Box>
                   }

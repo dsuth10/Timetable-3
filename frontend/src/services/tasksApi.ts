@@ -19,8 +19,9 @@ export const tasksApi = {
   listAssignments(taskId: ID) {
     return api.get(`/tasks/${taskId}/assignments`).then((r) => r.data as any[]);
   },
-  delete(id: ID): Promise<void> {
-    return api.delete(`/tasks/${id}`).then(() => undefined);
+  delete(id: ID, reset?: boolean): Promise<void> {
+    const query = reset ? '?reset=true' : '';
+    return api.delete(`/tasks/${id}${query}`).then(() => undefined);
   },
 };
 

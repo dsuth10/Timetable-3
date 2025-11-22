@@ -2,20 +2,49 @@ import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
 import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
 import { DragIndicator, Repeat, School } from '@mui/icons-material';
-import type { Task } from '../types';
+import type { Task, Assignment, TeacherAide } from '../types';
 import { categoryColors } from '../theme/theme';
 
 type TaskTemplateCardProps = {
   task: Task;
   index: number;
+  assignments?: Assignment[];
+  aides?: TeacherAide[];
   onDoubleClick?: (task: Task) => void;
 };
 
-function TaskTemplateCardBase({ task, index, onDoubleClick }: TaskTemplateCardProps) {
+function TaskTemplateCardBase({ task, index, assignments, aides, onDoubleClick }: TaskTemplateCardProps) {
   const categoryColor = categoryColors[task.category] || '#9E9E9E';
   
-  // Tasks in Task Bank are not scheduled yet
-  const durationText = 'Not scheduled';
+  // Compute assigned aides for this task
+  const getAssignedAides = () => {
+    if (!assignments || !aides || assignments.length === 0) {
+      return 'Not scheduled';
+    }
+    
+    // Filter assignments for this task
+    const taskAssignments = assignments.filter(a => a.task_id === task.id);
+    
+    if (taskAssignments.length === 0) {
+      return 'Not scheduled';
+    }
+    
+    // Get unique aide IDs
+    const uniqueAideIds = [...new Set(taskAssignments.map(a => a.aide_id).filter(Boolean))];
+    
+    // Map to aide names
+    const aideNames = uniqueAideIds
+      .map(aideId => aides.find(a => a.id === aideId)?.name)
+      .filter(Boolean);
+    
+    if (aideNames.length === 0) {
+      return 'Not scheduled';
+    }
+    
+    return aideNames.join(', ');
+  };
+  
+  const durationText = getAssignedAides();
 
   return (
     <Draggable draggableId={`task-${task.id}`} index={index}>
@@ -107,7 +136,9 @@ export const TaskTemplateCard = memo(TaskTemplateCardBase, (prev, next) => {
     prev.task.id === next.task.id &&
     prev.task.title === next.task.title &&
     prev.task.category === next.task.category &&
-    prev.index === next.index
+    prev.index === next.index &&
+    prev.assignments === next.assignments &&
+    prev.aides === next.aides
   );
 });
 

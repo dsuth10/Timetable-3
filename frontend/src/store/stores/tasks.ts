@@ -9,7 +9,7 @@ type TasksState = {
   error?: string;
   fetchTasks: (opts?: { category?: Task['category'] }) => Promise<void>;
   updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }) => Promise<Task>;
-  deleteTask: (id: ID) => Promise<void>;
+  deleteTask: (id: ID, reset?: boolean) => Promise<void>;
 };
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -45,15 +45,20 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       throw e;
     }
   },
-  async deleteTask(id) {
+  async deleteTask(id, reset) {
     try {
       set({ loading: true, error: undefined });
-      await tasksApi.delete(id);
+      await tasksApi.delete(id, reset);
       
-      // Remove the task from local state
-      const tasks = get().tasks;
-      const updatedTasks = tasks.filter(task => task.id !== id);
-      set({ tasks: updatedTasks, loading: false });
+      if (reset) {
+        // Reset mode: Refresh tasks to get the updated task data
+        await get().fetchTasks();
+      } else {
+        // Full deletion: Remove the task from local state
+        const tasks = get().tasks;
+        const updatedTasks = tasks.filter(task => task.id !== id);
+        set({ tasks: updatedTasks, loading: false });
+      }
     } catch (e: any) {
       set({ error: e.message || 'Failed to delete task', loading: false });
       throw e;
