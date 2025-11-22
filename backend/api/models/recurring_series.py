@@ -1,59 +1,77 @@
 """
-T033: Assignment Model
-Represents a specific occurrence of a task assigned to an aide (or unassigned).
+RecurringSeries Model
+Represents an independent recurring assignment series for a specific task/aide combination.
 """
 from datetime import datetime, date as dt_date, time as dt_time
-from sqlalchemy import Column, Integer, Date, Time, String, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Text, Time, Date, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship, validates
 from api.models import db
+from dateutil.rrule import rrulestr
 
 
-ASSIGNMENT_STATUSES = {'UNASSIGNED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETE'}
-
-
-class Assignment(db.Model):
+class RecurringSeries(db.Model):
     """
-    Assignment model representing task occurrences.
+    RecurringSeries model representing an independent recurring assignment series.
+    
+    This allows the same task template to have multiple independent recurring instances,
+    each with different recurrence patterns, assigned to different aides.
     
     Relationships:
     - task: Many-to-One with Task
-    - aide: Many-to-One with TeacherAide (nullable)
+    - aide: Many-to-One with TeacherAide (nullable for unassigned recurring)
+    - assignments: One-to-Many with Assignment
     """
     
-    __tablename__ = 'assignments'
+    __tablename__ = 'recurring_series'
     
     # Columns
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False, index=True)
     aide_id = Column(Integer, ForeignKey('teacher_aides.id', ondelete='SET NULL'), nullable=True)
-    recurring_series_id = Column(Integer, ForeignKey('recurring_series.id', ondelete='CASCADE'), nullable=True, index=True)
-    date = Column(Date, nullable=False, index=True)
+    recurrence_rule = Column(Text, nullable=False)  # iCal RRULE
+    expires_on = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
-    status = Column(String(20), nullable=False, default='UNASSIGNED')
-    version = Column(Integer, nullable=False, default=1)  # Optimistic locking
+    base_date = Column(Date, nullable=False)  # Original assignment date that was made recurring
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    task = relationship('Task', back_populates='assignments')
-    aide = relationship('TeacherAide', back_populates='assignments', foreign_keys=[aide_id])
-    recurring_series = relationship('RecurringSeries', back_populates='assignments')
+    task = relationship('Task', back_populates='recurring_series')
+    aide = relationship('TeacherAide', back_populates='recurring_series', foreign_keys=[aide_id])
+    assignments = relationship(
+        'Assignment',
+        back_populates='recurring_series',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
     
-    # Indexes for collision detection and weekly queries
+    # Indexes
     __table_args__ = (
-        Index('idx_assignments_aide_date_time', 'aide_id', 'date', 'start_time'),
-        Index('idx_assignments_date', 'date'),
-        Index('idx_assignments_task_id', 'task_id'),
-        Index('idx_assignments_status_date', 'status', 'date', 'start_time'),
+        Index('idx_recurring_series_task', 'task_id'),
+        Index('idx_recurring_series_aide', 'aide_id'),
     )
     
     # Validation
-    @validates('date')
-    def validate_date(self, key, value):
-        """Validate date is provided"""
-        if not isinstance(value, dt_date):
-            raise ValueError("date must be a date object")
+    @validates('recurrence_rule')
+    def validate_recurrence_rule(self, key, value):
+        """Validate RRULE format"""
+        if not value or value == '':
+            raise ValueError("recurrence_rule is required for recurring series")
+        
+        try:
+            # Attempt to parse RRULE
+            rrulestr(value, dtstart=datetime.now())
+        except Exception as e:
+            raise ValueError(f"Invalid recurrence rule: {e}")
+        
+        return value
+    
+    @validates('expires_on')
+    def validate_expires_on(self, key, value):
+        """Validate expires_on is provided"""
+        if not value:
+            raise ValueError("expires_on is required for recurring series")
         return value
     
     @validates('start_time')
@@ -85,33 +103,11 @@ class Assignment(db.Model):
         
         return value
     
-    @validates('status')
-    def validate_status(self, key, value):
-        """Validate status is one of defined types"""
-        if not value:
-            raise ValueError("Assignment status is required")
-        
-        value = value.upper()
-        if value not in ASSIGNMENT_STATUSES:
-            raise ValueError(f"Status must be one of {ASSIGNMENT_STATUSES}")
-        
-        # Auto-set status based on aide_id
-        if hasattr(self, 'aide_id'):
-            if self.aide_id is None and value not in ['UNASSIGNED']:
-                value = 'UNASSIGNED'
-            elif self.aide_id is not None and value == 'UNASSIGNED':
-                value = 'ASSIGNED'
-        
-        return value
-    
-    @validates('aide_id')
-    def validate_aide_id(self, key, value):
-        """Ensure status matches aide_id state"""
-        # If aide_id is None, status should be UNASSIGNED
-        if value is None and hasattr(self, 'status'):
-            if self.status not in ['UNASSIGNED', None]:
-                self.status = 'UNASSIGNED'
-        
+    @validates('base_date')
+    def validate_base_date(self, key, value):
+        """Validate base_date is provided"""
+        if not isinstance(value, dt_date):
+            raise ValueError("base_date must be a date object")
         return value
     
     def to_dict(self, include_relationships=False):
@@ -120,12 +116,11 @@ class Assignment(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'aide_id': self.aide_id,
-            'recurring_series_id': self.recurring_series_id,
-            'date': self.date.isoformat() if self.date else None,
+            'recurrence_rule': self.recurrence_rule,
+            'expires_on': self.expires_on.isoformat() if self.expires_on else None,
             'start_time': self.start_time.strftime('%H:%M:%S') if self.start_time else None,
             'end_time': self.end_time.strftime('%H:%M:%S') if self.end_time else None,
-            'status': self.status,
-            'version': self.version,
+            'base_date': self.base_date.isoformat() if self.base_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -135,10 +130,12 @@ class Assignment(db.Model):
                 data['task'] = self.task.to_dict()
             if self.aide:
                 data['aide'] = self.aide.to_dict()
+            # Note: We don't include all assignments by default as there could be many
+            data['assignments_count'] = self.assignments.count()
         
         return data
     
     def __repr__(self):
         aide_info = f'aide={self.aide_id}' if self.aide_id else 'unassigned'
-        return f'<Assignment {self.id}: task={self.task_id} {aide_info} {self.date}>'
+        return f'<RecurringSeries {self.id}: task={self.task_id} {aide_info} expires={self.expires_on}>'
 

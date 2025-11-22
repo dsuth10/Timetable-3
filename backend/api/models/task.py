@@ -1,12 +1,11 @@
 """
 T032: Task Model
-Represents a support duty or assignment (one-off or recurring).
+Represents a support duty template (tasks can have multiple recurring series).
 """
 from datetime import datetime, date as dt_date, time as dt_time
-from sqlalchemy import Column, Integer, String, Text, Time, Date, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Text, Time, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship, validates
 from api.models import db
-from dateutil.rrule import rrulestr
 
 
 TASK_CATEGORIES = {'PLAYGROUND', 'CLASS_SUPPORT', 'GROUP_SUPPORT', 'INDIVIDUAL_SUPPORT'}
@@ -30,8 +29,6 @@ class Task(db.Model):
     category = Column(String(20), nullable=False, index=True)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
-    recurrence_rule = Column(Text, nullable=True)  # iCal RRULE
-    expires_on = Column(Date, nullable=True)
     classroom_id = Column(Integer, ForeignKey('classrooms.id', ondelete='SET NULL'), nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default='UNASSIGNED', index=True)
@@ -43,6 +40,13 @@ class Task(db.Model):
     
     assignments = relationship(
         'Assignment',
+        back_populates='task',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+    
+    recurring_series = relationship(
+        'RecurringSeries',
         back_populates='task',
         cascade='all, delete-orphan',
         lazy='dynamic'
@@ -117,30 +121,6 @@ class Task(db.Model):
         
         return value
     
-    @validates('recurrence_rule')
-    def validate_recurrence_rule(self, key, value):
-        """Validate RRULE format if provided"""
-        if value is None or value == '':
-            return None
-        
-        try:
-            # Attempt to parse RRULE
-            rrulestr(value, dtstart=datetime.now())
-        except Exception as e:
-            raise ValueError(f"Invalid recurrence rule: {e}")
-        
-        return value
-    
-    @validates('expires_on')
-    def validate_expires_on(self, key, value):
-        """Validate expires_on is required for recurring tasks"""
-        # This validation runs after recurrence_rule is set
-        if hasattr(self, 'recurrence_rule') and self.recurrence_rule:
-            if not value:
-                raise ValueError("expires_on is required for recurring tasks")
-        
-        return value
-    
     def to_dict(self, include_assignments=False):
         """Convert to dictionary for JSON serialization"""
         data = {
@@ -149,8 +129,6 @@ class Task(db.Model):
             'category': self.category,
             'start_time': self.start_time.strftime('%H:%M:%S') if self.start_time else None,
             'end_time': self.end_time.strftime('%H:%M:%S') if self.end_time else None,
-            'recurrence_rule': self.recurrence_rule,
-            'expires_on': self.expires_on.isoformat() if self.expires_on else None,
             'classroom_id': self.classroom_id,
             'notes': self.notes,
             'status': self.status,

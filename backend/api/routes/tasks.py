@@ -6,6 +6,7 @@ from datetime import datetime, date as dt_date, time as dt_time
 from api.models import db
 from api.models.task import Task
 from api.models.assignment import Assignment
+from api.models.recurring_series import RecurringSeries
 from api.services.recurrence_service import RecurrenceService
 
 bp = Blueprint('tasks', __name__, url_prefix='/api')
@@ -62,8 +63,6 @@ def create_task():
             category=category,
             start_time=s_t,
             end_time=e_t,
-            recurrence_rule=None,
-            expires_on=None,
             classroom_id=classroom_id,
             notes=notes
         )
@@ -81,7 +80,7 @@ def create_task():
 
 @bp.put('/tasks/<int:task_id>')
 def update_task(task_id: int):
-    """Update an existing task (template only for recurring tasks)"""
+    """Update an existing task template and optionally create a recurring series"""
     task = db.session.get(Task, task_id)
     if not task:
         return {'error': 'Task not found'}, 404
@@ -100,11 +99,14 @@ def update_task(task_id: int):
     aide_id = data.get('aide_id')  # Optional aide to assign recurring tasks to
     existing_assignment_date = data.get('existing_assignment_date')  # Date to exclude from generation
     
-    # Track if we're converting to recurring
-    was_recurring = task.recurrence_rule is not None
-    is_now_recurring = recurrence_rule is not None
+    # Validate recurrence parameters
+    if recurrence_rule is not None and expires_on is None:
+        return {'error': 'expires_on is required when recurrence_rule is provided'}, 400
     
-    # Update fields if provided
+    # Check if recurrence is being requested
+    is_creating_recurring = recurrence_rule is not None and expires_on is not None
+    
+    # Update task template fields if provided
     try:
         if title is not None:
             task.title = title.strip()
@@ -126,36 +128,54 @@ def update_task(task_id: int):
         if 'notes' in data:
             task.notes = notes
         
-        if 'recurrence_rule' in data:
-            task.recurrence_rule = recurrence_rule
-        
-        if 'expires_on' in data:
-            if expires_on:
-                task.expires_on = dt_date.fromisoformat(expires_on)
-            else:
-                task.expires_on = None
-        
         db.session.flush()  # Flush to get updated task data
         
-        # If task is being converted to recurring (or recurrence settings changed)
-        if is_now_recurring and not was_recurring:
-            # Parse existing assignment date if provided
-            exclude_date = None
+        # If recurrence is being requested, create a new recurring series
+        if is_creating_recurring:
+            # Parse existing assignment date (base date for the series)
+            base_date = dt_date.today()
             if existing_assignment_date:
                 try:
-                    exclude_date = dt_date.fromisoformat(existing_assignment_date)
+                    base_date = dt_date.fromisoformat(existing_assignment_date)
                 except Exception:
                     pass
             
-            # Generate recurring assignments
+            # Parse expires_on date
+            expires_on_date = dt_date.fromisoformat(expires_on)
+            
+            # Parse times for the series
+            series_start_time = task.start_time
+            series_end_time = task.end_time
+            if start_time:
+                s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
+                series_start_time = dt_time(s_h, s_m)
+            if end_time:
+                e_h, e_m = [int(x) for x in end_time.split(':')[:2]]
+                series_end_time = dt_time(e_h, e_m)
+            
+            # Create the recurring series
+            recurring_series = RecurringSeries(
+                task_id=task.id,
+                aide_id=aide_id,
+                recurrence_rule=recurrence_rule,
+                expires_on=expires_on_date,
+                start_time=series_start_time,
+                end_time=series_end_time,
+                base_date=base_date
+            )
+            db.session.add(recurring_series)
+            db.session.flush()  # Get the series ID
+            
+            # Generate recurring assignments linked to this series
             assignments_data = RecurrenceService.generate_assignments_for_task(
                 task_id=task.id,
-                rrule_string=task.recurrence_rule,
-                task_start_time=task.start_time,
-                task_end_time=task.end_time,
-                expires_on=task.expires_on,
-                aide_id=aide_id,  # Pass the aide_id if provided
-                exclude_date=exclude_date  # Exclude the existing assignment's date
+                rrule_string=recurrence_rule,
+                task_start_time=series_start_time,
+                task_end_time=series_end_time,
+                expires_on=expires_on_date,
+                aide_id=aide_id,
+                exclude_date=base_date,  # Exclude the base date (existing assignment)
+                recurring_series_id=recurring_series.id  # Link to the series
             )
             
             # Create all the assignments
@@ -164,6 +184,7 @@ def update_task(task_id: int):
                     Assignment(
                         task_id=a['task_id'],
                         aide_id=a['aide_id'],
+                        recurring_series_id=a['recurring_series_id'],
                         date=a['date'],
                         start_time=a['start_time'],
                         end_time=a['end_time'],
@@ -180,7 +201,7 @@ def update_task(task_id: int):
         return {'error': str(e)}, 400
     except Exception as e:
         db.session.rollback()
-        return {'error': 'Invalid data format'}, 400
+        return {'error': f'Invalid data format: {str(e)}'}, 400
 
 
 @bp.get('/tasks/<int:task_id>/assignments')

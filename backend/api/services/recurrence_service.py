@@ -115,7 +115,8 @@ class RecurrenceService:
         expires_on: date,
         horizon_weeks: int = DEFAULT_HORIZON_WEEKS,
         aide_id: Optional[int] = None,
-        exclude_date: Optional[date] = None
+        exclude_date: Optional[date] = None,
+        recurring_series_id: Optional[int] = None
     ) -> List[dict]:
         """
         Generate assignment instances for a recurring task.
@@ -129,6 +130,7 @@ class RecurrenceService:
             horizon_weeks: How many weeks ahead to generate (default: 12)
             aide_id: Optional aide ID to assign to (if None, assignments will be unassigned)
             exclude_date: Optional date to exclude from generation (e.g., existing assignment)
+            recurring_series_id: Optional recurring series ID to link assignments to
         
         Returns:
             List of assignment data dictionaries ready for database insertion
@@ -157,6 +159,7 @@ class RecurrenceService:
             {
                 'task_id': task_id,
                 'aide_id': aide_id,  # Use provided aide_id or None for unassigned
+                'recurring_series_id': recurring_series_id,  # Link to recurring series
                 'date': occ['date'],
                 'start_time': occ['start_time'],
                 'end_time': occ['end_time'],
@@ -177,7 +180,8 @@ class RecurrenceService:
         expires_on: date,
         current_latest_date: date,
         horizon_weeks: int = DEFAULT_HORIZON_WEEKS,
-        aide_id: Optional[int] = None
+        aide_id: Optional[int] = None,
+        recurring_series_id: Optional[int] = None
     ) -> List[dict]:
         """
         Extend assignment generation horizon for an existing recurring task.
@@ -193,6 +197,7 @@ class RecurrenceService:
             current_latest_date: Latest date currently in assignments table
             horizon_weeks: How many weeks ahead to maintain
             aide_id: Optional aide ID to assign to (if None, assignments will be unassigned)
+            recurring_series_id: Optional recurring series ID to link assignments to
         
         Returns:
             List of new assignment dictionaries to create
@@ -220,6 +225,7 @@ class RecurrenceService:
             {
                 'task_id': task_id,
                 'aide_id': aide_id,
+                'recurring_series_id': recurring_series_id,  # Link to recurring series
                 'date': occ['date'],
                 'start_time': occ['start_time'],
                 'end_time': occ['end_time'],

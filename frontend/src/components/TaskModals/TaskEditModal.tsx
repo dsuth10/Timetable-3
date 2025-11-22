@@ -96,28 +96,16 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
       setClassroomId(task.classroom_id || null);
       setNotes(task.notes || '');
       
-      // Handle recurring task fields
-      if (task.recurrence_rule) {
-        setIsRecurring(true);
-        
-        // Parse BYDAY from recurrence rule
-        const byDayMatch = task.recurrence_rule.match(/BYDAY=([^;]+)/);
-        if (byDayMatch) {
-          const days = byDayMatch[1].split(',').filter(d => WEEKDAY_MAP[d]) as Weekday[];
-          setSelectedWeekdays(days);
-        }
-        
-        // Calculate number of weeks from expires_on if available
-        if (task.expires_on && assignment?.date) {
-          const startDate = new Date(assignment.date);
-          const expiryDate = new Date(task.expires_on);
-          const diffTime = expiryDate.getTime() - startDate.getTime();
-          const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-          setNumWeeks(diffWeeks > 0 ? diffWeeks : 4);
-        } else {
-          setNumWeeks(4);
-        }
+      // Check if this assignment is part of a recurring series
+      // Note: Task no longer has recurrence_rule, but we can check the assignment
+      if (assignment?.recurring_series_id) {
+        // This assignment is part of a recurring series
+        // We don't pre-populate recurring fields in edit mode
+        setIsRecurring(false);
+        setSelectedWeekdays([]);
+        setNumWeeks(4);
       } else {
+        // Not part of a recurring series
         setIsRecurring(false);
         setSelectedWeekdays([]);
         setNumWeeks(4);
@@ -254,9 +242,14 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
         </Box>
       </DialogTitle>
       <DialogContent>
+        {assignment?.recurring_series_id && (
+          <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
+            This assignment is part of a recurring series. Edits to the task template will not affect existing recurring assignments.
+          </Alert>
+        )}
         {isRecurring && (
           <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
-            Editing a recurring task will update the task template only. Existing assignments will not be affected.
+            Creating a new recurring series for this task. Each recurring series is independent.
           </Alert>
         )}
         {error && (

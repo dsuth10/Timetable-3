@@ -103,8 +103,6 @@ def seed_database():
                 category="PLAYGROUND",
                 start_time=time(10, 30),
                 end_time=time(11, 0),
-                recurrence_rule="FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[4].id,
                 notes="Supervise students during morning recess"
             ))
@@ -113,8 +111,6 @@ def seed_database():
                 category="CLASS_SUPPORT",
                 start_time=time(9, 0),
                 end_time=time(10, 0),
-                recurrence_rule="FREQ=WEEKLY;BYDAY=MO,WE,FR",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[0].id,
                 notes="Small group reading intervention"
             ))
@@ -123,8 +119,6 @@ def seed_database():
                 category="CLASS_SUPPORT",
                 start_time=time(13, 0),
                 end_time=time(14, 0),
-                recurrence_rule="FREQ=WEEKLY;BYDAY=TU,TH",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[2].id,
                 notes="One-on-one math tutoring"
             ))
@@ -133,8 +127,6 @@ def seed_database():
                 category="PLAYGROUND",
                 start_time=time(12, 0),
                 end_time=time(12, 30),
-                recurrence_rule="FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[4].id,
                 notes="Cafeteria and playground supervision"
             ))
@@ -151,8 +143,6 @@ def seed_database():
                 category="INDIVIDUAL_SUPPORT",
                 start_time=time(9, 30),
                 end_time=time(10, 30),
-                recurrence_rule="FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[1].id,
                 notes="1:1 behavior intervention plan support"
             ))
@@ -161,8 +151,6 @@ def seed_database():
                 category="GROUP_SUPPORT",
                 start_time=time(11, 0),
                 end_time=time(11, 30),
-                recurrence_rule="FREQ=WEEKLY;BYDAY=TU,TH",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[3].id,
                 notes="English language learners support group"
             ))
@@ -179,8 +167,6 @@ def seed_database():
                 category="PLAYGROUND",
                 start_time=time(14, 30),
                 end_time=time(15, 0),
-                recurrence_rule="FREQ=WEEKLY;BYDAY=MO,WE,FR",
-                expires_on=next_monday + timedelta(weeks=10),
                 classroom_id=classrooms[4].id,
                 notes="Supervise afternoon outdoor activities"
             ))
@@ -197,8 +183,6 @@ def seed_database():
             session.flush()
             for i, task in enumerate(tasks, 1):
                 print(f"Created task {i}: {task.title} ({task.category})")
-                if task.recurrence_rule:
-                    print(f"  Recurring: {task.recurrence_rule}")
 
             print("\n=== Seeding Sample Assignments ===")
             assignments = []

@@ -51,6 +51,13 @@ class TeacherAide(db.Model):
         lazy='dynamic'
     )
     
+    recurring_series = relationship(
+        'RecurringSeries',
+        back_populates='aide',
+        foreign_keys='RecurringSeries.aide_id',
+        lazy='dynamic'
+    )
+    
     # Validation
     @validates('name')
     def validate_name(self, key, value):

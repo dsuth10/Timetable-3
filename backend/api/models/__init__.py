@@ -10,6 +10,7 @@ from .teacher_aide import TeacherAide
 from .availability import Availability
 from .classroom import Classroom
 from .task import Task
+from .recurring_series import RecurringSeries
 from .assignment import Assignment
 from .absence import Absence
 from .request import Request
@@ -25,6 +26,7 @@ __all__ = [
     'Availability',
     'Classroom',
     'Task',
+    'RecurringSeries',
     'Assignment',
     'Absence',
     'Request'

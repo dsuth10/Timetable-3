@@ -12,8 +12,8 @@ export const tasksApi = {
   createOneOff(payload: Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id'> & { notes?: string | null }): Promise<Task> {
     return api.post('/tasks', payload).then((r) => r.data as Task);
   },
-  // Old createRecurring removed - recurring tasks are now created by editing an assigned task
-  update(id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }): Promise<Task> {
+  // Update task template and optionally create a recurring series
+  update(id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes'>> & { aide_id?: number | null; existing_assignment_date?: string; recurrence_rule?: string; expires_on?: string }): Promise<Task> {
     return api.put(`/tasks/${id}`, payload).then((r) => r.data as Task);
   },
   listAssignments(taskId: ID) {
@@ -24,5 +24,8 @@ export const tasksApi = {
     return api.delete(`/tasks/${id}${query}`).then(() => undefined);
   },
 };
+
+// Add default export for backward compatibility
+export default tasksApi;
 
 

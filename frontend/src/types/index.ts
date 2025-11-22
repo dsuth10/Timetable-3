@@ -42,18 +42,33 @@ export interface Task {
   category: TaskCategory;
   start_time: string; // HH:MM:SS
   end_time: string;   // HH:MM:SS
-  recurrence_rule?: string | null;
-  expires_on?: string | null; // YYYY-MM-DD
   classroom_id?: ID | null;
   notes?: string | null;
   status?: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE';
   classroom?: Classroom;
 }
 
+export interface RecurringSeries {
+  id: ID;
+  task_id: ID;
+  aide_id: ID | null;
+  recurrence_rule: string;
+  expires_on: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  end_time: string;   // HH:MM:SS
+  base_date: string;  // YYYY-MM-DD
+  created_at?: string;
+  updated_at?: string;
+  task?: Task;
+  aide?: TeacherAide;
+  assignments_count?: number;
+}
+
 export interface Assignment {
   id: ID;
   task_id: ID;
   aide_id: ID | null;
+  recurring_series_id?: ID | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:MM:SS
   end_time: string;   // HH:MM:SS
