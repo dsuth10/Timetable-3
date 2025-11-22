@@ -127,8 +127,23 @@ export default function TasksManagement({ refreshTrigger }: Props) {
               >
                 <ListItemText
                   primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body1">{task.title}</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                        <Typography variant="body1">{task.title}</Typography>
+                        {task.classroom && (
+                          <Chip
+                            label={task.classroom.name}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              height: 18,
+                              fontSize: '0.6rem',
+                              flexShrink: 0,
+                              '& .MuiChip-label': { px: 0.75 },
+                            }}
+                          />
+                        )}
+                      </Box>
                       {task.recurrence_rule && (
                         <Repeat fontSize="small" color="primary" />
                       )}

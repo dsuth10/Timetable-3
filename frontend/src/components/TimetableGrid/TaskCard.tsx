@@ -71,18 +71,33 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                 <DragIndicator fontSize="small" />
               </IconButton>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    color: task ? 'text.primary' : 'error.main',
-                  }}
-                >
-                  {task?.title || `Missing Task #${assignment.task_id}`}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      color: task ? 'text.primary' : 'error.main',
+                    }}
+                  >
+                    {task?.title || `Missing Task #${assignment.task_id}`}
+                  </Typography>
+                  {task?.classroom && (
+                    <Chip
+                      label={task.classroom.name}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        flexShrink: 0,
+                        '& .MuiChip-label': { px: 0.75 },
+                      }}
+                    />
+                  )}
+                </Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                   {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
                 </Typography>

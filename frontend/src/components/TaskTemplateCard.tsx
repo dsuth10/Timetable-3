@@ -78,18 +78,33 @@ function TaskTemplateCardBase({ task, index, assignments, aides, onDoubleClick }
                 <DragIndicator fontSize="small" />
               </IconButton>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    color: 'text.primary',
-                  }}
-                >
-                  {task.title}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      color: 'text.primary',
+                    }}
+                  >
+                    {task.title}
+                  </Typography>
+                  {task.classroom && (
+                    <Chip
+                      label={task.classroom.name}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        flexShrink: 0,
+                        '& .MuiChip-label': { px: 0.75 },
+                      }}
+                    />
+                  )}
+                </Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
                   {durationText}
                 </Typography>
