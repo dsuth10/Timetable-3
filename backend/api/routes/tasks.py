@@ -206,6 +206,20 @@ def delete_task(task_id: int):
         return {'error': 'Task not found'}, 404
     
     try:
+        # Check if this is a reset operation (keep task, delete assignments)
+        reset = request.args.get('reset', '').lower() == 'true'
+        
+        if reset:
+            # Delete all assignments
+            Assignment.query.filter(Assignment.task_id == task_id).delete()
+            
+            # Reset task recurrence settings
+            task.recurrence_rule = None
+            task.expires_on = None
+            
+            db.session.commit()
+            return {'message': 'Task reset successfully'}, 200
+        
         # Delete the task itself - SQLAlchemy cascade will handle assignments
         db.session.delete(task)
         db.session.commit()
