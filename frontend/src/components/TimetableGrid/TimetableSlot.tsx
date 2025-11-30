@@ -1,17 +1,19 @@
 import { Droppable } from '@hello-pangea/dnd';
 import { Box, Typography } from '@mui/material';
 import { memo } from 'react';
-import { SLOT_HEIGHT_PX } from './timeUtils';
+// import { SLOT_HEIGHT_PX } from './timeUtils'; // No longer using fixed height
 
 type TimetableSlotProps = {
   aideId: number;
   date: string;
   timeSlot: string; // HH:MM format
   children?: React.ReactNode;
-  index: number; // Position index for visual guides
+  // index: number; // No longer needed for positioning
+  top: number;
+  height: number;
 };
 
-function TimetableSlotBase({ aideId, date, timeSlot, children, index }: TimetableSlotProps) {
+function TimetableSlotBase({ aideId, date, timeSlot, children, top, height }: TimetableSlotProps) {
   const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
 
   return (
@@ -22,10 +24,10 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, index }: Timetabl
           {...provided.droppableProps}
           sx={{
             position: 'absolute',
-            top: index * SLOT_HEIGHT_PX,
+            top: top,
             left: 0,
             right: 0,
-            height: SLOT_HEIGHT_PX,
+            height: height,
             borderBottom: '1px dashed',
             borderColor: 'divider',
             zIndex: 1,
@@ -98,7 +100,8 @@ export const TimetableSlot = memo(TimetableSlotBase, (prev, next) => {
     prev.aideId === next.aideId &&
     prev.date === next.date &&
     prev.timeSlot === next.timeSlot &&
-    prev.index === next.index &&
+    prev.top === next.top &&
+    prev.height === next.height &&
     prev.children === next.children
   );
 });

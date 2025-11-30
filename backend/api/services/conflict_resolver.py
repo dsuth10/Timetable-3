@@ -193,7 +193,7 @@ class ConflictResolver:
     def validate_shortened_task(
         original_start: dt_time,
         new_end: dt_time,
-        minimum_duration_minutes: int = 30
+        minimum_duration_minutes: int = 15
     ) -> tuple[bool, Optional[str]]:
         """
         Validate that shortened task meets minimum duration.

@@ -24,7 +24,7 @@ import { assignmentsApi } from '../../services/assignmentsApi';
 import { useTasksStore } from '../../store/stores/tasks';
 import type { Task, TaskCategory, Classroom, Weekday, Assignment } from '../../types';
 import { categoryColors } from '../../theme/theme';
-import { generateTimeSlots, END_HOUR } from '../TimetableGrid/timeUtils';
+import { generateTimeSlots, minutesToTime, END_TIME_MINUTES } from '../TimetableGrid/timeUtils';
 import TaskDeleteDialog from './TaskDeleteDialog';
 
 type Props = {
@@ -79,7 +79,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   const timeSlots = useMemo(() => {
     const slots = generateTimeSlots();
     // Add the end of the day time
-    slots.push(`${END_HOUR}:00`);
+    slots.push(minutesToTime(END_TIME_MINUTES));
     return slots;
   }, []);
 
@@ -144,22 +144,6 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
     setBusy(true);
     setError(undefined);
     
-    // Validate 15-minute increments
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    
-    if (startM % 15 !== 0) {
-      setError('Start time must be in 15-minute increments (00, 15, 30, 45)');
-      setBusy(false);
-      return;
-    }
-    
-    if (endM % 15 !== 0) {
-      setError('End time must be in 15-minute increments (00, 15, 30, 45)');
-      setBusy(false);
-      return;
-    }
-
     if (start >= end) {
       setError('End time must be after start time');
       setBusy(false);

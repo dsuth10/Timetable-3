@@ -25,8 +25,8 @@ import { categoryColors } from '../../theme/theme';
 import { 
   timeToMinutes, 
   minutesToTime, 
-  START_HOUR, 
-  END_HOUR,
+  START_TIME_MINUTES, 
+  END_TIME_MINUTES,
   addMinutesToTime
 } from '../TimetableGrid/timeUtils';
 
@@ -165,16 +165,16 @@ export default function AssignmentDurationModal({
     }
     
     // Check if times are within working hours
-    const workingStartMinutes = START_HOUR * 60;
-    const workingEndMinutes = END_HOUR * 60;
+    const workingStartMinutes = START_TIME_MINUTES;
+    const workingEndMinutes = END_TIME_MINUTES;
     
     if (startMinutes < workingStartMinutes || startMinutes >= workingEndMinutes) {
-      setError(`Start time must be between ${START_HOUR}:00 and ${END_HOUR}:00`);
+      setError(`Start time must be between ${minutesToTime(START_TIME_MINUTES)} and ${minutesToTime(END_TIME_MINUTES)}`);
       return;
     }
     
     if (endMinutes > workingEndMinutes) {
-      setError(`End time cannot exceed ${END_HOUR}:00 (end of working hours)`);
+      setError(`End time cannot exceed ${minutesToTime(END_TIME_MINUTES)} (end of working hours)`);
       return;
     }
     
@@ -269,7 +269,7 @@ export default function AssignmentDurationModal({
                 label="Start Time"
                 value={startTime}
                 onChange={handleStartTimeChange}
-                minutesStep={15}
+                minutesStep={5} // Updated step to 5 for finer control
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -284,7 +284,7 @@ export default function AssignmentDurationModal({
                 label="End Time"
                 value={endTime}
                 onChange={(newTime) => setEndTime(newTime)}
-                minutesStep={15}
+                minutesStep={5} // Updated step to 5 for finer control
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -362,4 +362,3 @@ export default function AssignmentDurationModal({
     </Dialog>
   );
 }
-

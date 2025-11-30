@@ -55,8 +55,9 @@ def validate_time_30min(field_names: list[str]):
                 if not (hh.isdigit() and mm.isdigit()):
                     return {"error": "Bad request", "message": f"{field} must be numeric time"}, 400
                 h, m = int(hh), int(mm)
-                if h < 0 or h > 23 or m not in (0, 15, 30, 45):
-                    return {"error": "Bad request", "message": f"{field} must be 15-min increment (00, 15, 30, or 45)"}, 400
+                # Allow 5-minute increments to support custom schedule segments (e.g. 08:50, 09:10)
+                if h < 0 or h > 23 or m % 5 != 0:
+                    return {"error": "Bad request", "message": f"{field} must be 5-min increment"}, 400
             return func(*args, **kwargs)
         return wrapper
     return decorator

@@ -1,5 +1,5 @@
 import type { Assignment } from '../../types';
-import { timeIntervalsOverlap, timeToMinutes } from './timeUtils';
+import { timeIntervalsOverlap, timeToMinutes, timeToPixels, durationToPixels } from './timeUtils';
 
 export interface TaskPosition {
   assignment: Assignment;
@@ -66,8 +66,8 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
     
     for (let i = 0; i < group.length; i++) {
       const assignment = group[i];
-      const top = calculateTopPosition(assignment.start_time);
-      const height = calculateHeight(assignment.start_time, assignment.end_time);
+      const top = timeToPixels(assignment.start_time);
+      const height = durationToPixels(assignment.start_time, assignment.end_time);
       const left = (i / maxColumns) * 100;
       const width = (1 / maxColumns) * 100;
 
@@ -84,32 +84,6 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
   }
 
   return positions;
-}
-
-/**
- * Calculate top position in pixels for a start time
- */
-function calculateTopPosition(startTime: string): number {
-  const [hours, minutes] = startTime.split(':').map(Number);
-  const totalMinutes = hours * 60 + minutes;
-  const startMinutes = 8 * 60; // 8:00 AM
-  const slotMinutes = 15;
-  const slotHeight = 30;
-  
-  return ((totalMinutes - startMinutes) / slotMinutes) * slotHeight;
-}
-
-/**
- * Calculate height in pixels for a time duration
- */
-function calculateHeight(startTime: string, endTime: string): number {
-  const startMinutes = timeToMinutes(startTime);
-  const endMinutes = timeToMinutes(endTime);
-  const durationMinutes = endMinutes - startMinutes;
-  const slotMinutes = 15;
-  const slotHeight = 30;
-  
-  return (durationMinutes / slotMinutes) * slotHeight;
 }
 
 /**

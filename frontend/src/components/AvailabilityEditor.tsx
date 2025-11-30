@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { AccessTime, Schedule } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
-import { generateTimeSlots, timeToMinutes, snapToSlot } from './TimetableGrid/timeUtils';
+import { generateTimeSlots, timeToMinutes, snapToSlot, minutesToTime, END_TIME_MINUTES } from './TimetableGrid/timeUtils';
 import type { Availability, ID, Weekday } from '../types';
 
 type AvailabilityEditorProps = {
@@ -39,8 +39,8 @@ const WEEKDAYS: { key: Weekday; label: string }[] = [
   { key: 'FR', label: 'Friday' },
 ];
 
-const DEFAULT_START_TIME = '08:00';
-const DEFAULT_END_TIME = '17:00';
+const DEFAULT_START_TIME = '08:50';
+const DEFAULT_END_TIME = '15:00';
 
 export default function AvailabilityEditor({
   aideId,
@@ -72,7 +72,12 @@ export default function AvailabilityEditor({
   }, [initialAvailability]);
 
   // Generate time slots for dropdowns
-  const timeSlots = generateTimeSlots();
+  const timeSlots = useMemo(() => {
+    const slots = generateTimeSlots();
+    // Add the end of the day time
+    slots.push(minutesToTime(END_TIME_MINUTES));
+    return slots;
+  }, []);
 
   const handleDayToggle = async (weekday: Weekday, enabled: boolean) => {
     if (disabled) return;

@@ -7,7 +7,7 @@ import { useUndoStore } from '../store/stores/undoStore';
 import { useTasksStore } from '../store/stores/tasks'; // Import tasks store
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
 import type { TeacherAide, Task } from '../types';
-import { calculateDuration, addMinutesToTime, timeToMinutes, END_HOUR } from '../components/TimetableGrid/timeUtils';
+import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } from '../components/TimetableGrid/timeUtils';
 
 type UseDragDropOptions = {
   onSuccess?: () => void;
@@ -354,9 +354,9 @@ export function useDragDrop(options?: UseDragDropOptions) {
     const { type, task, assignmentId, currentAssignment, sourceData } = pendingAssignment;
 
     // Validate end time doesn't exceed working hours
-    if (timeToMinutes(data.endTime.slice(0, 5)) > END_HOUR * 60) {
+    if (timeToMinutes(data.endTime.slice(0, 5)) > END_TIME_MINUTES) {
       window.dispatchEvent(new CustomEvent('app:error', { 
-        detail: { message: 'Cannot assign task: end time would exceed working hours (17:00)' } 
+        detail: { message: 'Cannot assign task: end time would exceed working hours (15:00)' } 
       }));
       return;
     }
@@ -546,5 +546,3 @@ export function useDragDrop(options?: UseDragDropOptions) {
 
   return { onDragEnd, ConflictUI, DurationModal };
 }
-
-

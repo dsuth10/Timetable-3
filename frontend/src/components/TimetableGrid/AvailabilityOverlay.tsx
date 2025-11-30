@@ -1,7 +1,7 @@
 import { Box, Tooltip } from '@mui/material';
 import { EventBusy } from '@mui/icons-material';
 import type { Availability, Absence } from '../../types';
-import { START_HOUR, END_HOUR, SLOT_HEIGHT_PX } from './timeUtils';
+import { START_TIME_MINUTES, END_TIME_MINUTES, PIXELS_PER_MINUTE } from './timeUtils';
 
 type AvailabilityOverlayProps = {
   aideId: number;
@@ -117,8 +117,8 @@ export default function AvailabilityOverlay({
     return hh * 60 + mm;
   };
 
-  const workStart = START_HOUR * 60;
-  const workEnd = END_HOUR * 60;
+  const workStart = START_TIME_MINUTES;
+  const workEnd = END_TIME_MINUTES;
   const availStart = Math.max(workStart, toMinutes(dayWindow.start_time));
   const availEnd = Math.min(workEnd, toMinutes(dayWindow.end_time));
 
@@ -126,16 +126,15 @@ export default function AvailabilityOverlay({
 
   // Block before availability
   if (availStart > workStart) {
-    const minutes = availStart - workStart;
-    blocks.push({ top: 0, height: (minutes / 15) * SLOT_HEIGHT_PX });
+    const duration = availStart - workStart;
+    blocks.push({ top: 0, height: duration * PIXELS_PER_MINUTE });
   }
   // Block after availability
   if (availEnd < workEnd) {
-    const minutesFromStart = availEnd - workStart;
-    const top = (minutesFromStart / 15) * SLOT_HEIGHT_PX;
-    const minutes = workEnd - availEnd;
-    const height = (minutes / 15) * SLOT_HEIGHT_PX;
-    blocks.push({ top, height });
+    const durationFromStart = availEnd - workStart;
+    const top = durationFromStart * PIXELS_PER_MINUTE;
+    const duration = workEnd - availEnd;
+    blocks.push({ top, height: duration * PIXELS_PER_MINUTE });
   }
 
   return (
@@ -158,4 +157,3 @@ export default function AvailabilityOverlay({
     </>
   );
 }
-

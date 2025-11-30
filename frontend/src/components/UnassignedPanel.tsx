@@ -141,54 +141,61 @@ export default function UnassignedPanel({ dateISO, refreshTrigger, onTaskDoubleC
           
           {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
           <Droppable droppableId="unassigned">
-            {(provided, snapshot) => (
-              <Box
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                sx={{ 
-                  minHeight: '100%',
-                  bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
-                  transition: 'background-color 0.2s',
-                  borderRadius: 1,
-                }}
-              >
-                {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
-                  <Accordion key={category} defaultExpanded>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Typography variant="body2" fontWeight={600}>
-                        {category.replace(/_/g, ' ')}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ ml: 1, color: 'text.secondary' }}
-                      >
-                        ({categoryTasks.length})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails sx={{ p: 1 }}>
-                      {categoryTasks.map((task, idx) => (
-                        <Box key={task.id}>
-                          <TaskTemplateCard
-                            task={task}
-                            index={idx}
-                            assignments={assignments}
-                            aides={aides}
-                            onDoubleClick={(t) => {
-                              // For double click on template, maybe create a new assignment on today?
-                              // Or just edit the task?
-                              // Existing prop is onTaskDoubleClick(assignment, task)
-                              // We don't have an assignment here.
-                              // Let's ignore for now or allow editing task
-                            }}
-                          />
-                        </Box>
-                      ))}
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-                {provided.placeholder}
-              </Box>
-            )}
+            {(provided, snapshot) => {
+              let globalIndex = 0; // Track index across all categories
+              
+              return (
+                <Box
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  sx={{ 
+                    minHeight: '100%',
+                    bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
+                    transition: 'background-color 0.2s',
+                    borderRadius: 1,
+                  }}
+                >
+                  {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
+                    <Accordion key={category} defaultExpanded>
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {category.replace(/_/g, ' ')}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ ml: 1, color: 'text.secondary' }}
+                        >
+                          ({categoryTasks.length})
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ p: 1 }}>
+                        {categoryTasks.map((task) => {
+                          const currentIndex = globalIndex++;
+                          return (
+                            <Box key={task.id}>
+                              <TaskTemplateCard
+                                task={task}
+                                index={currentIndex}
+                                assignments={assignments}
+                                aides={aides}
+                                onDoubleClick={(t) => {
+                                  // For double click on template, maybe create a new assignment on today?
+                                  // Or just edit the task?
+                                  // Existing prop is onTaskDoubleClick(assignment, task)
+                                  // We don't have an assignment here.
+                                  // Let's ignore for now or allow editing task
+                                }}
+                              />
+                            </Box>
+                          );
+                        })}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                  {provided.placeholder}
+                </Box>
+              );
+            }}
           </Droppable>
         </Box>
       </Box>
