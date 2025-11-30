@@ -4,7 +4,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import type { TeacherAide, Assignment, Task, Absence } from '../../types';
-import TimeAxis from './TimeAxis';
 import { TimeSlottedColumn } from './TimeSlottedColumn';
 
 type TimetableGridProps = {
@@ -32,9 +31,6 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
 
   return (
     <Box sx={{ display: 'flex', overflow: 'auto', height: '100%' }}>
-      {/* Time Axis */}
-      <TimeAxis />
-
       {/* Day Columns */}
       <Box 
         sx={{ 

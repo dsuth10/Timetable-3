@@ -70,7 +70,7 @@ class PdfService:
         headers = ["Time"] + [day.strftime("%A\n%d/%m") for day in days]
         data = [headers]
         
-        # Generate time slots (08:00 to 16:00, 30 min intervals)
+        # Generate time slots (08:00 to 16:00, 15 min intervals)
         start_hour = 8
         end_hour = 16
         time_slots = []
@@ -78,41 +78,61 @@ class PdfService:
         current_time = time(start_hour, 0)
         while current_time < time(end_hour, 0):
             time_slots.append(current_time)
-            # Add 30 mins
-            dt = datetime.combine(date.today(), current_time) + timedelta(minutes=30)
+            # Add 15 mins
+            dt = datetime.combine(date.today(), current_time) + timedelta(minutes=15)
             current_time = dt.time()
             
         # Fill matrix
-        # Map (date, rounded_time) -> List[Assignment]
+        # Map (date, bucket_time) -> List[Assignment]
         assignment_map: Dict[Tuple[date, time], List[Assignment]] = {}
         for a in assignments:
-            t = a.start_time
-            # Round down to nearest 30 mins for bucket key
-            # e.g. 09:15 -> 09:00, 09:45 -> 09:30
-            total_minutes = t.hour * 60 + t.minute
-            rounded_minutes = (total_minutes // 30) * 30
+            t_start = a.start_time
+            t_end = a.end_time
             
-            rounded_hour = rounded_minutes // 60
-            rounded_minute = rounded_minutes % 60
+            start_minutes = t_start.hour * 60 + t_start.minute
+            end_minutes = t_end.hour * 60 + t_end.minute
             
-            bucket_time = time(rounded_hour, rounded_minute)
+            # Round start down to nearest 15
+            current_minutes = (start_minutes // 15) * 15
             
-            key = (a.date, bucket_time)
-            if key not in assignment_map:
-                assignment_map[key] = []
-            assignment_map[key].append(a)
+            # Iterate 15 mins at a time until end time
+            while current_minutes < end_minutes:
+                h = current_minutes // 60
+                m = current_minutes % 60
+                
+                if h >= 24: break
+                
+                bucket_time = time(h, m)
+                key = (a.date, bucket_time)
+                
+                if key not in assignment_map:
+                    assignment_map[key] = []
+                
+                if a not in assignment_map[key]:
+                    assignment_map[key].append(a)
+                    
+                current_minutes += 15
             
         # Sort assignments within each bucket by actual start time
         for key in assignment_map:
             assignment_map[key].sort(key=lambda x: x.start_time)
             
-        for slot_time in time_slots:
+        # Track spans
+        spans = []
+        # State: day_idx -> {'assignments': [Assignment], 'start_row': int}
+        col_state = {}
+        
+        for i, slot_time in enumerate(time_slots):
+            # row index in data (0 is header)
+            row_idx = i + 1
             row = [slot_time.strftime("%H:%M")]
-            for day in days:
+            
+            for day_idx, day in enumerate(days):
                 # Find assignments bucketed to this time slot
                 slot_assignments = assignment_map.get((day, slot_time), [])
-                cell_content_parts = []
                 
+                # Content generation
+                cell_content_parts = []
                 for assignment in slot_assignments:
                     parts = []
                     
@@ -135,8 +155,49 @@ class PdfService:
                     cell_content_parts.append("<br/>".join(parts))
                     
                 cell_text = "".join(cell_content_parts)
-                row.append(Paragraph(cell_text, styles['Normal']))
+                
+                # Span detection
+                should_span = False
+                if day_idx in col_state:
+                    prev = col_state[day_idx]
+                    # Compare assignments by ID
+                    prev_ids = [x.id for x in prev['assignments']]
+                    curr_ids = [x.id for x in slot_assignments]
+                    
+                    if slot_assignments and prev_ids == curr_ids:
+                        should_span = True
+                
+                if should_span:
+                    # Continue span
+                    row.append(Paragraph("", styles['Normal']))
+                else:
+                    # New block or empty
+                    # Close previous span if it existed
+                    if day_idx in col_state:
+                        prev = col_state[day_idx]
+                        if row_idx - 1 > prev['start_row']:
+                            # Col in table = day_idx + 1 (0 is Time)
+                            c = day_idx + 1
+                            spans.append(('SPAN', (c, prev['start_row']), (c, row_idx - 1)))
+                    
+                    # Start new state if not empty
+                    if slot_assignments:
+                        col_state[day_idx] = {'assignments': slot_assignments, 'start_row': row_idx}
+                    else:
+                        if day_idx in col_state:
+                            del col_state[day_idx]
+                            
+                    row.append(Paragraph(cell_text, styles['Normal']))
+            
             data.append(row)
+            
+        # Close any open spans at the end
+        final_row_idx = len(data) - 1
+        for day_idx in col_state:
+            prev = col_state[day_idx]
+            if final_row_idx > prev['start_row']:
+                c = day_idx + 1
+                spans.append(('SPAN', (c, prev['start_row']), (c, final_row_idx)))
             
         # Create Table
         # Col widths: Time is narrow, days are equal
@@ -148,7 +209,7 @@ class PdfService:
         table = Table(data, colWidths=col_widths, repeatRows=1)
         
         # Style
-        ts = TableStyle([
+        style_cmds = [
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -157,7 +218,12 @@ class PdfService:
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ])
+        ]
+        
+        # Add calculated spans
+        style_cmds.extend(spans)
+        
+        ts = TableStyle(style_cmds)
         
         # Add alternating colors or specific assignment styling if needed
         # For now, just grid
