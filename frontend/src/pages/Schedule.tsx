@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { 
+  Box, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  SelectChangeEvent, 
+  Button, 
+  Tooltip, 
+  Menu
+} from '@mui/material';
+import { FileDownload as FileDownloadIcon, PictureAsPdf as PdfIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
 import { useUiStore } from '../store/stores/uiStore';
 import { useAidesStore } from '../store/stores/aides';
 import { useTasksStore } from '../store/stores/tasks';
 import { assignmentsApi } from '../services/assignmentsApi';
+import { calendarApi } from '../services/calendarApi';
+import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import AppDragDropContext from '../components/DragDropContext';
 import UnassignedPanel from '../components/UnassignedPanel';
@@ -53,6 +66,9 @@ export default function Schedule() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { byAide: absencesByAide, listForAide, delete: deleteAbsence } = useAbsencesStore();
   const [selectedAbsenceDate, setSelectedAbsenceDate] = useState<string | null>(null);
+  
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
+  const exportMenuOpen = Boolean(exportAnchorEl);
 
   // Initialize visible aides when aides are loaded
   useEffect(() => {
@@ -215,6 +231,68 @@ export default function Schedule() {
     }
   };
 
+  const handleExportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+  };
+
+  const handleExportIcs = async () => {
+    handleExportClose();
+    if (!weekDates.length) return;
+    
+    setLoading(true);
+    try {
+      const startDate = weekDates[0];
+      const endDate = weekDates[weekDates.length - 1];
+      
+      const blob = await calendarApi.export({
+        start_date: startDate,
+        end_date: endDate,
+        aide_id: selectedAideId || undefined
+      });
+      
+      const filename = selectedAide 
+        ? `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.ics`
+        : `schedule-${startDate}.ics`;
+        
+      downloadBlob(blob, filename);
+    } catch (e: any) {
+      setError(e.message || 'Failed to export schedule');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    handleExportClose();
+    if (!weekDates.length) return;
+    
+    setLoading(true);
+    try {
+      const startDate = weekDates[0];
+      const endDate = weekDates[weekDates.length - 1];
+      
+      const blob = await calendarApi.exportPdf({
+        start_date: startDate,
+        end_date: endDate,
+        aide_id: selectedAideId || undefined
+      });
+      
+      const filename = selectedAide 
+        ? `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.pdf`
+        : `schedule-${startDate}.pdf`;
+        
+      downloadBlob(blob, filename);
+    } catch (e: any) {
+      setError(e.message || 'Failed to export PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
     onSuccess: refreshData,
     aides: aides
@@ -281,7 +359,41 @@ export default function Schedule() {
                 </Select>
               </FormControl>
               
-              <UndoRedoControls />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Tooltip title="Export Schedule">
+                  <Button
+                    startIcon={<FileDownloadIcon />}
+                    onClick={handleExportClick}
+                    disabled={loading}
+                    variant="outlined"
+                    size="small"
+                    aria-controls={exportMenuOpen ? 'export-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={exportMenuOpen ? 'true' : undefined}
+                  >
+                    Export
+                  </Button>
+                </Tooltip>
+                <Menu
+                  id="export-menu"
+                  anchorEl={exportAnchorEl}
+                  open={exportMenuOpen}
+                  onClose={handleExportClose}
+                  MenuListProps={{
+                    'aria-labelledby': 'basic-button',
+                  }}
+                >
+                  <MenuItem onClick={handleExportIcs}>
+                    <CalendarIcon fontSize="small" sx={{ mr: 1 }} />
+                    Export to Calendar (.ics)
+                  </MenuItem>
+                  <MenuItem onClick={handleExportPdf}>
+                    <PdfIcon fontSize="small" sx={{ mr: 1 }} />
+                    Export to PDF
+                  </MenuItem>
+                </Menu>
+                <UndoRedoControls />
+              </Box>
             </Box>
             {loading && <LoadingState message="Loading schedule..." />}
             {error && (

@@ -13,20 +13,43 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Add as AddIcon, Edit } from '@mui/icons-material';
+import { Add as AddIcon, Edit, FileDownload } from '@mui/icons-material';
 import { useAidesStore } from '../store/stores/aides';
 import AideFormModal from '../components/AideFormModal';
 import type { TeacherAide } from '../types';
+import { calendarApi } from '../services/calendarApi';
+import { downloadBlob } from '../utils/download';
 
 export default function Aides() {
   const { aides, loading, error, fetchAides } = useAidesStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAide, setSelectedAide] = useState<TeacherAide | null>(null);
+  const [exportingId, setExportingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
   }, [fetchAides]);
+
+  const handleExportAide = async (aide: TeacherAide) => {
+    setExportingId(aide.id);
+    const today = new Date();
+    const future = new Date();
+    future.setDate(today.getDate() + 28); // 4 weeks
+    
+    try {
+      const blob = await calendarApi.export({
+        aide_id: aide.id,
+        start_date: today.toISOString().slice(0, 10),
+        end_date: future.toISOString().slice(0, 10)
+      });
+      downloadBlob(blob, `schedule-${aide.name.replace(/\s+/g, '_')}.ics`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setExportingId(null);
+    }
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -68,6 +91,7 @@ export default function Aides() {
               </ListItemAvatar>
               <ListItemText
                 primary={aide.name}
+                secondaryTypographyProps={{ component: 'div' }}
                 secondary={
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                     {aide.qualifications && (
@@ -86,6 +110,18 @@ export default function Aides() {
                 }
               />
               <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Tooltip title="Export Schedule (Next 4 Weeks)">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportAide(aide);
+                    }}
+                    disabled={exportingId === aide.id}
+                  >
+                    <FileDownload fontSize="small" />
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Edit Aide">
                   <IconButton
                     size="small"

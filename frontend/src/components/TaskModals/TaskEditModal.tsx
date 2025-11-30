@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -20,9 +20,11 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { classroomsApi } from '../../services/classroomsApi';
+import { assignmentsApi } from '../../services/assignmentsApi';
 import { useTasksStore } from '../../store/stores/tasks';
 import type { Task, TaskCategory, Classroom, Weekday, Assignment } from '../../types';
 import { categoryColors } from '../../theme/theme';
+import { generateTimeSlots, END_HOUR } from '../TimetableGrid/timeUtils';
 import TaskDeleteDialog from './TaskDeleteDialog';
 
 type Props = {
@@ -72,6 +74,14 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Generate time slots
+  const timeSlots = useMemo(() => {
+    const slots = generateTimeSlots();
+    // Add the end of the day time
+    slots.push(`${END_HOUR}:00`);
+    return slots;
+  }, []);
 
   // Load classrooms when modal opens
   useEffect(() => {
@@ -157,67 +167,118 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
     }
 
     try {
-      // Build payload
-      const payload: any = {
-        title,
-        category,
-        start_time: start,
-        end_time: end,
-        classroom_id: classroomId,
-        notes: notes || null,
-      };
-      
-      // Handle recurring task fields
-      if (isRecurring) {
-        if (selectedWeekdays.length === 0) {
-          setError('Please select at least one weekday');
-          setBusy(false);
-          return;
-        }
-        if (!numWeeks || numWeeks < 1) {
-          setError('Please enter a valid number of weeks (at least 1)');
-          setBusy(false);
-          return;
-        }
-        
-        payload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
-        
-        // Calculate expiry date based on number of weeks from assignment date
-        if (assignment?.date) {
-          const startDate = new Date(assignment.date);
-          startDate.setDate(startDate.getDate() + (numWeeks * 7));
-          payload.expires_on = startDate.toISOString().split('T')[0];
+      // If editing an assignment (scheduled task)
+      if (assignment) {
+        // Update assignment times and status
+        await assignmentsApi.update(assignment.id, {
+          start_time: start,
+          end_time: end,
+          version: assignment.version
+        });
+
+        // Update task template (shared properties, but NOT times to preserve defaults)
+        const taskPayload: any = {
+          title,
+          category,
+          classroom_id: classroomId,
+          notes: notes || null,
+        };
+
+        // Handle recurring task fields for task update if needed
+        // (Usually we don't convert to recurring series when editing an instance unless explicit)
+        // Keeping existing logic for recurring creation just in case user checked it
+        if (isRecurring) {
+          if (selectedWeekdays.length === 0) {
+            setError('Please select at least one weekday');
+            setBusy(false);
+            return;
+          }
+          if (!numWeeks || numWeeks < 1) {
+            setError('Please enter a valid number of weeks (at least 1)');
+            setBusy(false);
+            return;
+          }
+          
+          taskPayload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
+          
+          // Calculate expiry date based on number of weeks from assignment date
+          if (assignment.date) {
+            const startDate = new Date(assignment.date);
+            startDate.setDate(startDate.getDate() + (numWeeks * 7));
+            taskPayload.expires_on = startDate.toISOString().split('T')[0];
+          } else {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() + (numWeeks * 7));
+            taskPayload.expires_on = startDate.toISOString().split('T')[0];
+          }
+          
+          if (assignment.aide_id) {
+            taskPayload.aide_id = assignment.aide_id;
+          }
+          
+          taskPayload.existing_assignment_date = assignment.date;
         } else {
-          // Fallback to weeks from today if no assignment date
+            taskPayload.recurrence_rule = null;
+            taskPayload.expires_on = null;
+        }
+
+        const updatedTask = await updateTask(task.id, taskPayload);
+        
+        // Dispatch success event
+        try {
+          window.dispatchEvent(new CustomEvent('app:success', { 
+            detail: { message: 'Task and assignment updated successfully' } 
+          }));
+        } catch {}
+        
+        onUpdated?.(updatedTask);
+      } else {
+        // Editing task template only (Task Bank)
+        const payload: any = {
+          title,
+          category,
+          start_time: start,
+          end_time: end,
+          classroom_id: classroomId,
+          notes: notes || null,
+        };
+        
+        // Handle recurring task fields
+        if (isRecurring) {
+          if (selectedWeekdays.length === 0) {
+            setError('Please select at least one weekday');
+            setBusy(false);
+            return;
+          }
+          if (!numWeeks || numWeeks < 1) {
+            setError('Please enter a valid number of weeks (at least 1)');
+            setBusy(false);
+            return;
+          }
+          
+          payload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
+          
+          // Fallback to weeks from today
           const startDate = new Date();
           startDate.setDate(startDate.getDate() + (numWeeks * 7));
           payload.expires_on = startDate.toISOString().split('T')[0];
+        } else {
+          payload.recurrence_rule = null;
+          payload.expires_on = null;
         }
         
-        // Include aide_id if this assignment is currently assigned to an aide
-        if (assignment?.aide_id) {
-          payload.aide_id = assignment.aide_id;
-        }
+        const updatedTask = await updateTask(task.id, payload);
         
-        // Include the existing assignment's date to exclude it from generation
-        if (assignment?.date) {
-          payload.existing_assignment_date = assignment.date;
-        }
-      } else {
-        payload.recurrence_rule = null;
-        payload.expires_on = null;
+        // Dispatch success event
+        try {
+          window.dispatchEvent(new CustomEvent('app:success', { 
+            detail: { message: 'Task updated successfully' } 
+          }));
+        } catch {}
+        
+        onUpdated?.(updatedTask);
       }
       
-      const updatedTask = await updateTask(task.id, payload);
-      
-      // Dispatch success event for toast notification
-      try {
-        window.dispatchEvent(new CustomEvent('app:success', { 
-          detail: { message: 'Task updated successfully' } 
-        }));
-      } catch {}
-      
-      onUpdated?.(updatedTask);
       handleClose();
     } catch (e: any) {
       setError(e.message || 'Failed to update task');
@@ -294,24 +355,35 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           </FormControl>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              label="Start Time"
-              type="time"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              fullWidth
-              required
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="End Time"
-              type="time"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              fullWidth
-              required
-              InputLabelProps={{ shrink: true }}
-            />
+            <FormControl fullWidth required>
+              <InputLabel>Start Time</InputLabel>
+              <Select
+                value={start}
+                label="Start Time"
+                onChange={(e) => setStart(e.target.value)}
+              >
+                {timeSlots.map(time => (
+                  <MenuItem key={time} value={time}>
+                    {time}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth required>
+              <InputLabel>End Time</InputLabel>
+              <Select
+                value={end}
+                label="End Time"
+                onChange={(e) => setEnd(e.target.value)}
+              >
+                {timeSlots.map(time => (
+                  <MenuItem key={time} value={time}>
+                    {time}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
           {/* Classroom Selection */}
@@ -437,4 +509,3 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
     </Dialog>
   );
 }
-

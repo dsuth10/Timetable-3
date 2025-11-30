@@ -49,7 +49,7 @@ def create_app(config=None):
     # instance folder already ensured above
     
     # Register blueprints
-    from api.routes import aides, availability, tasks, assignments, absences, classrooms, requests, recurring_series
+    from api.routes import aides, availability, tasks, assignments, absences, classrooms, requests, recurring_series, calendar
     app.register_blueprint(aides.bp)
     app.register_blueprint(availability.bp)
     app.register_blueprint(tasks.bp)
@@ -58,6 +58,7 @@ def create_app(config=None):
     app.register_blueprint(classrooms.bp)
     app.register_blueprint(requests.bp)
     app.register_blueprint(recurring_series.bp)
+    app.register_blueprint(calendar.calendar_bp)
     
     # Error handlers (T052)
     @app.errorhandler(400)

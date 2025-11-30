@@ -13,6 +13,10 @@ Alembic==1.13.1
 
 # Date/Time & Recurrence
 python-dateutil==2.8.2
+icalendar==5.0.11
+
+# PDF Generation
+reportlab==4.0.8
 
 # Testing
 pytest==8.0.2
@@ -23,4 +27,3 @@ pytest-flask==1.3.0
 python-dotenv==1.0.1
 ruff==0.1.15
 black==24.1.1
-

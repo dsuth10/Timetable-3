@@ -84,6 +84,7 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
               </ListItemAvatar>
               <ListItemText
                 primary={aide.name}
+                secondaryTypographyProps={{ component: 'div' }}
                 secondary={
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                     {aide.qualifications && (

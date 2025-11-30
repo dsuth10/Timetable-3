@@ -8,6 +8,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  SelectChangeEvent,
   MenuItem,
   Box,
   Alert,
@@ -28,6 +29,17 @@ import {
   END_HOUR,
   addMinutesToTime
 } from '../TimetableGrid/timeUtils';
+
+const DURATION_OPTIONS = [
+  { value: 15, label: '15 minutes' },
+  { value: 30, label: '30 minutes' },
+  { value: 45, label: '45 minutes' },
+  { value: 60, label: '1 hour' },
+  { value: 75, label: '1 hour 15 minutes' },
+  { value: 90, label: '1 hour 30 minutes' },
+  { value: 105, label: '1 hour 45 minutes' },
+  { value: 120, label: '2 hours' },
+];
 
 type Props = {
   open: boolean;
@@ -90,6 +102,19 @@ export default function AssignmentDurationModal({
       setError(undefined);
     }
   }, [open, initialData]);
+
+  // Calculate current duration in minutes
+  const currentDuration = startTime && endTime 
+    ? Math.round((endTime.getTime() - startTime.getTime()) / 60000)
+    : 0;
+
+  const handleDurationChange = (event: SelectChangeEvent<number>) => {
+    const durationMinutes = Number(event.target.value);
+    if (startTime) {
+      const newEndDate = new Date(startTime.getTime() + durationMinutes * 60000);
+      setEndTime(newEndDate);
+    }
+  };
 
   const handleStartTimeChange = (newTime: Date | null) => {
     if (newTime) {
@@ -172,26 +197,6 @@ export default function AssignmentDurationModal({
   };
 
   if (!task) return null;
-
-  // Calculate duration for display
-  const getDurationText = () => {
-    if (!startTime || !endTime) return '';
-    const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
-    const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
-    const duration = endMinutes - startMinutes;
-    if (duration <= 0) return '';
-    
-    const hours = Math.floor(duration / 60);
-    const mins = duration % 60;
-    
-    if (hours === 0) {
-      return `${mins} minutes`;
-    } else if (mins === 0) {
-      return `${hours} hour${hours > 1 ? 's' : ''}`;
-    } else {
-      return `${hours} hour${hours > 1 ? 's' : ''} ${mins} minutes`;
-    }
-  };
 
   return (
     <Dialog
@@ -293,14 +298,23 @@ export default function AssignmentDurationModal({
             </Box>
           </LocalizationProvider>
 
-          {/* Duration Display */}
-          {startTime && endTime && getDurationText() && (
-            <Box sx={{ p: 1.5, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200' }}>
-              <Typography variant="body2" color="info.dark">
-                <strong>Duration:</strong> {getDurationText()}
-              </Typography>
-            </Box>
-          )}
+          {/* Duration Selection */}
+          <FormControl fullWidth>
+            <InputLabel>Duration</InputLabel>
+            <Select
+              value={currentDuration > 0 ? currentDuration : ''}
+              label="Duration"
+              onChange={handleDurationChange}
+              startAdornment={<AccessTime sx={{ ml: 1, mr: 0.5, color: 'action.active' }} />}
+              disabled={!startTime}
+            >
+              {DURATION_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           {/* Aide Selection */}
           <FormControl fullWidth>
