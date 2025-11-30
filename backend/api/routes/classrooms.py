@@ -16,6 +16,9 @@ def create_classroom():
     teacher = (data.get('teacher') or '').strip()
     capacity = data.get('capacity')
     notes = data.get('notes')
+    year_level = data.get('year_level')
+    is_composite = data.get('is_composite', False)
+    composite_year_levels = data.get('composite_year_levels')
 
     if not name:
         return {'error': 'Name is required'}, 400
@@ -33,7 +36,10 @@ def create_classroom():
         room_number=room_number,
         teacher=teacher,
         capacity=capacity,
-        notes=notes
+        notes=notes,
+        year_level=year_level,
+        is_composite=is_composite,
+        composite_year_levels=composite_year_levels
     )
     try:
         db.session.add(c)
@@ -85,6 +91,15 @@ def update_classroom(classroom_id):
         
     if 'notes' in data:
         c.notes = data.get('notes')
+
+    if 'year_level' in data:
+        c.year_level = data.get('year_level')
+        
+    if 'is_composite' in data:
+        c.is_composite = data.get('is_composite')
+        
+    if 'composite_year_levels' in data:
+        c.composite_year_levels = data.get('composite_year_levels')
 
     try:
         db.session.commit()

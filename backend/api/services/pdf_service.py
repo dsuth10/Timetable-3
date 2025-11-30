@@ -70,48 +70,45 @@ class PdfService:
         headers = ["Time"] + [day.strftime("%A\n%d/%m") for day in days]
         data = [headers]
         
-        # Generate time slots (08:00 to 16:00, 15 min intervals)
-        start_hour = 8
-        end_hour = 16
-        time_slots = []
+        # Define custom schedule segments matching the frontend
+        schedule_segments = [
+            (time(8, 50), time(9, 10)),
+            (time(9, 10), time(9, 40)),
+            (time(9, 40), time(10, 10)),
+            (time(10, 10), time(10, 40)),
+            (time(10, 40), time(11, 10)),
+            (time(11, 10), time(11, 50)),
+            (time(11, 50), time(12, 20)),
+            (time(12, 20), time(12, 50)),
+            (time(12, 50), time(13, 20)),
+            (time(13, 20), time(14, 00)),
+            (time(14, 00), time(14, 30)),
+            (time(14, 30), time(15, 00)),
+        ]
         
-        current_time = time(start_hour, 0)
-        while current_time < time(end_hour, 0):
-            time_slots.append(current_time)
-            # Add 15 mins
-            dt = datetime.combine(date.today(), current_time) + timedelta(minutes=15)
-            current_time = dt.time()
-            
+        # Helper to check if time intervals overlap
+        def intervals_overlap(start1, end1, start2, end2):
+            # Simple overlap check: (StartA < EndB) and (EndA > StartB)
+            return start1 < end2 and end1 > start2
+
         # Fill matrix
-        # Map (date, bucket_time) -> List[Assignment]
+        # Map (date, segment_start_time) -> List[Assignment]
         assignment_map: Dict[Tuple[date, time], List[Assignment]] = {}
+        
         for a in assignments:
             t_start = a.start_time
             t_end = a.end_time
             
-            start_minutes = t_start.hour * 60 + t_start.minute
-            end_minutes = t_end.hour * 60 + t_end.minute
-            
-            # Round start down to nearest 15
-            current_minutes = (start_minutes // 15) * 15
-            
-            # Iterate 15 mins at a time until end time
-            while current_minutes < end_minutes:
-                h = current_minutes // 60
-                m = current_minutes % 60
-                
-                if h >= 24: break
-                
-                bucket_time = time(h, m)
-                key = (a.date, bucket_time)
-                
-                if key not in assignment_map:
-                    assignment_map[key] = []
-                
-                if a not in assignment_map[key]:
-                    assignment_map[key].append(a)
+            # Check against all segments
+            for seg_start, seg_end in schedule_segments:
+                if intervals_overlap(t_start, t_end, seg_start, seg_end):
+                    key = (a.date, seg_start)
                     
-                current_minutes += 15
+                    if key not in assignment_map:
+                        assignment_map[key] = []
+                    
+                    if a not in assignment_map[key]:
+                        assignment_map[key].append(a)
             
         # Sort assignments within each bucket by actual start time
         for key in assignment_map:
@@ -122,14 +119,17 @@ class PdfService:
         # State: day_idx -> {'assignments': [Assignment], 'start_row': int}
         col_state = {}
         
-        for i, slot_time in enumerate(time_slots):
+        for i, (seg_start, seg_end) in enumerate(schedule_segments):
             # row index in data (0 is header)
             row_idx = i + 1
-            row = [slot_time.strftime("%H:%M")]
+            
+            # Format time label with range
+            time_label = f"{seg_start.strftime('%H:%M')}\n{seg_end.strftime('%H:%M')}"
+            row = [time_label]
             
             for day_idx, day in enumerate(days):
                 # Find assignments bucketed to this time slot
-                slot_assignments = assignment_map.get((day, slot_time), [])
+                slot_assignments = assignment_map.get((day, seg_start), [])
                 
                 # Content generation
                 cell_content_parts = []

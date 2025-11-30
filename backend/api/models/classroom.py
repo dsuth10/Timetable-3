@@ -3,7 +3,7 @@ T035: Classroom Model
 Represents a physical or virtual learning space.
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, Index, Boolean
 from sqlalchemy.orm import relationship, validates
 from api.models import db
 
@@ -26,6 +26,9 @@ class Classroom(db.Model):
     teacher = Column(String(100), nullable=False, server_default='TBD') # Default for migration
     capacity = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
+    year_level = Column(String(50), nullable=True)
+    is_composite = Column(Boolean, default=False, nullable=False)
+    composite_year_levels = Column(String(50), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships
@@ -78,6 +81,26 @@ class Classroom(db.Model):
             raise ValueError("Capacity must be a positive integer")
         return value
     
+    @validates('year_level')
+    def validate_year_level(self, key, value):
+        """Validate year level is one of the allowed values"""
+        if value:
+            valid_levels = {'Prep', '1', '2', '3', '4', '5', '6'}
+            if value not in valid_levels:
+                raise ValueError(f"Invalid year level: {value}")
+        return value
+
+    @validates('composite_year_levels')
+    def validate_composite_year_levels(self, key, value):
+        """Validate composite year levels are allowed values"""
+        if value:
+            levels = [l.strip() for l in value.split(',')]
+            valid_levels = {'Prep', '1', '2', '3', '4', '5', '6'}
+            for level in levels:
+                if level not in valid_levels:
+                    raise ValueError(f"Invalid composite year level: {level}")
+        return value
+
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""
         return {
@@ -87,6 +110,9 @@ class Classroom(db.Model):
             'teacher': self.teacher,
             'capacity': self.capacity,
             'notes': self.notes,
+            'year_level': self.year_level,
+            'is_composite': self.is_composite,
+            'composite_year_levels': self.composite_year_levels,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     

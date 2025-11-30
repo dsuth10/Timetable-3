@@ -35,6 +35,9 @@ export interface Classroom {
   teacher: string;
   capacity?: number | null;
   notes?: string | null;
+  year_level?: string | null;
+  is_composite?: boolean;
+  composite_year_levels?: string | null;
   created_at?: string;
 }
 

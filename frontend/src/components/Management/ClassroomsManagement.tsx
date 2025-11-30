@@ -104,6 +104,19 @@ export default function ClassroomsManagement() {
                       variant="outlined" 
                       sx={{ fontSize: '0.75rem', height: 24 }}
                     />
+                    {(classroom.is_composite || classroom.year_level) && (
+                      <Chip
+                        label={
+                          classroom.is_composite
+                            ? `Years: ${classroom.composite_year_levels}`
+                            : `Year: ${classroom.year_level}`
+                        }
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem', height: 24 }}
+                      />
+                    )}
                   </Box>
                 }
                 secondary={
