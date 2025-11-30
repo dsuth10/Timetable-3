@@ -16,8 +16,7 @@ from .absence import Absence
 from .request import Request
 
 # Base class for Alembic
-from sqlalchemy.orm import declarative_base
-Base = declarative_base()
+Base = db.Model
 
 __all__ = [
     'db',

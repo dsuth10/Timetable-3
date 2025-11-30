@@ -32,6 +32,7 @@ import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
 import RequestsManagement from '../components/Management/RequestsManagement';
+import ClassroomsManagement from '../components/Management/ClassroomsManagement';
 import UndoRedoControls from '../components/UndoRedoControls';
 import LoadingState from '../components/common/LoadingState';
 import AbsenceModal from '../components/AbsenceModal';
@@ -432,6 +433,7 @@ export default function Schedule() {
         aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} />}
         tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
         requestsContent={<RequestsManagement />}
+        classroomsContent={<ClassroomsManagement />}
       />
 
       {/* Modals */}
@@ -537,5 +539,3 @@ export default function Schedule() {
     </Box>
   );
 }
-
-

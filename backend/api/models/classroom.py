@@ -22,6 +22,8 @@ class Classroom(db.Model):
     # Columns
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False, unique=True, index=True)
+    room_number = Column(String(20), nullable=False, server_default='TBD') # Default for migration
+    teacher = Column(String(100), nullable=False, server_default='TBD') # Default for migration
     capacity = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -50,6 +52,24 @@ class Classroom(db.Model):
         if len(value) > 100:
             raise ValueError("Classroom name must not exceed 100 characters")
         return value.strip()
+
+    @validates('room_number')
+    def validate_room_number(self, key, value):
+        """Validate room_number is provided"""
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Room number is required")
+        if len(value) > 20:
+            raise ValueError("Room number must not exceed 20 characters")
+        return value.strip()
+
+    @validates('teacher')
+    def validate_teacher(self, key, value):
+        """Validate teacher is provided"""
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Teacher name is required")
+        if len(value) > 100:
+            raise ValueError("Teacher name must not exceed 100 characters")
+        return value.strip()
     
     @validates('capacity')
     def validate_capacity(self, key, value):
@@ -63,6 +83,8 @@ class Classroom(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'room_number': self.room_number,
+            'teacher': self.teacher,
             'capacity': self.capacity,
             'notes': self.notes,
             'created_at': self.created_at.isoformat() if self.created_at else None
@@ -74,6 +96,3 @@ class Classroom(db.Model):
 
 # Indexes
 Index('idx_classrooms_name', Classroom.name, unique=True)
-
-
-

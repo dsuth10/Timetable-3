@@ -31,6 +31,8 @@ export type TaskCategory =
 export interface Classroom {
   id: ID;
   name: string;
+  room_number: string;
+  teacher: string;
   capacity?: number | null;
   notes?: string | null;
   created_at?: string;
@@ -46,6 +48,8 @@ export interface Task {
   notes?: string | null;
   status?: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE';
   classroom?: Classroom;
+  recurrence_rule?: string;
+  expires_on?: string;
 }
 
 export interface RecurringSeries {
@@ -91,7 +95,3 @@ export interface ApiError {
   error: string;
   message?: string;
 }
-
-
-
-

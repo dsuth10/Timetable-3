@@ -36,12 +36,14 @@ type ManagementPanelProps = {
   aidesContent: React.ReactNode;
   tasksContent: React.ReactNode;
   requestsContent: React.ReactNode;
+  classroomsContent: React.ReactNode;
 };
 
 export default function ManagementPanel({
   aidesContent,
   tasksContent,
   requestsContent,
+  classroomsContent,
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
@@ -103,6 +105,7 @@ export default function ManagementPanel({
               <Tab label="Aides" id="management-tab-0" />
               <Tab label="Tasks" id="management-tab-1" />
               <Tab label="Requests" id="management-tab-2" />
+              <Tab label="Classes" id="management-tab-3" />
             </Tabs>
             <IconButton onClick={() => toggleDrawer(false)} sx={{ mr: 1 }}>
               <KeyboardArrowDown />
@@ -120,10 +123,12 @@ export default function ManagementPanel({
             <TabPanel value={tabIndex} index={2}>
               <ErrorBoundary>{requestsContent}</ErrorBoundary>
             </TabPanel>
+            <TabPanel value={tabIndex} index={3}>
+              <ErrorBoundary>{classroomsContent}</ErrorBoundary>
+            </TabPanel>
           </Box>
         </Box>
       </SwipeableDrawer>
     </>
   );
 }
-
