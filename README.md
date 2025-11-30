@@ -26,6 +26,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
 ✅ **Task Editing** - Edit task details and recurring patterns with smart updates  
 ✅ **Granular Deletion** - Delete individual assignments or entire task series  
+✅ **Classroom Management** - Manage classrooms, assigned teachers, and room numbers
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
@@ -173,7 +174,7 @@ timetable-scheduler/
 │   ├── src/
 │   │   ├── components/           # React components
 │   │   │   ├── Layout/           # Layout components (AppBar, AideDrawer, ManagementPanel)
-│   │   │   ├── Management/       # Management components (Aides, Tasks, Requests)
+│   │   │   ├── Management/       # Management components (Aides, Tasks, Requests, Classrooms)
 │   │   │   ├── common/           # Common UI components (LoadingState, EmptyState)
 │   │   │   ├── TimetableGrid/    # Timetable grid & slots (weekly view)
 │   │   │   ├── TaskModals/       # Task creation/editing modals
@@ -230,7 +231,7 @@ The application manages 7 core entities:
 | **Task** | Support duty template (title, category, classroom, notes) | Has Assignments, optional Classroom |
 | **Assignment** | Specific task occurrence assigned to aide | Belongs to Task and TeacherAide |
 | **Absence** | Aide unavailability record | Belongs to TeacherAide |
-| **Classroom** | Physical learning space | Has Tasks |
+| **Classroom** | Physical learning space (includes Name, Room Number, Teacher) | Has Tasks |
 | **Request** | Teacher request for aide support | Optional Classroom |
 
 See [data-model.md](specs/001-create-a-drag/data-model.md) for full entity definitions.
@@ -378,6 +379,15 @@ Deleting Tasks:
    → "Delete task": Removes the task template and all assignments
    → "Delete all instances": (For recurring) Removes entire series
 ```
+
+### 6. Classroom Management
+
+The application allows administrators to manage a database of classrooms, each with an assigned teacher and room number.
+
+- **Create Classrooms**: Add new classrooms with Name (e.g., "3A"), Room Number, Teacher Name, and optional notes.
+- **Assign Teachers**: Directly link a teacher's name to a classroom entity.
+- **Management**: Edit or delete classroom details from the management panel.
+- **Integration**: Classrooms can be selected when creating or editing tasks, making it easy to see where support is needed.
 
 ---
 
