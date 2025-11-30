@@ -83,22 +83,43 @@ class PdfService:
             current_time = dt.time()
             
         # Fill matrix
-        # Map (date, time) -> Assignment
-        assignment_map = {}
+        # Map (date, rounded_time) -> List[Assignment]
+        assignment_map: Dict[Tuple[date, time], List[Assignment]] = {}
         for a in assignments:
-            # Round down to nearest 30 mins for mapping
             t = a.start_time
-            # Simple mapping for now - assumes 30 min slots align
-            assignment_map[(a.date, t)] = a
+            # Round down to nearest 30 mins for bucket key
+            # e.g. 09:15 -> 09:00, 09:45 -> 09:30
+            total_minutes = t.hour * 60 + t.minute
+            rounded_minutes = (total_minutes // 30) * 30
+            
+            rounded_hour = rounded_minutes // 60
+            rounded_minute = rounded_minutes % 60
+            
+            bucket_time = time(rounded_hour, rounded_minute)
+            
+            key = (a.date, bucket_time)
+            if key not in assignment_map:
+                assignment_map[key] = []
+            assignment_map[key].append(a)
+            
+        # Sort assignments within each bucket by actual start time
+        for key in assignment_map:
+            assignment_map[key].sort(key=lambda x: x.start_time)
             
         for slot_time in time_slots:
             row = [slot_time.strftime("%H:%M")]
             for day in days:
-                # Find assignment starting at this time
-                assignment = assignment_map.get((day, slot_time))
-                cell_text = ""
-                if assignment:
+                # Find assignments bucketed to this time slot
+                slot_assignments = assignment_map.get((day, slot_time), [])
+                cell_content_parts = []
+                
+                for assignment in slot_assignments:
                     parts = []
+                    
+                    # Always show actual time range for clarity
+                    time_range = f"{assignment.start_time.strftime('%H:%M')} - {assignment.end_time.strftime('%H:%M')}"
+                    parts.append(f"<font size=6 color='grey'>{time_range}</font>")
+                    
                     if assignment.task:
                         parts.append(f"<b>{assignment.task.title}</b>")
                         if assignment.task.classroom:
@@ -106,9 +127,14 @@ class PdfService:
                     
                     if not aide and assignment.aide:
                          parts.append(f"({assignment.aide.name})")
-                         
-                    cell_text = "<br/>".join(parts)
                     
+                    # Add spacing between multiple assignments in same slot
+                    if cell_content_parts:
+                         cell_content_parts.append("<br/><br/>")
+                         
+                    cell_content_parts.append("<br/>".join(parts))
+                    
+                cell_text = "".join(cell_content_parts)
                 row.append(Paragraph(cell_text, styles['Normal']))
             data.append(row)
             
@@ -145,4 +171,3 @@ class PdfService:
         pdf_bytes = buffer.getvalue()
         buffer.close()
         return pdf_bytes
-
