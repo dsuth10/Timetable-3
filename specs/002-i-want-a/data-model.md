@@ -44,3 +44,4 @@ The feature uses existing entities:
 - **Droppable**: `TimeSlot` (Target: Class Schedule)
 - **Payload**: `aideId`
 
+

@@ -42,3 +42,4 @@
 - Switch back to "Classes" view.
 - **Verify**: The previously selected class is still active (or resets gracefully).
 
+
