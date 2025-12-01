@@ -49,7 +49,7 @@ type Props = {
     date: string;
     startTime: string;
     endTime: string;
-  }) => void;
+  }) => Promise<void> | void;
   task: Task | null;
   aides: TeacherAide[];
   initialData: {
@@ -135,7 +135,7 @@ export default function AssignmentDurationModal({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(undefined);
     
     // Validation
@@ -183,12 +183,17 @@ export default function AssignmentDurationModal({
     const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}:00`;
     const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}:00`;
     
-    onConfirm({
-      aideId,
-      date: dateStr,
-      startTime: startTimeStr,
-      endTime: endTimeStr,
-    });
+    try {
+      await onConfirm({
+        aideId,
+        date: dateStr,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+      });
+    } catch (e: any) {
+      console.error('Assignment failed:', e);
+      setError(e.message || 'Failed to create assignment');
+    }
   };
 
   const handleClose = () => {

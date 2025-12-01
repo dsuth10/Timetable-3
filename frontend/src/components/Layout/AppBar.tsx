@@ -10,6 +10,8 @@ import {
   Popover,
   Stack,
   Chip,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -19,6 +21,8 @@ import {
   Add as AddIcon,
   Settings as SettingsIcon,
   CalendarMonth,
+  School,
+  Person,
 } from '@mui/icons-material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -51,7 +55,7 @@ export default function AppBar({
   onToday,
   onCreateTask,
 }: AppBarProps) {
-  const { getWeekNumber, getWeekDateRange, setWeekStart } = useUiStore();
+  const { getWeekNumber, getWeekDateRange, setWeekStart, viewMode, setViewMode } = useUiStore();
   const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
   
   const weekNumber = getWeekNumber(weekLabel);
@@ -77,6 +81,15 @@ export default function AppBar({
       handleDatePickerClose();
     }
   };
+
+  const handleViewChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newView: 'AIDE' | 'CLASS' | null,
+  ) => {
+    if (newView !== null) {
+      setViewMode(newView);
+    }
+  };
   
   const datePickerOpen = Boolean(datePickerAnchor);
   return (
@@ -92,9 +105,41 @@ export default function AppBar({
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" component="div" sx={{ mr: 4 }}>
+        <Typography variant="h6" component="div" sx={{ mr: 2 }}>
           Aide Scheduler
         </Typography>
+
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewChange}
+          aria-label="view mode"
+          size="small"
+          sx={{ 
+            mr: 4, 
+            bgcolor: 'rgba(255,255,255,0.1)',
+            '& .MuiToggleButton-root': {
+               color: 'rgba(255,255,255,0.7)',
+               border: '1px solid rgba(255,255,255,0.3)',
+               '&.Mui-selected': {
+                 color: 'white',
+                 bgcolor: 'rgba(255,255,255,0.3)',
+               },
+               '&:hover': {
+                 bgcolor: 'rgba(255,255,255,0.2)',
+               }
+            }
+          }}
+        >
+          <ToggleButton value="AIDE" aria-label="aide view">
+            <Person sx={{ mr: 1, fontSize: 20 }} />
+            Aides
+          </ToggleButton>
+          <ToggleButton value="CLASS" aria-label="class view">
+            <School sx={{ mr: 1, fontSize: 20 }} />
+            Classes
+          </ToggleButton>
+        </ToggleButtonGroup>
 
         {/* Center: Week Navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>

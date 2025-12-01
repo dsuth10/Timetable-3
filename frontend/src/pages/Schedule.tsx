@@ -18,16 +18,20 @@ import { assignmentsApi } from '../services/assignmentsApi';
 import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
+import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
 import AppDragDropContext from '../components/DragDropContext';
-import UnassignedPanel from '../components/UnassignedPanel';
+import TaskBank from '../components/Layout/SidePanel/TaskBank';
+import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
 import { useDragDrop } from '../hooks/useDragDrop';
 import type { Assignment, Task, Absence } from '../types';
 import { useAbsencesStore } from '../store/stores/absences';
+import { useClassroomsStore } from '../store/stores/classrooms';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import MultiDayDialog from '../components/MultiDayDialog';
 import AppBar from '../components/Layout/AppBar';
 import AideDrawer from '../components/Layout/AideDrawer';
+import ClassroomDrawer from '../components/Layout/ClassroomDrawer';
 import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
@@ -39,9 +43,10 @@ import AbsenceModal from '../components/AbsenceModal';
 import AideFormModal from '../components/AideFormModal';
 
 export default function Schedule() {
-  const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek } = useUiStore();
+  const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
   const { tasks, fetchTasks } = useTasksStore();
+  const { classrooms, fetchClassrooms } = useClassroomsStore();
   const [assignmentsByAide, setAssignmentsByAide] = useState<Record<string, Assignment[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -91,7 +96,8 @@ export default function Schedule() {
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
     fetchTasks().catch(() => undefined);
-  }, [fetchAides, fetchTasks]);
+    fetchClassrooms().catch(() => undefined);
+  }, [fetchAides, fetchTasks, fetchClassrooms]);
 
   useEffect(() => {
     setLoading(true);
@@ -170,6 +176,32 @@ export default function Schedule() {
     return aides.find(aide => aide.id === selectedAideId) || null;
   }, [aides, selectedAideId]);
 
+  // Get selected class object
+  const selectedClass = useMemo(() => {
+    return classrooms.find(c => c.id === selectedClassId) || null;
+  }, [classrooms, selectedClassId]);
+
+  // Transform assignments for selected class into day-based structure
+  const classAssignmentsByDay = useMemo(() => {
+    if (viewMode !== 'CLASS' || !selectedClassId) return {};
+    
+    const byDay: Record<string, Assignment[]> = {};
+    weekDates.forEach(date => {
+      byDay[date] = [];
+    });
+
+    Object.values(assignmentsByAide).flat().forEach(assignment => {
+      if (weekDates.includes(assignment.date)) {
+        const task = tasks.find(t => t.id === assignment.task_id);
+        if (task && task.classroom_id === selectedClassId) {
+          byDay[assignment.date].push(assignment);
+        }
+      }
+    });
+    
+    return byDay;
+  }, [viewMode, selectedClassId, assignmentsByAide, weekDates, tasks]);
+
   const handleToggleAideVisibility = (aideId: number) => {
     setVisibleAideIds(prev => {
       const next = new Set(prev);
@@ -226,6 +258,7 @@ export default function Schedule() {
       // Trigger refresh of unassigned panel
       setRefreshTrigger(prev => prev + 1);
     } catch (e: any) {
+      console.error('Failed to refresh schedule data:', e);
       setError(e.message || 'Failed to refresh data');
     } finally {
       setLoading(false);
@@ -307,6 +340,10 @@ export default function Schedule() {
     }
   };
 
+  const handleSlotClick = (date: string, time: string) => {
+    setSelectedTimeSlot({ date, time, duration: 60 }); // Default to 60 minutes
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Top App Bar */}
@@ -322,22 +359,36 @@ export default function Schedule() {
       {/* Main Content Area */}
       <AppDragDropContext onDragEnd={onDragEnd}>
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* Left Aide Drawer */}
-          <AideDrawer
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            aides={aides}
-            visibleAideIds={visibleAideIds}
-            onToggleAideVisibility={handleToggleAideVisibility}
-            onMarkAbsence={handleMarkAbsence}
-            onAddAide={() => {
-              setDrawerOpen(false);
-              setShowAideFormModal(true);
-            }}
-          />
+          {/* Left Drawer */}
+          {viewMode === 'AIDE' ? (
+            <AideDrawer
+              open={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              aides={aides}
+              visibleAideIds={visibleAideIds}
+              onToggleAideVisibility={handleToggleAideVisibility}
+              onMarkAbsence={handleMarkAbsence}
+              onAddAide={() => {
+                setDrawerOpen(false);
+                setShowAideFormModal(true);
+              }}
+            />
+          ) : (
+            <ClassroomDrawer
+              open={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              classrooms={classrooms}
+              selectedClassId={selectedClassId}
+              onSelectClass={(id) => {
+                setSelectedClassId(id);
+                setDrawerOpen(false);
+              }}
+            />
+          )}
 
           {/* Center: Timetable Grid */}
           <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+            {viewMode === 'AIDE' && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               {/* Aide Selector */}
               <FormControl sx={{ minWidth: 200 }}>
@@ -396,13 +447,24 @@ export default function Schedule() {
                 <UndoRedoControls />
               </Box>
             </Box>
+            )}
+            
+            {viewMode === 'CLASS' && !selectedClass && (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <Button variant="contained" onClick={() => setDrawerOpen(true)}>
+                  Select a Class
+                </Button>
+              </Box>
+            )}
+
             {loading && <LoadingState message="Loading schedule..." />}
             {error && (
               <Box sx={{ p: 2, color: 'error.main' }} role="alert">
                 {error}
               </Box>
             )}
-            {!loading && !error && selectedAide && (
+            
+            {!loading && !error && viewMode === 'AIDE' && selectedAide && (
               <TimetableGrid 
                 key={`${selectedWeekStartISO}-${selectedAide.id}`}
                 selectedAide={selectedAide}
@@ -415,16 +477,33 @@ export default function Schedule() {
                 onRemoveAbsence={handleRemoveAbsence}
               />
             )}
+
+            {!loading && !error && viewMode === 'CLASS' && selectedClass && (
+              <ClassTimetableGrid
+                selectedClass={selectedClass}
+                assignmentsByDay={classAssignmentsByDay}
+                weekDates={weekDates}
+                tasks={tasks}
+                aides={aides}
+                onTaskDoubleClick={handleTaskDoubleClick}
+                onSlotClick={handleSlotClick}
+              />
+            )}
+            
             {ConflictUI}
             {DurationModal}
           </Box>
 
-          {/* Right: Unassigned Panel */}
-          <UnassignedPanel 
-            dateISO={selectedWeekStartISO} 
-            refreshTrigger={refreshTrigger}
-            onTaskDoubleClick={handleTaskDoubleClick}
-          />
+          {/* Right Panel */}
+          {viewMode === 'AIDE' ? (
+            <TaskBank 
+              dateISO={selectedWeekStartISO} 
+              refreshTrigger={refreshTrigger}
+              onTaskDoubleClick={handleTaskDoubleClick}
+            />
+          ) : (
+            <TeacherAideListPanel assignmentsByAide={assignmentsByAide} />
+          )}
         </Box>
       </AppDragDropContext>
 

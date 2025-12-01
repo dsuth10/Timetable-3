@@ -11,9 +11,10 @@ type TimetableSlotProps = {
   // index: number; // No longer needed for positioning
   top: number;
   height: number;
+  onClick?: (date: string, time: string) => void;
 };
 
-function TimetableSlotBase({ aideId, date, timeSlot, children, top, height }: TimetableSlotProps) {
+function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick }: TimetableSlotProps) {
   const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
 
   return (
@@ -22,6 +23,7 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height }: Ti
         <Box
           ref={provided.innerRef}
           {...provided.droppableProps}
+          onClick={() => onClick?.(date, timeSlot)}
           sx={{
             position: 'absolute',
             top: top,
@@ -102,6 +104,7 @@ export const TimetableSlot = memo(TimetableSlotBase, (prev, next) => {
     prev.timeSlot === next.timeSlot &&
     prev.top === next.top &&
     prev.height === next.height &&
-    prev.children === next.children
+    prev.children === next.children &&
+    prev.onClick === next.onClick
   );
 });

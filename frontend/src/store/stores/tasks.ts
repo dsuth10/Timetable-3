@@ -10,6 +10,7 @@ type TasksState = {
   fetchTasks: (opts?: { category?: Task['category'] }) => Promise<void>;
   updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }) => Promise<Task>;
   deleteTask: (id: ID, reset?: boolean) => Promise<void>;
+  addTask: (task: Task) => void;
 };
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -26,6 +27,9 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     } finally {
       set({ loading: false });
     }
+  },
+  addTask(task) {
+    set(state => ({ tasks: [...state.tasks, task] }));
   },
   async updateTask(id, payload) {
     try {

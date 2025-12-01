@@ -15,6 +15,10 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ### Key Features
 
 ✅ **Drag-and-Drop Interface** - Assign tasks by dragging them to aide time slots with real-time updates  
+✅ **Class-based Interface** - Alternative view focusing on classroom schedules and aide allocations  
+✅ **Dual View Modes** - Seamlessly toggle between Teacher Aide and Class-centric views  
+✅ **Smart Aide Filtering** - Filter available aides by time slot with drag-and-drop allocation  
+✅ **Flexible Time Slots** - Support for 5-minute increments (e.g. school bell times)  
 ✅ **Simplified Task Creation** - Create task templates with just title, category, classroom, and notes  
 ✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
 ✅ **Automatic Time Assignment** - Times set automatically based on where task is dropped  
@@ -26,7 +30,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Conflict Detection** - Real-time collision detection with replace/shorten/cancel options  
 ✅ **Task Editing** - Edit task details and recurring patterns with smart updates  
 ✅ **Granular Deletion** - Delete individual assignments or entire task series  
-✅ **Classroom Management** - Manage classrooms, assigned teachers, and room numbers
+✅ **Classroom Management** - Manage classrooms, assigned teachers, and room numbers  
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
@@ -123,6 +127,7 @@ Open your browser to: **http://localhost:3000**
 │  • Tasks (One-off & Recurring)                           │
 │  • Assignments (w/ Optimistic Locking)                   │
 │  • Absences & Classrooms                                 │
+│  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -207,13 +212,18 @@ timetable-scheduler/
 │   └── deployment.md             # Deployment guide
 │
 ├── specs/                        # Design specifications
-│   └── 001-create-a-drag/        # Feature specification
-│       ├── spec.md               # Feature spec
-│       ├── plan.md               # Implementation plan
-│       ├── tasks.md              # Task breakdown
-│       ├── data-model.md         # Entity relationship model
-│       ├── quickstart.md         # Integration test scenario
-│       └── contracts/            # API & RRULE specs
+│   ├── 001-create-a-drag/        # Feature specification
+│   │   ├── spec.md               # Feature spec
+│   │   ├── plan.md               # Implementation plan
+│   │   ├── tasks.md              # Task breakdown
+│   │   ├── data-model.md         # Entity relationship model
+│   │   ├── quickstart.md         # Integration test scenario
+│   │   └── contracts/            # API & RRULE specs
+│   └── 002-i-want-a/             # Class Interface specification
+│       ├── spec.md
+│       ├── plan.md
+│       ├── tasks.md
+│       └── ...
 │
 └── README.md                     # This file
 ```
@@ -388,6 +398,17 @@ The application allows administrators to manage a database of classrooms, each w
 - **Assign Teachers**: Directly link a teacher's name to a classroom entity.
 - **Management**: Edit or delete classroom details from the management panel.
 - **Integration**: Classrooms can be selected when creating or editing tasks, making it easy to see where support is needed.
+
+### 7. Class-based Allocation
+
+```
+1. Switch to "Class" view using the toggle in the top bar
+2. Select a specific classroom from the left drawer
+3. View the classroom's weekly schedule showing all allocated support
+4. Click any time slot to see a filtered list of *available* teacher aides
+5. Drag an aide from the right panel into the slot to allocate them
+6. Automatic "Class Support" task creation and assignment
+```
 
 ---
 
@@ -894,6 +915,12 @@ Contributions are welcome! Please follow these steps:
 - [x] WCAG AA compliance
 - [x] UTC-based date handling (timezone-safe)
 
+### Version 1.0.5 (Dec 2025) ✅
+- [x] Class-based Interface
+- [x] Dual view modes (Aide/Class)
+- [x] Smart aide filtering by availability
+- [x] Flexible time slots (5-min increments)
+
 ### Version 1.1 (Planned)
 - [ ] User authentication & authorization
 - [ ] Email notifications
@@ -909,11 +936,21 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Made with ❤️ for Queensland Primary Schools**
-
----
-
 ## 🔄 Recent Updates
+
+### Version 1.0.5 (2025-12-01)
+
+**New Features**:
+- ✅ **Class-based Interface** - New view mode to manage schedules per classroom
+- ✅ **Smart Aide Selector** - Right-side panel filters aides by availability when a time slot is selected
+- ✅ **Drag-to-Allocate** - Drag available aides directly into class time slots
+- ✅ **Flexible Timing** - Updated backend to support 5-minute time increments (e.g., 08:50)
+
+**Technical Improvements**:
+- Implemented `ClassTimetableGrid` for multi-aide slot display
+- Added client-side availability filtering in `TeacherAideListPanel`
+- Refactored `Schedule` page to support swappable views (Aide vs Class)
+- Updated `Task` model validation to allow 5-minute increments
 
 ### Version 1.0.4 (2025-11-21)
 
@@ -991,6 +1028,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.4  
-**Last Updated**: 2025-11-21
-
+**Version**: 1.0.5  
+**Last Updated**: 2025-12-01

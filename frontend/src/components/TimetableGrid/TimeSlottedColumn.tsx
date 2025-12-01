@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Box } from '@mui/material';
-import type { Assignment, Task, Absence, Availability } from '../../types';
+import type { Assignment, Task, Absence, Availability, TeacherAide } from '../../types';
 import { generateTimeSlots, timeToPixels, durationToPixels, TOTAL_HEIGHT_PX, getSegmentForTime, snapToSlot } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';
 import { TaskCard } from './TaskCard';
@@ -8,7 +8,7 @@ import { TimetableSlot } from './TimetableSlot';
 import AvailabilityOverlay from './AvailabilityOverlay';
 
 type TimeSlottedColumnProps = {
-  aideId: number;
+  aideId?: number; // Optional for Class View
   date: string;
   assignments: Assignment[];
   tasks: Task[];
@@ -16,6 +16,9 @@ type TimeSlottedColumnProps = {
   onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
   availability?: Availability[];
   absences?: Absence[];
+  showAideName?: boolean;
+  aides?: TeacherAide[];
+  onSlotClick?: (date: string, time: string) => void;
 };
 
 export function TimeSlottedColumn({ 
@@ -26,7 +29,10 @@ export function TimeSlottedColumn({
   aideColor,
   onTaskDoubleClick,
   availability = [],
-  absences = []
+  absences = [],
+  showAideName,
+  aides = [],
+  onSlotClick,
 }: TimeSlottedColumnProps) {
   const taskMap = useMemo(() => {
     const map = new Map<number, Task>();
@@ -67,12 +73,14 @@ export function TimeSlottedColumn({
       }}
     >
       {/* Availability / Absence overlay (non-blocking) */}
-      <AvailabilityOverlay
-        aideId={aideId}
-        availability={availability}
-        absences={absences}
-        date={date}
-      />
+      {aideId && (
+        <AvailabilityOverlay
+          aideId={aideId}
+          availability={availability}
+          absences={absences}
+          date={date}
+        />
+      )}
 
       {/* Special break shades (11:10-11:50 and 13:20-14:00) */}
       {['11:10', '13:20'].map((time) => {
@@ -111,15 +119,17 @@ export function TimeSlottedColumn({
         return (
           <TimetableSlot
             key={timeSlot}
-            aideId={aideId}
+            aideId={aideId || 0} // Pass 0 or dummy if no aideId
             date={date}
             timeSlot={timeSlot}
             top={top}
             height={height}
+            onClick={onSlotClick}
           >
             {/* Render task cards that start in this slot */}
             {slotTasks.map((position, taskIndex) => {
               const task = taskMap.get(position.assignment.task_id);
+              const aide = aides.find(a => a.id === position.assignment.aide_id);
               return (
                 <Box
                   key={position.assignment.id}
@@ -136,9 +146,11 @@ export function TimeSlottedColumn({
                     assignment={position.assignment}
                     index={taskIndex}
                     task={task}
-                    aideColor={aideColor}
+                    aideColor={aide ? aide.colour_hex : aideColor}
                     isPositioned={true}
                     onDoubleClick={onTaskDoubleClick}
+                    showAideName={showAideName}
+                    aideName={aide?.name}
                   />
                 </Box>
               );

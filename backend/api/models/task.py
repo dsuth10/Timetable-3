@@ -94,25 +94,25 @@ class Task(db.Model):
     
     @validates('start_time')
     def validate_start_time(self, key, value):
-        """Validate start_time is in 15-minute increments"""
+        """Validate start_time"""
         if not isinstance(value, dt_time):
             raise ValueError("start_time must be a time object")
         
-        # Check 15-minute increments
-        if value.minute not in [0, 15, 30, 45]:
-            raise ValueError("start_time must be in 15-minute increments (00, 15, 30, or 45)")
+        # Allow 5-minute increments to support school bell times (e.g. 08:50, 09:10)
+        if value.minute % 5 != 0:
+            raise ValueError("start_time must be in 5-minute increments")
         
         return value
     
     @validates('end_time')
     def validate_end_time(self, key, value):
-        """Validate end_time is in 15-minute increments and after start_time"""
+        """Validate end_time is after start_time"""
         if not isinstance(value, dt_time):
             raise ValueError("end_time must be a time object")
         
-        # Check 15-minute increments
-        if value.minute not in [0, 15, 30, 45]:
-            raise ValueError("end_time must be in 15-minute increments (00, 15, 30, or 45)")
+        # Allow 5-minute increments
+        if value.minute % 5 != 0:
+            raise ValueError("end_time must be in 5-minute increments")
         
         # Check end_time > start_time
         if hasattr(self, 'start_time') and self.start_time:

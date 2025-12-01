@@ -13,9 +13,11 @@ type TaskCardProps = {
   onContextMenu?: (event: React.MouseEvent, assignment: Assignment) => void;
   onDoubleClick?: (assignment: Assignment, task?: Task) => void;
   isPositioned?: boolean; // When true, card is positioned absolutely and doesn't need margin
+  showAideName?: boolean;
+  aideName?: string;
 };
 
-function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false }: TaskCardProps) {
+function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName }: TaskCardProps) {
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
 
@@ -82,7 +84,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                       color: task ? 'text.primary' : 'error.main',
                     }}
                   >
-                    {task?.title || `Missing Task #${assignment.task_id}`}
+                    {showAideName ? (aideName || 'Unknown Aide') : (task?.title || `Missing Task #${assignment.task_id}`)}
                   </Typography>
                   {task?.classroom && (
                     <Chip
@@ -161,7 +163,9 @@ export const TaskCard = memo(TaskCardBase, (prev, next) => {
     prev.task?.id === next.task?.id &&
     prev.aideColor === next.aideColor &&
     prev.isPositioned === next.isPositioned &&
-    prev.onDoubleClick === next.onDoubleClick
+    prev.onDoubleClick === next.onDoubleClick &&
+    prev.showAideName === next.showAideName &&
+    prev.aideName === next.aideName
   );
 });
 

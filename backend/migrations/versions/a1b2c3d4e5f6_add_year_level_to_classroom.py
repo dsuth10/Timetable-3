@@ -31,3 +31,4 @@ def downgrade() -> None:
         batch_op.drop_column('is_composite')
         batch_op.drop_column('year_level')
 
+

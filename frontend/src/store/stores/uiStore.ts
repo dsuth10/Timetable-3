@@ -2,6 +2,9 @@ import { create } from 'zustand';
 
 type UiState = {
   selectedWeekStartISO: string; // Monday YYYY-MM-DD
+  viewMode: 'AIDE' | 'CLASS';
+  selectedClassId: number | null;
+  selectedTimeSlot: { date: string; time: string; duration: number } | null;
   modals: {
     conflict: boolean;
     taskCreation: boolean;
@@ -11,6 +14,9 @@ type UiState = {
   openModal: (key: keyof UiState['modals']) => void;
   closeModal: (key: keyof UiState['modals']) => void;
   setWeekStart: (dateISO: string) => void;
+  setViewMode: (mode: 'AIDE' | 'CLASS') => void;
+  setSelectedClassId: (id: number | null) => void;
+  setSelectedTimeSlot: (slot: { date: string; time: string; duration: number } | null) => void;
   nextWeek: () => void;
   prevWeek: () => void;
   thisWeek: () => void;
@@ -62,6 +68,9 @@ function formatWeekDateRange(mondayISO: string): string {
 
 export const useUiStore = create<UiState>((set, get) => ({
   selectedWeekStartISO: fmt(getMonday(new Date())),
+  viewMode: 'AIDE',
+  selectedClassId: null,
+  selectedTimeSlot: null,
   modals: {
     conflict: false,
     taskCreation: false,
@@ -76,6 +85,15 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   setWeekStart(dateISO) {
     set({ selectedWeekStartISO: dateISO });
+  },
+  setViewMode(mode) {
+    set({ viewMode: mode });
+  },
+  setSelectedClassId(id) {
+    set({ selectedClassId: id });
+  },
+  setSelectedTimeSlot(slot) {
+    set({ selectedTimeSlot: slot });
   },
   nextWeek() {
     const cur = new Date(get().selectedWeekStartISO + 'T00:00:00Z');

@@ -16,20 +16,22 @@ export const assignmentsApi = {
   },
   weeklyMatrix(startDateISO: string) {
     const url = `/assignments/weekly-matrix?start_date=${startDateISO}`;
-    const maybe = (api as any)?.get?.(url);
-    if (!maybe || typeof (maybe as any).then !== 'function') {
-      return Promise.resolve({ assignments: [] } as any);
-    }
-    return (maybe as any).then((r: any) => (r?.data ?? { assignments: [] }) as any);
+    return api.get(url)
+      .then((r) => (r?.data ?? { assignments: [] }) as any)
+      .catch((err) => {
+        console.error('Failed to fetch weekly matrix:', err);
+        throw err;
+      });
   },
   unassigned(dateISO?: string) {
     const q = dateISO ? `?date=${dateISO}` : '';
     const url = `/assignments/unassigned${q}`;
-    const maybe = (api as any)?.get?.(url);
-    if (!maybe || typeof (maybe as any).then !== 'function') {
-      return Promise.resolve([] as Assignment[]);
-    }
-    return (maybe as any).then((r: any) => (r?.data ?? []) as Assignment[]);
+    return api.get(url)
+      .then((r) => (r?.data ?? []) as Assignment[])
+      .catch((err) => {
+        console.error('Failed to fetch unassigned tasks:', err);
+        throw err;
+      });
   },
   assigned(): Promise<Assignment[]> {
     return api.get('/assignments/assigned').then((r) => r.data as Assignment[]);

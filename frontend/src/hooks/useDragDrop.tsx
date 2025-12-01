@@ -1,10 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
+import { tasksApi } from '../services/tasksApi'; // Import tasksApi
 import ConflictModal from '../components/ConflictModal';
 import AssignmentDurationModal from '../components/TaskModals/AssignmentDurationModal';
 import { useUndoStore } from '../store/stores/undoStore';
-import { useTasksStore } from '../store/stores/tasks'; // Import tasks store
+import { useTasksStore } from '../store/stores/tasks'; 
+import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
 import type { TeacherAide, Task } from '../types';
 import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } from '../components/TimetableGrid/timeUtils';
@@ -36,15 +38,16 @@ export function useDragDrop(options?: UseDragDropOptions) {
   const [conflicts, setConflicts] = useState<{
     conflicts: any[];
     errorMessage?: string | null;
-    assignmentId?: number; // Optional now
-    taskId?: number; // Add taskId for conflicts during creation
+    assignmentId?: number; 
+    taskId?: number; 
     destAideId: number | null;
     updatePayload?: any;
-    createPayload?: any; // Add create payload
+    createPayload?: any; 
   } | null>(null);
   const [pendingAssignment, setPendingAssignment] = useState<PendingAssignment | null>(null);
   const { execute } = useUndoStore();
-  const { tasks } = useTasksStore(); // Get tasks from store
+  const { tasks } = useTasksStore(); 
+  const { selectedClassId } = useUiStore(); // Get selectedClassId
   const aides = options?.aides || [];
 
   // Debounce map for drag-triggered updates (per-assignment key)
@@ -77,8 +80,9 @@ export function useDragDrop(options?: UseDragDropOptions) {
 
     const isTaskTemplate = draggableId.startsWith('task-');
     const isAssignment = draggableId.startsWith('asg-');
+    const isTeacherAide = draggableId.startsWith('aide-') && !draggableId.includes('date');
 
-    if (!isTaskTemplate && !isAssignment) return;
+    if (!isTaskTemplate && !isAssignment && !isTeacherAide) return;
 
     // Handle destination - could be aide-date-time, aide-date, or unassigned
     const destDroppableId = destination.droppableId;
@@ -120,73 +124,124 @@ export function useDragDrop(options?: UseDragDropOptions) {
     if (isAssignment && sourceDroppableId === destDroppableId) return;
 
     // --- VALIDATION ---
-    // Validate availability if assigning to an aide
-    if (destAideId !== null && destDate) {
+    // Validate availability if assigning to an aide (and not in Class View where destAideId might be 0)
+    // In Class View, destAideId is 0. But if isTeacherAide, the aide ID comes from Source.
+    // If isAssignment or isTaskTemplate, we use destAideId.
+    
+    let targetAideId = destAideId;
+    if (isTeacherAide) {
+        targetAideId = Number(draggableId.replace('aide-', ''));
+    }
+
+    if (targetAideId !== null && destDate && targetAideId !== 0) {
       // ... (same availability validation logic as before) ...
-      const aide = aides.find(a => a.id === destAideId);
+      const aide = aides.find(a => a.id === targetAideId);
       if (!aide) {
-        console.error('Aide not found:', destAideId);
-        return;
-      }
-      
-      const availability = aide.availability || [];
-      
-      if (availability.length === 0) {
-        const weekday = new Date(destDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
-        const errorMessage = `Cannot assign: No availability set for ${aide.name} on ${weekday}`;
-        window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
-        return;
-      }
-      
-      if (destTime) {
-        // For validation, we need start and end time. 
-        // If it's a task template, we know the duration.
-        // If it's an assignment, we need to fetch it or know its duration.
-        let duration = 30; // default fallback
-        
-        if (isTaskTemplate) {
-            const taskId = Number(draggableId.replace('task-', ''));
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                duration = calculateDuration(task.start_time, task.end_time);
+        // Only error if we really expected an aide (ignore if 0/dummy)
+        if (targetAideId !== 0) console.error('Aide not found:', targetAideId);
+        // If 0, we continue (Class View logic will handle it)
+      } else {
+          const availability = aide.availability || [];
+          
+          if (availability.length === 0) {
+            const weekday = new Date(destDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+            const errorMessage = `Cannot assign: No availability set for ${aide.name} on ${weekday}`;
+            window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+            return;
+          }
+          
+          if (destTime) {
+            let duration = 30; // default fallback
+            
+            if (isTaskTemplate) {
+                const taskId = Number(draggableId.replace('task-', ''));
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    duration = calculateDuration(task.start_time, task.end_time);
+                }
+            } else if (isTeacherAide) {
+                duration = 30; // Default for new allocation
             }
-        } else {
-             // For assignments, we'll validate optimistically or fetch first?
-             // The original code fetched assignment later. We can defer precise time check or do it after fetch.
-             // Let's proceed and let the loop check handle basic availability, but strict time check needs end time.
-             // We'll defer precise check for assignments until we have the object.
+
+            // Only validate here if we have duration (Task Template or Aide)
+            if (isTaskTemplate || isTeacherAide) {
+                 const endTime = addMinutesToTime(destTime, duration);
+                 const isAvailable = isAideAvailable(
+                  availability,
+                  destDate,
+                  destTime + ':00',
+                  endTime + ':00'
+                );
+                
+                if (!isAvailable) {
+                     const availabilityInfo = getAvailabilityInfo(availability, destDate);
+                      const aideName = aide.name;
+                      const weekday = availabilityInfo.weekday;
+                      
+                      let errorMessage: string;
+                      if (!availabilityInfo.hasAvailability) {
+                        errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
+                      } else if (availabilityInfo.timeWindow) {
+                        errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
+                      } else {
+                        errorMessage = `Cannot assign: ${aideName} is not available at this time`;
+                      }
+                      
+                      window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+                      return;
+                }
+            }
+          }
+      }
+    }
+
+    // --- HANDLE TEACHER AIDE DROP ---
+    if (isTeacherAide) {
+        console.log('Dropping Teacher Aide:', draggableId, 'to', destDroppableId);
+        const sourceAideId = Number(draggableId.replace('aide-', ''));
+        
+        if (!destDate || !destTime) {
+            console.warn('Missing destDate or destTime', { destDate, destTime });
+            return; // Must drop on a time slot
+        }
+        if (!selectedClassId) {
+            console.error('No class selected');
+            window.dispatchEvent(new CustomEvent('app:error', { detail: { message: 'No class selected' } }));
+            return;
         }
 
-        // Only validate here if we have duration (Task Template)
-        if (isTaskTemplate) {
-             const endTime = addMinutesToTime(destTime, duration);
-             const isAvailable = isAideAvailable(
-              availability,
-              destDate,
-              destTime + ':00',
-              endTime + ':00'
-            );
+        // Create One-Off Task
+        try {
+            const startTime = destTime + ':00';
+            const endTime = addMinutesToTime(destTime, 30) + ':00';
             
-            if (!isAvailable) {
-                // ... (error message logic) ...
-                 const availabilityInfo = getAvailabilityInfo(availability, destDate);
-                  const aideName = aide.name;
-                  const weekday = availabilityInfo.weekday;
-                  
-                  let errorMessage: string;
-                  if (!availabilityInfo.hasAvailability) {
-                    errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
-                  } else if (availabilityInfo.timeWindow) {
-                    errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
-                  } else {
-                    errorMessage = `Cannot assign: ${aideName} is not available at this time`;
-                  }
-                  
-                  window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
-                  return;
-            }
+            console.log('Creating one-off task...', { startTime, endTime, selectedClassId });
+
+            const task = await tasksApi.createOneOff({
+                title: 'Class Support',
+                category: 'CLASS_SUPPORT',
+                start_time: startTime,
+                end_time: endTime,
+                classroom_id: selectedClassId
+            });
+            
+            console.log('Task created:', task);
+
+            setPendingAssignment({
+                type: 'create',
+                task: task,
+                initialData: {
+                    aideId: sourceAideId,
+                    date: destDate,
+                    startTime: startTime,
+                    endTime: endTime,
+                },
+            });
+        } catch (e: any) {
+            console.error('Failed to create task:', e);
+            window.dispatchEvent(new CustomEvent('app:error', { detail: { message: e.message || 'Failed to create task' } }));
         }
-      }
+        return;
     }
 
     // --- HANDLE TASK TEMPLATE DROP ---
@@ -236,9 +291,8 @@ export function useDragDrop(options?: UseDragDropOptions) {
     const assignmentId = Number(draggableId.replace('asg-', ''));
     if (!Number.isFinite(assignmentId)) return;
 
-    // Parse source aide ID, date, and time (same as before)
-    // ... (existing parsing logic) ...
-     let sourceAideId: number | null = null;
+    // Parse source aide ID, date, and time
+    let sourceAideId: number | null = null;
     let sourceDate: string | null = null;
     let sourceTime: string | null = null;
     
@@ -340,7 +394,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
         time: sourceTime,
       },
     });
-  }, [execute, debouncedUpdate, options, aides, tasks]); // Add aides and tasks to dependencies
+  }, [execute, debouncedUpdate, options, aides, tasks, selectedClassId]); 
 
   // Handle modal confirmation
   const handleModalConfirm = useCallback(async (data: {
@@ -404,9 +458,6 @@ export function useDragDrop(options?: UseDragDropOptions) {
       }
     }
 
-    // All validations passed - now clear pending state to dismiss modal
-    setPendingAssignment(null);
-
     // Execute the operation
     if (type === 'create') {
       const createPayload = {
@@ -425,7 +476,11 @@ export function useDragDrop(options?: UseDragDropOptions) {
         async do() {
           try {
             await assignmentsApi.create(createPayload);
-            options?.onSuccess?.();
+            // Optimistically add task to store if available (avoids refetching all tasks)
+            const { addTask } = useTasksStore.getState();
+            if (addTask && task) {
+                addTask(task);
+            }
           } catch (e: any) {
             if (e?.status === 409) {
               setConflicts({
@@ -435,9 +490,26 @@ export function useDragDrop(options?: UseDragDropOptions) {
                 destAideId: data.aideId,
                 createPayload: createPayload
               });
+              // Stop execution, but don't rethrow - we handled the conflict UI
+              // Wait, if we stop here, the modal remains open (which is good for conflict resolution).
+              // But if we don't rethrow, execute considers it a success?
+              // We want modal to stay open. 
+              // setConflicts will trigger ConflictUI.
+              // pendingAssignment is still true.
+              // handleModalConfirm finishes.
+              // setPendingAssignment(null) is at the end of handleModalConfirm.
+              // We need to PREVENT setPendingAssignment(null) if conflict found.
+              throw e; // Rethrow to stop handleModalConfirm from reaching setPendingAssignment(null)
             } else {
               throw e;
             }
+          }
+          
+          // Refresh data (ignore errors to prevent rollback of creation)
+          try {
+            await options?.onSuccess?.();
+          } catch (err) {
+            console.error('Refresh failed after assignment creation:', err);
           }
         },
         async undo() {
@@ -464,7 +536,6 @@ export function useDragDrop(options?: UseDragDropOptions) {
             await debouncedUpdate(`asg-${assignmentId}`, async () => {
               await assignmentsApi.update(assignmentId, updatePayload);
             });
-            options?.onSuccess?.();
           } catch (e: any) {
             if (e?.status === 409) {
               setConflicts({
@@ -474,9 +545,17 @@ export function useDragDrop(options?: UseDragDropOptions) {
                 destAideId: data.aideId,
                 updatePayload: updatePayload
               });
+              throw e; // Rethrow to keep modal open
             } else {
               throw e;
             }
+          }
+          
+          // Refresh data (ignore errors to prevent rollback of update)
+          try {
+            await options?.onSuccess?.();
+          } catch (err) {
+            console.error('Refresh failed after assignment update:', err);
           }
         },
         async undo() {
@@ -491,10 +570,17 @@ export function useDragDrop(options?: UseDragDropOptions) {
           };
           
           await assignmentsApi.update(assignmentId, undoPayload);
-          options?.onSuccess?.();
+          try {
+            await options?.onSuccess?.();
+          } catch (err) {
+            console.error('Refresh failed after undo:', err);
+          }
         },
       });
     }
+
+    // Clear pending state only after successful execution (or handled conflict)
+    setPendingAssignment(null);
   }, [pendingAssignment, aides, execute, debouncedUpdate, options]);
 
   const ConflictUI = conflicts ? (
