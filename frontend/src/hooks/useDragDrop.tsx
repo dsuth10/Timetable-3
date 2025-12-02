@@ -41,6 +41,12 @@ type PendingAssignment = {
   };
 };
 
+// Helper function to calculate default duration based on time slot
+// 8:50 slot defaults to 20 minutes, all other slots default to 30 minutes
+const getDefaultDuration = (time: string | null): number => {
+  return time === '08:50' ? 20 : 30;
+};
+
 export function useDragDrop(options?: UseDragDropOptions) {
   const [conflicts, setConflicts] = useState<{
     conflicts: any[];
@@ -158,17 +164,9 @@ export function useDragDrop(options?: UseDragDropOptions) {
           }
           
           if (destTime) {
-            let duration = 30; // default fallback
-            
-            if (isTaskTemplate) {
-                const taskId = Number(draggableId.replace('task-', ''));
-                const task = tasks.find(t => t.id === taskId);
-                if (task) {
-                    duration = calculateDuration(task.start_time, task.end_time);
-                }
-            } else if (isTeacherAide) {
-                duration = 30; // Default for new allocation
-            }
+            // Use default duration based on time slot (20 minutes for 8:50, 30 for others)
+            // This ensures availability validation matches the default duration that will be used
+            const duration = getDefaultDuration(destTime);
 
             // Only validate here if we have duration (Task Template or Aide)
             if (isTaskTemplate || isTeacherAide) {
@@ -219,20 +217,22 @@ export function useDragDrop(options?: UseDragDropOptions) {
 
         // Check if onClassroomDrop callback is provided (Feature: Task Selection Modal)
         if (options?.onClassroomDrop) {
+             const defaultDuration = getDefaultDuration(destTime);
              options.onClassroomDrop({
                 aideId: sourceAideId,
                 classroomId: selectedClassId,
                 date: destDate,
                 time: destTime,
-                duration: 30
+                duration: defaultDuration
              });
              return;
         }
 
         // Create One-Off Task (Legacy Fallback)
         try {
+            const defaultDuration = getDefaultDuration(destTime);
             const startTime = destTime + ':00';
-            const endTime = addMinutesToTime(destTime, 30) + ':00';
+            const endTime = addMinutesToTime(destTime, defaultDuration) + ':00';
             
             console.log('Creating one-off task...', { startTime, endTime, selectedClassId });
 
@@ -278,14 +278,15 @@ export function useDragDrop(options?: UseDragDropOptions) {
         const task = tasks.find(t => t.id === taskId);
         if (!task) return;
 
-        // Calculate default times - always use 30 minutes as default duration
+        // Calculate default times - use 20 minutes for 8:50 slot, 30 minutes for others
         let startTime: string;
         let endTime: string;
 
         if (destTime) {
             // Dropped on specific time slot
+            const defaultDuration = getDefaultDuration(destTime);
             startTime = destTime + ':00';
-            endTime = addMinutesToTime(destTime, 30) + ':00'; // Default 30 minutes
+            endTime = addMinutesToTime(destTime, defaultDuration) + ':00';
         } else {
             // No specific time, use current task times or defaults
             startTime = '09:00:00';
