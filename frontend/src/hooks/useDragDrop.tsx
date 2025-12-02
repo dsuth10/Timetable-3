@@ -14,6 +14,13 @@ import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } 
 type UseDragDropOptions = {
   onSuccess?: () => void;
   aides?: TeacherAide[];
+  onClassroomDrop?: (data: {
+    aideId: number;
+    classroomId: number;
+    date: string;
+    time: string;
+    duration: number;
+  }) => void;
 };
 
 type PendingAssignment = {
@@ -210,7 +217,19 @@ export function useDragDrop(options?: UseDragDropOptions) {
             return;
         }
 
-        // Create One-Off Task
+        // Check if onClassroomDrop callback is provided (Feature: Task Selection Modal)
+        if (options?.onClassroomDrop) {
+             options.onClassroomDrop({
+                aideId: sourceAideId,
+                classroomId: selectedClassId,
+                date: destDate,
+                time: destTime,
+                duration: 30
+             });
+             return;
+        }
+
+        // Create One-Off Task (Legacy Fallback)
         try {
             const startTime = destTime + ':00';
             const endTime = addMinutesToTime(destTime, 30) + ':00';

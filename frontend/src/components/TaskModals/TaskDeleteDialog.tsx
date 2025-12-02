@@ -28,8 +28,10 @@ type Props = {
 
 export default function TaskDeleteDialog({ open, onClose, task, assignment, onDeleted }: Props) {
   const { deleteTask } = useTasksStore();
-  const [deleteOption, setDeleteOption] = useState<'instance' | 'all'>(
-    assignment ? 'instance' : 'all'
+  // When deleting from TaskBank (no assignment), default to permanent deletion
+  // When deleting from assignment context, default to instance deletion
+  const [deleteOption, setDeleteOption] = useState<'instance' | 'reset' | 'delete'>(
+    assignment ? 'instance' : 'delete'
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -38,7 +40,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
 
   const handleClose = () => {
     if (!busy) {
-      setDeleteOption(assignment ? 'instance' : 'all');
+      setDeleteOption(assignment ? 'instance' : 'delete');
       setError(undefined);
       onClose();
     }
@@ -67,7 +69,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
             detail: { message: 'Assignment deleted successfully' } 
           }));
         } catch {}
-      } else {
+      } else if (deleteOption === 'reset') {
         // Reset the task back to task bank (remove all assignments but keep task)
         await deleteTask(task.id, true);
         
@@ -79,6 +81,20 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
         try {
           window.dispatchEvent(new CustomEvent('app:success', { 
             detail: { message: 'Task reset successfully and returned to task bank' } 
+          }));
+        } catch {}
+      } else {
+        // Permanently delete the task (reset=false)
+        await deleteTask(task.id, false);
+        
+        // Refresh tasks to ensure UI is updated
+        const { fetchTasks } = useTasksStore.getState();
+        await fetchTasks();
+        
+        // Dispatch success event for toast notification
+        try {
+          window.dispatchEvent(new CustomEvent('app:success', { 
+            detail: { message: 'Task deleted successfully' } 
           }));
         } catch {}
       }
@@ -119,7 +135,66 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
             {task.title}
           </Typography>
           
-          {isRecurring || assignment ? (
+          {assignment ? (
+            <>
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                Choose how you want to delete this task:
+              </Alert>
+              
+              <RadioGroup
+                value={deleteOption}
+                onChange={(e) => setDeleteOption(e.target.value as 'instance' | 'reset' | 'delete')}
+              >
+                <FormControlLabel
+                  value="instance"
+                  control={<Radio />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        Delete only this instance
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Remove the assignment for {assignment.date ? new Date(assignment.date + 'T00:00:00').toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        }) : 'this date'} only. The task template will remain.
+                      </Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  value="reset"
+                  control={<Radio />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        Reset task (keep template, remove all assignments)
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Remove all assignments and reset the task back to the task bank. The task will keep its basic info (title, category, classroom, notes) and times from the last assignment{isRecurring ? ', but lose recurring settings' : ''}.
+                      </Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  value="delete"
+                  control={<Radio />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        Permanently delete task
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Permanently remove this task and all its assignments. This action cannot be undone.
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </>
+          ) : (
             <>
               <Alert severity="warning" sx={{ mb: 1 }}>
                 {isRecurring 
@@ -129,54 +204,38 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
               
               <RadioGroup
                 value={deleteOption}
-                onChange={(e) => setDeleteOption(e.target.value as 'instance' | 'all')}
+                onChange={(e) => setDeleteOption(e.target.value as 'reset' | 'delete')}
               >
                 <FormControlLabel
-                  value="instance"
-                  control={<Radio disabled={!assignment} />}
-                  disabled={!assignment}
+                  value="reset"
+                  control={<Radio />}
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        Delete only this instance
+                        Reset task (keep template, remove all assignments)
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {assignment ? (
-                          <>Remove the assignment for {assignment.date ? new Date(assignment.date + 'T00:00:00').toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric',
-                            year: 'numeric'
-                          }) : 'this date'} only. The task template will remain.</>
-                        ) : (
-                          'This option is only available when deleting from a specific assignment.'
-                        )}
+                        Remove all assignments and reset the task back to the task bank. The task will keep its basic info (title, category, classroom, notes) and times from the last assignment{isRecurring ? ', but lose recurring settings' : ''}.
                       </Typography>
                     </Box>
                   }
                 />
                 <FormControlLabel
-                  value="all"
+                  value="delete"
                   control={<Radio />}
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        {isRecurring ? "Delete all assignments and reset task" : "Delete all assignments and reset task"}
+                        Permanently delete task
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {isRecurring 
-                          ? "Remove all assignments and reset the task back to the task bank. The task will keep its basic info (title, category, classroom, notes) and times from the last assignment, but lose recurring settings."
-                          : "Remove all assignments and reset the task back to the task bank. The task will keep its basic info and times."}
+                        Permanently remove this task and all its assignments. This action cannot be undone.
                       </Typography>
                     </Box>
                   }
                 />
               </RadioGroup>
             </>
-          ) : (
-            <Alert severity="warning">
-              Are you sure you want to delete this task? This action cannot be undone.
-            </Alert>
           )}
         </Box>
       </DialogContent>

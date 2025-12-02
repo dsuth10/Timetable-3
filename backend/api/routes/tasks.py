@@ -15,10 +15,17 @@ bp = Blueprint('tasks', __name__, url_prefix='/api')
 @bp.get('/tasks')
 def list_tasks():
     category = request.args.get('category')
+    classroom_id = request.args.get('classroom_id')
     q = Task.query
     if category:
         category = category.strip().upper()
         q = q.filter(Task.category == category)
+    if classroom_id:
+        try:
+            q = q.filter(Task.classroom_id == int(classroom_id))
+        except ValueError:
+            return {'error': 'Invalid classroom_id'}, 400
+            
     tasks = q.order_by(Task.id).all()
     return [t.to_dict() for t in tasks], 200
 
@@ -36,17 +43,19 @@ def create_task():
     """Create a task template (no assignment until dragged to calendar)"""
     data = request.get_json(silent=True) or {}
     title = (data.get('title') or '').strip()
-    category = (data.get('category') or '').strip()
+    # Default to CLASS_SUPPORT for quick-create flow (when classroom_id is provided)
+    category = (data.get('category') or ('CLASS_SUPPORT' if data.get('classroom_id') else 'General')).strip()
     start_time = data.get('start_time', '09:00')  # Default placeholder
     end_time = data.get('end_time', '10:00')      # Default placeholder
     classroom_id = data.get('classroom_id')
-    notes = data.get('notes')
+    # Support both 'notes' (legacy) and 'description' (new contract) for compatibility
+    notes = data.get('notes') or data.get('description')
 
     # Basic validation
     if not title:
         return {'error': 'title is required'}, 400
-    if not category:
-        return {'error': 'category is required'}, 400
+    # if not category:
+    #     return {'error': 'category is required'}, 400
 
     try:
         s_h, s_m = [int(x) for x in start_time.split(':')[:2]]

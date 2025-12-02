@@ -58,10 +58,12 @@ export const useTasksStore = create<TasksState>((set, get) => ({
         // Reset mode: Refresh tasks to get the updated task data
         await get().fetchTasks();
       } else {
-        // Full deletion: Remove the task from local state
+        // Full deletion: Remove the task from local state immediately
         const tasks = get().tasks;
         const updatedTasks = tasks.filter(task => task.id !== id);
         set({ tasks: updatedTasks, loading: false });
+        // Also refresh from server to ensure consistency
+        await get().fetchTasks();
       }
     } catch (e: any) {
       set({ error: e.message || 'Failed to delete task', loading: false });

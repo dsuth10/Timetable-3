@@ -19,6 +19,7 @@ import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
+import { addMinutesToTime } from '../components/TimetableGrid/timeUtils';
 import AppDragDropContext from '../components/DragDropContext';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
@@ -28,6 +29,8 @@ import { useAbsencesStore } from '../store/stores/absences';
 import { useClassroomsStore } from '../store/stores/classrooms';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
+import { TaskSelectionModal } from '../components/Modals/TaskSelectionModal';
+import { taskService } from '../services/taskService';
 import MultiDayDialog from '../components/MultiDayDialog';
 import AppBar from '../components/Layout/AppBar';
 import AideDrawer from '../components/Layout/AideDrawer';
@@ -327,9 +330,22 @@ export default function Schedule() {
     }
   };
 
+  const [showTaskSelection, setShowTaskSelection] = useState(false);
+  const [taskSelectionDraft, setTaskSelectionDraft] = useState<{
+    aideId: number;
+    classroomId: number;
+    date: string;
+    time: string;
+    duration: number;
+  } | null>(null);
+
   const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
     onSuccess: refreshData,
-    aides: aides
+    aides: aides,
+    onClassroomDrop: (data) => {
+      setTaskSelectionDraft(data);
+      setShowTaskSelection(true);
+    }
   });
 
   const handleTaskDoubleClick = (assignment: Assignment, task?: Task) => {
@@ -589,6 +605,65 @@ export default function Schedule() {
           fetchAides({ includeAvailability: true });
           // Add the new aide to visible set
           setVisibleAideIds(prev => new Set([...prev, aide.id]));
+        }}
+      />
+      <TaskSelectionModal
+        open={showTaskSelection}
+        classroomId={taskSelectionDraft?.classroomId || null}
+        onClose={() => {
+          setShowTaskSelection(false);
+          setTaskSelectionDraft(null);
+        }}
+        onConfirm={async (taskId) => {
+          if (!taskSelectionDraft) return;
+          try {
+            setLoading(true);
+            await assignmentsApi.create({
+              aide_id: taskSelectionDraft.aideId,
+              task_id: taskId,
+              date: taskSelectionDraft.date,
+              start_time: taskSelectionDraft.time,
+              end_time: addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration),
+              auto_shorten: true
+            });
+            await refreshData();
+            setShowTaskSelection(false);
+            setTaskSelectionDraft(null);
+          } catch (e: any) {
+            setError(e.message || 'Failed to create assignment');
+          } finally {
+            setLoading(false);
+          }
+        }}
+        onCreate={async (taskData) => {
+          if (!taskSelectionDraft) return;
+          try {
+            setLoading(true);
+            const newTask = await taskService.createTask({
+              title: taskData.title,
+              description: taskData.description,
+              classroom_id: taskSelectionDraft.classroomId
+            });
+            
+            await assignmentsApi.create({
+              aide_id: taskSelectionDraft.aideId,
+              task_id: newTask.id,
+              date: taskSelectionDraft.date,
+              start_time: taskSelectionDraft.time,
+              end_time: addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration),
+              auto_shorten: true
+            });
+            
+            await refreshData();
+            // Also refresh tasks list
+            fetchTasks(); 
+            setShowTaskSelection(false);
+            setTaskSelectionDraft(null);
+          } catch (e: any) {
+            setError(e.message || 'Failed to create task and assignment');
+          } finally {
+            setLoading(false);
+          }
         }}
       />
       <TaskEditModal

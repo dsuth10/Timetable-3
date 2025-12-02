@@ -18,6 +18,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Class-based Interface** - Alternative view focusing on classroom schedules and aide allocations  
 ✅ **Dual View Modes** - Seamlessly toggle between Teacher Aide and Class-centric views  
 ✅ **Smart Aide Filtering** - Filter available aides by time slot with drag-and-drop allocation  
+✅ **Interactive Task Selection** - When assigning aides to classes, choose from existing tasks or create new ones via modal dialog  
 ✅ **Flexible Time Slots** - Support for 5-minute increments (e.g. school bell times)  
 ✅ **Simplified Task Creation** - Create task templates with just title, category, classroom, and notes  
 ✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
@@ -385,9 +386,11 @@ Editing Assignments (Calendar):
 Deleting Tasks:
 1. Click "Delete" in the task edit dialog
 2. Choose deletion scope:
-   → "Delete only this instance": Removes just this specific assignment
-   → "Delete task": Removes the task template and all assignments
-   → "Delete all instances": (For recurring) Removes entire series
+   → "Delete only this instance": Removes just this specific assignment (when deleting from calendar)
+   → "Reset task": Removes all assignments but keeps the task template in Task Bank
+   → "Permanently delete task": Completely removes the task and all assignments (default when deleting from Task Bank)
+3. When deleting from Task Bank, task is permanently removed by default
+4. When deleting from assignment context, all three options are available
 ```
 
 ### 6. Classroom Management
@@ -407,7 +410,11 @@ The application allows administrators to manage a database of classrooms, each w
 3. View the classroom's weekly schedule showing all allocated support
 4. Click any time slot to see a filtered list of *available* teacher aides
 5. Drag an aide from the right panel into the slot to allocate them
-6. Automatic "Class Support" task creation and assignment
+6. Task Selection Modal appears:
+   - Select from existing tasks for that classroom
+   - Or click "Create New Task" to quickly create a specific task
+   - Prevents duplicate "Class Support" tasks from cluttering the system
+7. Assignment created with the selected or newly created task
 ```
 
 ---
@@ -938,6 +945,25 @@ Contributions are welcome! Please follow these steps:
 
 ## 🔄 Recent Updates
 
+### Version 1.0.6 (2025-12-02)
+
+**New Features**:
+- ✅ **Interactive Task Selection Modal** - When dragging an aide to a class schedule slot, a modal appears allowing selection of existing tasks or quick creation of new ones
+- ✅ **Prevent Duplicate Tasks** - No more automatic "Class Support" task creation; users choose or create specific tasks
+- ✅ **Quick Task Creation** - Inline form in modal for creating tasks with just title and description
+
+**Bug Fixes**:
+- ✅ **Fixed Task Deletion** - Tasks deleted from Task Bank now properly disappear from the list (permanent deletion instead of reset)
+- ✅ **Improved Deletion Options** - Clear distinction between "Reset task" (keep template) and "Permanently delete task" (remove completely)
+- ✅ **Better Default Behavior** - When deleting from Task Bank, defaults to permanent deletion; when deleting from assignment, offers all options
+
+**Technical Improvements**:
+- Added `TaskSelectionModal` component with task list and inline creation form
+- Updated `taskService` to fetch tasks by classroom and create tasks via API
+- Enhanced `TaskDeleteDialog` with three deletion options: instance, reset, and permanent delete
+- Updated task store to properly refresh after permanent deletion
+- Backend `POST /api/tasks` now accepts `description` field (maps to `notes`) and defaults to `CLASS_SUPPORT` category for quick-create
+
 ### Version 1.0.5 (2025-12-01)
 
 **New Features**:
@@ -1028,5 +1054,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.5  
-**Last Updated**: 2025-12-01
+**Version**: 1.0.6  
+**Last Updated**: 2025-12-02

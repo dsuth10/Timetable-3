@@ -1,0 +1,108 @@
+openapi: 3.0.0
+info:
+  title: Task Selection & Assignment API
+  version: 1.0.0
+paths:
+  /api/tasks:
+    get:
+      summary: List tasks, optionally filtered by classroom
+      parameters:
+        - name: classroom_id
+          in: query
+          schema:
+            type: integer
+          description: Filter tasks belonging to a specific classroom
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - classroom_id
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                classroom_id:
+                  type: integer
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /api/assignments:
+    post:
+      summary: Assign an aide to a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - aide_id
+                - task_id
+                - date
+                - time_slot_id
+              properties:
+                aide_id:
+                  type: integer
+                task_id:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                time_slot_id:
+                  type: integer
+      responses:
+        '201':
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        classroom_id:
+          type: integer
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        aide_id:
+          type: integer
+        task_id:
+          type: integer
+        date:
+          type: string
+        time_slot_id:
+          type: integer
+

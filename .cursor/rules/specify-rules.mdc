@@ -6,6 +6,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Vite, Material-UI v5, Zustand, @hello-pangea/dnd (001-create-a-drag)
 - [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION] (002-i-want-a)
 - [if applicable, e.g., PostgreSQL, CoreData, files or N/A] (002-i-want-a)
+- Python 3.12+ (Backend), TypeScript (Frontend) + Flask, SQLAlchemy (Backend); React 18, Material-UI v5, @hello-pangea/dnd (Frontend) (003-currently-when-viewing)
+- SQLite (Local-first) (003-currently-when-viewing)
 
 ## Project Structure
 ```
@@ -21,6 +23,7 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 003-currently-when-viewing: Added Python 3.12+ (Backend), TypeScript (Frontend) + Flask, SQLAlchemy (Backend); React 18, Material-UI v5, @hello-pangea/dnd (Frontend)
 - 002-i-want-a: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 - 001-create-a-drag: Added Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Vite, Material-UI v5, Zustand, @hello-pangea/dnd
 
