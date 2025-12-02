@@ -52,8 +52,8 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
         >
           <CardContent
             sx={{
-              p: 1.5,
-              '&:last-child': { pb: 1.5 },
+              p: 1.75,
+              '&:last-child': { pb: 1.75 },
               ...(isPositioned
                 ? {
                     flexGrow: 1,

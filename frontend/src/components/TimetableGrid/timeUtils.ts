@@ -1,6 +1,6 @@
 // Time calculation constants and utilities for calendar grid positioning
 
-export const PIXELS_PER_MINUTE = 2;
+export const PIXELS_PER_MINUTE = 2.5;
 export const START_TIME_MINUTES = 8 * 60 + 50; // 08:50
 export const END_TIME_MINUTES = 15 * 60; // 15:00
 
