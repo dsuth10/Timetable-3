@@ -169,10 +169,12 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick }:
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails sx={{ p: 1 }}>
-                        {categoryTasks.map((task) => {
+                        {categoryTasks.map((task, taskIndex) => {
                           const currentIndex = globalIndex++;
+                          // Use combination of category, task.id, and index to ensure unique keys
+                          const uniqueKey = `${category}-${task.id}-${taskIndex}`;
                           return (
-                            <Box key={task.id}>
+                            <Box key={uniqueKey}>
                               <TaskTemplateCard
                                 task={task}
                                 index={currentIndex}

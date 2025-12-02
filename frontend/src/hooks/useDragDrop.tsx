@@ -489,53 +489,66 @@ export function useDragDrop(options?: UseDragDropOptions) {
         version: 1,
       };
 
-      await execute({
-        id: `create-assignment-${task.id}-${data.aideId}-${Date.now()}`,
-        description: `Assign ${task.title} to ${data.aideId} on ${data.date}`,
-        async do() {
-          try {
-            await assignmentsApi.create(createPayload);
-            // Optimistically add task to store if available (avoids refetching all tasks)
-            const { addTask } = useTasksStore.getState();
-            if (addTask && task) {
-                addTask(task);
+      try {
+        await execute({
+          id: `create-assignment-${task.id}-${data.aideId}-${Date.now()}`,
+          description: `Assign ${task.title} to ${data.aideId} on ${data.date}`,
+          async do() {
+            try {
+              await assignmentsApi.create(createPayload);
+              // Optimistically add task to store if available (avoids refetching all tasks)
+              const { addTask } = useTasksStore.getState();
+              if (addTask && task) {
+                  addTask(task);
+              }
+            } catch (e: any) {
+              if (e?.status === 409) {
+                setConflicts({
+                  conflicts: e?.data?.conflicts || [],
+                  errorMessage: e?.data?.error || null,
+                  taskId: task.id,
+                  destAideId: data.aideId,
+                  createPayload: createPayload
+                });
+                // Stop execution, but don't rethrow - we handled the conflict UI
+                // Wait, if we stop here, the modal remains open (which is good for conflict resolution).
+                // But if we don't rethrow, execute considers it a success?
+                // We want modal to stay open. 
+                // setConflicts will trigger ConflictUI.
+                // pendingAssignment is still true.
+                // handleModalConfirm finishes.
+                // setPendingAssignment(null) is at the end of handleModalConfirm.
+                // We need to PREVENT setPendingAssignment(null) if conflict found.
+                throw e; // Rethrow to stop handleModalConfirm from reaching setPendingAssignment(null)
+              } else {
+                throw e;
+              }
             }
-          } catch (e: any) {
-            if (e?.status === 409) {
-              setConflicts({
-                conflicts: e?.data?.conflicts || [],
-                errorMessage: e?.data?.error || null,
-                taskId: task.id,
-                destAideId: data.aideId,
-                createPayload: createPayload
-              });
-              // Stop execution, but don't rethrow - we handled the conflict UI
-              // Wait, if we stop here, the modal remains open (which is good for conflict resolution).
-              // But if we don't rethrow, execute considers it a success?
-              // We want modal to stay open. 
-              // setConflicts will trigger ConflictUI.
-              // pendingAssignment is still true.
-              // handleModalConfirm finishes.
-              // setPendingAssignment(null) is at the end of handleModalConfirm.
-              // We need to PREVENT setPendingAssignment(null) if conflict found.
-              throw e; // Rethrow to stop handleModalConfirm from reaching setPendingAssignment(null)
-            } else {
-              throw e;
+            
+            // Refresh data (ignore errors to prevent rollback of creation)
+            try {
+              await options?.onSuccess?.();
+            } catch (err) {
+              console.error('Refresh failed after assignment creation:', err);
             }
+          },
+          async undo() {
+            console.warn("Undo for creation not fully implemented (missing ID capture)");
+            options?.onSuccess?.();
           }
-          
-          // Refresh data (ignore errors to prevent rollback of creation)
-          try {
-            await options?.onSuccess?.();
-          } catch (err) {
-            console.error('Refresh failed after assignment creation:', err);
-          }
-        },
-        async undo() {
-          console.warn("Undo for creation not fully implemented (missing ID capture)");
-          options?.onSuccess?.();
+        });
+      } catch (error: any) {
+        // Handle errors that aren't conflicts (conflicts are handled above)
+        if (error?.status !== 409) {
+          const errorMessage = error?.message || error?.data?.error || 'Failed to create assignment';
+          window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
         }
-      });
+        // Don't clear pendingAssignment if there's a conflict (modal should stay open)
+        if (error?.status !== 409) {
+          setPendingAssignment(null);
+        }
+        return; // Exit early to prevent clearing pendingAssignment below
+      }
     } else if (type === 'update' && assignmentId && currentAssignment) {
       const updatePayload: any = { 
         aide_id: data.aideId,
@@ -547,7 +560,8 @@ export function useDragDrop(options?: UseDragDropOptions) {
       };
 
       const timeDescription = data.startTime ? ` at ${data.startTime.slice(0, 5)}` : '';
-      await execute({
+      try {
+        await execute({
         id: `move-${assignmentId}-${sourceData?.aideId ?? 'unassigned'}-${sourceData?.date ?? 'any'}-${sourceData?.time ?? 'any'}-to-${data.aideId ?? 'unassigned'}-${data.date ?? 'any'}-${data.startTime.slice(0, 5) ?? 'any'}-${Date.now()}`,
         description: `Move assignment ${assignmentId} from ${sourceData?.aideId ?? 'unassigned'} to ${data.aideId ?? 'unassigned'}${data.date ? ` on ${data.date}` : ''}${timeDescription}`,
         async do() {
@@ -595,7 +609,19 @@ export function useDragDrop(options?: UseDragDropOptions) {
             console.error('Refresh failed after undo:', err);
           }
         },
-      });
+        });
+      } catch (error: any) {
+        // Handle errors that aren't conflicts (conflicts are handled above)
+        if (error?.status !== 409) {
+          const errorMessage = error?.message || error?.data?.error || 'Failed to update assignment';
+          window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+        }
+        // Don't clear pendingAssignment if there's a conflict (modal should stay open)
+        if (error?.status !== 409) {
+          setPendingAssignment(null);
+        }
+        return; // Exit early to prevent clearing pendingAssignment below
+      }
     }
 
     // Clear pending state only after successful execution (or handled conflict)

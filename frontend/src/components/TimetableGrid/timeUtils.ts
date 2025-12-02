@@ -95,10 +95,27 @@ export function snapToSlot(timeStr: string): string {
 }
 
 /**
- * Generate start times for all defined segments
+ * Generate start times for all defined segments (used for display)
  */
 export function generateTimeSlots(): string[] {
   return SCHEDULE_SEGMENTS.map(segment => segment.start);
+}
+
+/**
+ * Generate all possible time slots at 5-minute increments within working hours
+ * This ensures dropdowns can handle any valid assignment time (e.g., 11:40)
+ */
+export function generateAllTimeSlots(): string[] {
+  const slots: string[] = [];
+  let currentMinutes = START_TIME_MINUTES;
+  
+  // Generate all 5-minute increments from start to end time
+  while (currentMinutes <= END_TIME_MINUTES) {
+    slots.push(minutesToTime(currentMinutes));
+    currentMinutes += 5; // 5-minute increments
+  }
+  
+  return slots;
 }
 
 /**

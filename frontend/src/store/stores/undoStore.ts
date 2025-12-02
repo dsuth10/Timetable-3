@@ -33,6 +33,9 @@ export const useUndoStore = create<UndoState>((set, get) => ({
       await cmd.do();
       const nextUndo = [...get().undoStack, cmd].slice(-MAX_DEPTH);
       set({ undoStack: nextUndo, redoStack: [] });
+    } catch (error) {
+      // Re-throw the error so callers can handle it, but ensure executing is reset
+      throw error;
     } finally {
       set({ executing: false });
     }

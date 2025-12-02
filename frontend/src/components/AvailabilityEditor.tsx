@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { AccessTime, Schedule } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
-import { generateTimeSlots, timeToMinutes, snapToSlot, minutesToTime, END_TIME_MINUTES } from './TimetableGrid/timeUtils';
+import { generateAllTimeSlots, timeToMinutes, snapToSlot, minutesToTime, END_TIME_MINUTES } from './TimetableGrid/timeUtils';
 import type { Availability, ID, Weekday } from '../types';
 
 type AvailabilityEditorProps = {
@@ -71,12 +71,9 @@ export default function AvailabilityEditor({
     initializeAvailability();
   }, [initialAvailability]);
 
-  // Generate time slots for dropdowns
+  // Generate time slots for dropdowns - use all 5-minute increments
   const timeSlots = useMemo(() => {
-    const slots = generateTimeSlots();
-    // Add the end of the day time
-    slots.push(minutesToTime(END_TIME_MINUTES));
-    return slots;
+    return generateAllTimeSlots();
   }, []);
 
   const handleDayToggle = async (weekday: Weekday, enabled: boolean) => {

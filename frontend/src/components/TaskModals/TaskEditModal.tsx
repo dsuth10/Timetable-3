@@ -24,7 +24,7 @@ import { assignmentsApi } from '../../services/assignmentsApi';
 import { useTasksStore } from '../../store/stores/tasks';
 import type { Task, TaskCategory, Classroom, Weekday, Assignment } from '../../types';
 import { categoryColors } from '../../theme/theme';
-import { generateTimeSlots, minutesToTime, END_TIME_MINUTES } from '../TimetableGrid/timeUtils';
+import { generateAllTimeSlots, minutesToTime, END_TIME_MINUTES } from '../TimetableGrid/timeUtils';
 import TaskDeleteDialog from './TaskDeleteDialog';
 
 type Props = {
@@ -75,12 +75,9 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Generate time slots
+  // Generate time slots - use all 5-minute increments for dropdowns
   const timeSlots = useMemo(() => {
-    const slots = generateTimeSlots();
-    // Add the end of the day time
-    slots.push(minutesToTime(END_TIME_MINUTES));
-    return slots;
+    return generateAllTimeSlots();
   }, []);
 
   // Load classrooms when modal opens
