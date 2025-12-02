@@ -98,83 +98,85 @@ def seed_database():
             next_monday = today + timedelta(days=days_ahead)
 
             tasks = []
+            # Task templates use placeholder times (09:00-10:00) as per current paradigm
+            # Times will be set when tasks are assigned to the calendar
             tasks.append(Task(
                 title="Morning Playground Duty",
                 category="PLAYGROUND",
-                start_time=time(10, 30),
-                end_time=time(11, 0),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[4].id,
                 notes="Supervise students during morning recess"
             ))
             tasks.append(Task(
                 title="Grade 3A Reading Support",
                 category="CLASS_SUPPORT",
-                start_time=time(9, 0),
-                end_time=time(10, 0),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[0].id,
                 notes="Small group reading intervention"
             ))
             tasks.append(Task(
                 title="Grade 4A Math Support",
                 category="CLASS_SUPPORT",
-                start_time=time(13, 0),
-                end_time=time(14, 0),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[2].id,
                 notes="One-on-one math tutoring"
             ))
             tasks.append(Task(
                 title="Lunch Supervision",
                 category="PLAYGROUND",
-                start_time=time(12, 0),
-                end_time=time(12, 30),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[4].id,
                 notes="Cafeteria and playground supervision"
             ))
             tasks.append(Task(
                 title="Library Book Fair Setup",
                 category="CLASS_SUPPORT",
-                start_time=time(14, 0),
-                end_time=time(15, 30),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[3].id,
                 notes="Help set up book fair displays"
             ))
             tasks.append(Task(
                 title="Student A - Behavior Support",
                 category="INDIVIDUAL_SUPPORT",
-                start_time=time(9, 30),
-                end_time=time(10, 30),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[1].id,
                 notes="1:1 behavior intervention plan support"
             ))
             tasks.append(Task(
                 title="ESL Small Group",
                 category="GROUP_SUPPORT",
-                start_time=time(11, 0),
-                end_time=time(11, 30),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[3].id,
                 notes="English language learners support group"
             ))
             tasks.append(Task(
                 title="School Assembly Support",
                 category="CLASS_SUPPORT",
-                start_time=time(13, 30),
-                end_time=time(14, 30),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[3].id,
                 notes="Assist with student seating and crowd control"
             ))
             tasks.append(Task(
                 title="Afternoon Playground Duty",
                 category="PLAYGROUND",
-                start_time=time(14, 30),
-                end_time=time(15, 0),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[4].id,
                 notes="Supervise afternoon outdoor activities"
             ))
             tasks.append(Task(
                 title="Parent-Teacher Conference Support",
                 category="CLASS_SUPPORT",
-                start_time=time(15, 30),
-                end_time=time(16, 0),
+                start_time=time(9, 0),  # Placeholder time
+                end_time=time(10, 0),   # Placeholder time
                 classroom_id=classrooms[0].id,
                 notes="Provide childcare during parent conferences"
             ))

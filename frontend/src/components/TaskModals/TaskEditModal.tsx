@@ -185,6 +185,11 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           
           taskPayload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
           
+          // Include the assignment's times for the recurring series
+          // This ensures recurring instances use the same times as the original assignment
+          taskPayload.start_time = start;
+          taskPayload.end_time = end;
+          
           // Calculate expiry date based on number of weeks from assignment date
           if (assignment.date) {
             const startDate = new Date(assignment.date);
