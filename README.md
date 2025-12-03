@@ -115,11 +115,12 @@ Open your browser to: **http://localhost:3000**
 ┌─────────────────────────────────────────────────────────┐
 │              Flask 3.x REST API (Backend)                │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │  • API Routes (Aides, Tasks, Assignments, etc.)    │ │
+│  │  • API Routes (Aides, Tasks, Assignments, Relief Pool)│ │
 │  │  • Business Logic Services                         │ │
 │  │  • RRULE Recurrence Engine                         │ │
 │  │  • Collision Detection Service                     │ │
-│  │  • Background Scheduler (Horizon Extension)        │ │
+│  │  • Relief Pool Service (Task Reassignment)         │ │
+│  │  • Background Scheduler (Horizon Extension & Cleanup)│ │
 │  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
                           ↓ SQLAlchemy ORM
@@ -127,7 +128,7 @@ Open your browser to: **http://localhost:3000**
 │               SQLite Database (Local File)               │
 │  • Teacher Aides & Availability                          │
 │  • Tasks (One-off & Recurring)                           │
-│  • Assignments (w/ Optimistic Locking)                   │
+│  • Assignments (w/ Optimistic Locking & Relief Pool)    │
 │  • Absences & Classrooms                                 │
 │  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
@@ -163,10 +164,10 @@ timetable-scheduler/
 ├── backend/                      # Python Flask backend
 │   ├── api/
 │   │   ├── models/               # SQLAlchemy models (7 entities)
-│   │   ├── routes/               # API endpoints (aides, tasks, assignments, etc.)
-│   │   ├── services/             # Business logic (collision, recurrence, conflicts)
+│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, etc.)
+│   │   ├── services/             # Business logic (collision, recurrence, conflicts, relief_pool)
 │   │   ├── middleware/           # Validation middleware
-│   │   ├── scheduler.py          # Background scheduler for horizon extension
+│   │   ├── scheduler.py          # Background scheduler (horizon extension & Relief Pool cleanup)
 │   │   └── __init__.py
 │   ├── migrations/               # Alembic database migrations
 │   ├── tests/
@@ -180,7 +181,7 @@ timetable-scheduler/
 ├── frontend/                     # React TypeScript frontend
 │   ├── src/
 │   │   ├── components/           # React components
-│   │   │   ├── Layout/           # Layout components (AppBar, AideDrawer, ManagementPanel)
+│   │   │   ├── Layout/           # Layout components (AppBar, AideDrawer, ManagementPanel, TaskBank, ReliefPoolTab)
 │   │   │   ├── Management/       # Management components (Aides, Tasks, Requests, Classrooms)
 │   │   │   ├── common/           # Common UI components (LoadingState, EmptyState)
 │   │   │   ├── TimetableGrid/    # Timetable grid & slots (weekly view)
@@ -190,7 +191,7 @@ timetable-scheduler/
 │   │   │   └── ...
 │   │   ├── pages/                # Main pages (App, Schedule)
 │   │   ├── store/
-│   │   │   └── stores/           # Zustand stores (6 stores)
+│   │   │   └── stores/           # Zustand stores (aides, tasks, assignments, reliefPool, absences, classrooms)
 │   │   ├── services/             # API client layer
 │   │   ├── hooks/                # Custom React hooks (useDragDrop)
 │   │   ├── theme/                # Material Design theme system
@@ -241,10 +242,12 @@ The application manages 7 core entities:
 | **TeacherAide** | Staff member providing support | Has Availability, Assignments, Absences |
 | **Availability** | Weekly availability pattern (Monday-Friday time windows) | Belongs to TeacherAide, one per weekday |
 | **Task** | Support duty template (title, category, classroom, notes) | Has Assignments, optional Classroom |
-| **Assignment** | Specific task occurrence assigned to aide | Belongs to Task and TeacherAide |
-| **Absence** | Aide unavailability record | Belongs to TeacherAide |
+| **Assignment** | Specific task occurrence assigned to aide | Belongs to Task and TeacherAide, can be in Relief Pool |
+| **Absence** | Aide unavailability record | Belongs to TeacherAide, triggers Relief Pool cascade |
 | **Classroom** | Physical learning space (includes Name, Room Number, Teacher) | Has Tasks |
 | **Request** | Teacher request for aide support | Optional Classroom |
+
+**Relief Pool**: Not a separate entity, but a special status (`RELIEF_POOL`) for Assignments. When an aide is marked absent, their assignments are moved to Relief Pool status with `original_aide_id` preserved for potential restoration.
 
 See [data-model.md](specs/001-create-a-drag/data-model.md) for full entity definitions.
 
@@ -335,16 +338,34 @@ Making Tasks Recurring:
 7. No duplicates on first day (existing assignment preserved)
 ```
 
-### 3. Absence Management
+### 3. Absence Management & Relief Pool
 
 ```
+Marking an Aide Absent:
 1. Mark aide absent for specific date
-2. System finds all assignments for that aide/date
-3. Assignments automatically unassigned (aide_id = NULL)
-4. Tasks return to unassigned panel
-5. When absence removed:
-   → Restore assignments if slots still available
-   → Report conflicts if slots now occupied
+2. System finds all ASSIGNED and IN_PROGRESS assignments for that aide/date
+3. Assignments automatically moved to Relief Pool:
+   → Status changed to RELIEF_POOL
+   → Original aide preserved in original_aide_id
+   → aide_id set to NULL
+   → All task details (time, classroom, category) preserved
+4. Tasks appear in Relief Pool tab with badge count
+5. Relief Pool updates immediately when absence is created
+
+Relief Pool Features:
+- Tasks grouped by date for easy viewing
+- Shows original aide name, task details, and time slots
+- Date-restricted reassignment (can only assign on original absence date)
+- Drag-and-drop from Relief Pool to aide schedule
+- Dismiss option for tasks not needing coverage
+- Auto-cleanup of expired tasks at end of day
+
+Removing an Absence:
+1. Delete absence record
+2. System attempts to restore Relief Pool tasks to original aide:
+   → If time slot available: Task restored to original aide
+   → If time slot occupied: Task stays in Relief Pool, conflict reported
+3. Relief Pool updates immediately to reflect changes
 ```
 
 ### 4. Conflict Resolution
@@ -416,6 +437,40 @@ The application allows administrators to manage a database of classrooms, each w
    - Or click "Create New Task" to quickly create a specific task
    - Prevents duplicate "Class Support" tasks from cluttering the system
 7. Assignment created with the selected or newly created task
+```
+
+### 8. Relief Pool Management
+
+```
+Viewing Relief Pool Tasks:
+1. Open Task Bank panel (right side)
+2. Click "Relief Pool" tab (shows badge count of pending tasks)
+3. View tasks grouped by date with original aide information
+4. Each task card shows:
+   - Task title and category
+   - Time slot (start - end)
+   - Classroom (if applicable)
+   - Original aide name ("Was: [Aide Name]")
+
+Reassigning Relief Pool Tasks:
+1. Drag task from Relief Pool to aide's schedule
+2. System validates date restriction:
+   → Must be same date as original absence
+   → Error shown if trying to assign to different date
+3. System checks for time conflicts
+4. If valid, task is reassigned and removed from Relief Pool
+5. Original aide reference cleared
+
+Dismissing Tasks:
+1. Click dismiss button (X) on Relief Pool task card
+2. Task is permanently removed (not needed for coverage)
+3. Relief Pool count updates immediately
+
+Auto-Cleanup:
+- Expired tasks automatically removed after their scheduled time passes
+- Tasks from past dates are cleaned up
+- Tasks from today past their end time are cleaned up
+- Cleanup runs via background scheduler
 ```
 
 ---
@@ -710,6 +765,23 @@ curl -X POST http://localhost:5000/api/absences \
   -d '{"aide_id": 1, "date": "2025-10-06", "reason": "Sick leave"}'
 ```
 
+**Get Relief Pool tasks**:
+```bash
+curl http://localhost:5000/api/relief-pool
+```
+
+**Reassign Relief Pool task**:
+```bash
+curl -X POST http://localhost:5000/api/relief-pool/123/reassign \
+  -H "Content-Type: application/json" \
+  -d '{"aide_id": 2, "version": 1, "start_time": "09:10:00", "end_time": "09:40:00"}'
+```
+
+**Get Relief Pool count**:
+```bash
+curl http://localhost:5000/api/relief-pool/count
+```
+
 ---
 
 ## 🚢 Deployment
@@ -946,6 +1018,32 @@ Contributions are welcome! Please follow these steps:
 
 ## 🔄 Recent Updates
 
+### Version 1.0.7 (2025-12-03)
+
+**New Features**:
+- ✅ **Relief Pool System** - Complete implementation of Relief Pool for managing orphaned tasks from absent aides
+- ✅ **Relief Pool Tab** - New tab in Task Bank showing all Relief Pool tasks grouped by date
+- ✅ **Date-Restricted Reassignment** - Relief Pool tasks can only be reassigned on their original absence date
+- ✅ **Automatic Task Preservation** - When aide is marked absent, all tasks preserve time, classroom, and category details
+- ✅ **Absence Restoration** - Removing an absence attempts to restore tasks to original aide if slots available
+- ✅ **Auto-Cleanup** - Expired Relief Pool tasks automatically removed at end of day
+- ✅ **Real-Time Updates** - Relief Pool updates immediately when absences are created or deleted
+
+**Technical Improvements**:
+- Added `RELIEF_POOL` status to Assignment model with `original_aide_id` tracking
+- Created `ReliefPoolService` with full CRUD operations and cleanup logic
+- Implemented `ReliefPoolTab` component with drag-and-drop support
+- Added Relief Pool API endpoints: `GET /api/relief-pool`, `GET /api/relief-pool/count`, `POST /api/relief-pool/{id}/reassign`, `POST /api/relief-pool/{id}/dismiss`
+- Modified absence cascade to move tasks to Relief Pool instead of unassigning
+- Updated absence deletion to attempt task restoration
+- Added background scheduler job for end-of-day cleanup
+- Implemented auto-refresh of Relief Pool when absences change
+- Added 48 comprehensive tests covering all Relief Pool scenarios
+
+**Database Changes**:
+- Migration `003_add_relief_pool_support.py` adds `original_aide_id` column to assignments table
+- New indexes for efficient Relief Pool queries
+
 ### Version 1.0.6 (2025-12-02)
 
 **New Features**:
@@ -1055,5 +1153,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.6  
-**Last Updated**: 2025-12-02
+**Version**: 1.0.7  
+**Last Updated**: 2025-12-03
