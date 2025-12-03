@@ -79,6 +79,46 @@ class CollisionService:
         return query.all()
     
     @staticmethod
+    def check_collision(
+        aide_id: int,
+        date: date,
+        start_time: dt_time,
+        end_time: dt_time,
+        exclude_assignment_id: Optional[int] = None
+    ) -> Optional[Dict]:
+        """
+        Check if there's a collision with existing assignments.
+        
+        Args:
+            aide_id: Teacher aide ID
+            date: Date of proposed assignment
+            start_time: Start time of proposed assignment
+            end_time: End time of proposed assignment
+            exclude_assignment_id: Assignment ID to exclude (for updates)
+        
+        Returns:
+            Dictionary with conflict info if collision exists, None otherwise
+        """
+        conflicts = CollisionService.find_assignment_conflicts(
+            aide_id=aide_id,
+            assignment_date=date,
+            start_time=start_time,
+            end_time=end_time,
+            exclude_assignment_id=exclude_assignment_id
+        )
+        
+        if conflicts:
+            conflict = conflicts[0]
+            return {
+                'id': conflict.id,
+                'task_id': conflict.task_id,
+                'start_time': conflict.start_time.strftime('%H:%M:%S'),
+                'end_time': conflict.end_time.strftime('%H:%M:%S')
+            }
+        
+        return None
+
+    @staticmethod
     def check_availability(
         aide_id: int,
         assignment_date: date,

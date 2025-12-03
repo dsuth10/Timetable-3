@@ -71,17 +71,25 @@ class Absence(db.Model):
 
 @event.listens_for(Absence, 'after_insert')
 def _absence_after_insert(mapper, connection, target):
-    """Release assignments for the aide on the absence date at insert time.
+    """Move assignments to Relief Pool for the aide on the absence date at insert time.
     This ensures cascade happens for both API- and ORM-created absences.
+    
+    Relief Pool Behavior:
+    - Sets original_aide_id to preserve the original assignment
+    - Sets status to RELIEF_POOL (preserves time, class, and other details)
+    - Sets aide_id to NULL (task is now orphaned)
     """
     connection.execute(
         sa_text(
             """
             UPDATE assignments
-            SET aide_id = NULL,
-                status = 'UNASSIGNED',
+            SET original_aide_id = aide_id,
+                aide_id = NULL,
+                status = 'RELIEF_POOL',
                 version = version + 1
-            WHERE aide_id = :aide_id AND date = :date
+            WHERE aide_id = :aide_id 
+              AND date = :date
+              AND status IN ('ASSIGNED', 'IN_PROGRESS')
             """
         ),
         {"aide_id": target.aide_id, "date": target.date}

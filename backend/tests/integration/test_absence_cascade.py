@@ -1,6 +1,6 @@
 """
-T024: Integration test - Absence cascade
-Tests absence creation and assignment release from quickstart.md steps 8-10
+T024: Integration test - Absence cascade (Updated for Relief Pool)
+Tests absence creation and assignment cascade to Relief Pool
 """
 import pytest
 from datetime import date, time, timedelta
@@ -8,13 +8,13 @@ from datetime import date, time, timedelta
 
 def test_absence_cascade_releases_assignments(client):
     """
-    Test absence creation automatically releases all assignments for that day
+    Test absence creation automatically moves assignments to Relief Pool
     
-    Scenario from quickstart.md steps 8-10:
+    Updated behavior:
     1. Aide has 3 assignments on Thursday
     2. Administrator marks aide absent on Thursday
-    3. All 3 assignments automatically released (aide_id = null, status = UNASSIGNED)
-    4. Assignments appear in unassigned pool
+    3. All 3 assignments move to Relief Pool (aide_id = null, status = RELIEF_POOL)
+    4. Assignments retain original_aide_id for potential restoration
     """
     
     # Setup aide
@@ -30,7 +30,7 @@ def test_absence_cascade_releases_assignments(client):
     })
     
     # Create classroom and tasks
-    classroom = client.post('/api/classrooms', json={"name": "Room 202", "capacity": 30}).json
+    classroom = client.post('/api/classrooms', json={"name": "Room 202", "room_number": "202", "teacher": "Test Teacher", "capacity": 30}).json
     
     tasks = []
     for i, (start, end) in enumerate([("09:00", "10:00"), ("11:00", "12:00"), ("14:00", "15:00")]):
@@ -70,24 +70,30 @@ def test_absence_cascade_releases_assignments(client):
     })
     
     assert absence.status_code == 201
-    assert 'released_assignments' in absence.json
-    assert len(absence.json['released_assignments']) == 3
+    # Now uses relief_pool_tasks instead of released_assignments
+    assert 'relief_pool_tasks' in absence.json
+    assert len(absence.json['relief_pool_tasks']) == 3
     
-    # Verify all assignments now unassigned
+    # Verify all assignments now in Relief Pool
     for assign_id in [a['id'] for a in assignments]:
         get_assign = client.get(f'/api/assignments/{assign_id}')
         assert get_assign.status_code == 200
-        assert get_assign.json['status'] == 'UNASSIGNED'
+        # New behavior: status is RELIEF_POOL, not UNASSIGNED
+        assert get_assign.json['status'] == 'RELIEF_POOL'
         assert get_assign.json['aide_id'] is None
+        # New: original_aide_id is preserved
+        assert get_assign.json['original_aide_id'] == aide['id']
     
-    # Verify assignments appear in unassigned pool
-    unassigned = client.get(f'/api/assignments/unassigned?date={thursday.isoformat()}')
-    assert unassigned.status_code == 200
-    assert len(unassigned.json) >= 3
+    # Verify assignments appear in Relief Pool
+    relief_pool = client.get('/api/relief-pool?include_expired=true')
+    assert relief_pool.status_code == 200
+    relief_pool_ids = [t['id'] for t in relief_pool.json['tasks']]
+    for assign in assignments:
+        assert assign['id'] in relief_pool_ids
 
 
 def test_absence_does_not_affect_other_days(client):
-    """Test absence only releases assignments for the specific date"""
+    """Test absence only moves assignments for the specific date to Relief Pool"""
     
     aide = client.post('/api/aides', json={"name": "Test Aide", "colour_hex": "#3498DB"}).json
     
@@ -96,7 +102,7 @@ def test_absence_does_not_affect_other_days(client):
             "weekday": day, "start_time": "08:00", "end_time": "16:00"
         })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "101", "teacher": "Test Teacher", "capacity": 20}).json
     task = client.post('/api/tasks', json={
         "title": "Daily Task", "category": "PLAYGROUND",
         "start_time": "12:00", "end_time": "12:30",
@@ -126,9 +132,10 @@ def test_absence_does_not_affect_other_days(client):
         "reason": "Sick"
     })
     
-    # Verify Tuesday assignment unassigned
+    # Verify Tuesday assignment moved to Relief Pool
     get_tue = client.get(f'/api/assignments/{assign_tue["id"]}')
-    assert get_tue.json['status'] == 'UNASSIGNED'
+    assert get_tue.json['status'] == 'RELIEF_POOL'
+    assert get_tue.json['original_aide_id'] == aide['id']
     
     # Verify Wednesday assignment still assigned
     get_wed = client.get(f'/api/assignments/{assign_wed["id"]}')
@@ -138,8 +145,8 @@ def test_absence_does_not_affect_other_days(client):
 
 def test_deleting_absence_does_not_restore_assignments(client):
     """
-    Test that deleting an absence does NOT restore assignments
-    Administrators must manually reassign tasks
+    Test that deleting an absence DOES attempt to restore assignments
+    (Updated behavior: now restores if slot available)
     """
     
     aide = client.post('/api/aides', json={"name": "Test Aide", "colour_hex": "#1ABC9C"}).json
@@ -147,7 +154,7 @@ def test_deleting_absence_does_not_restore_assignments(client):
         "weekday": "FR", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "102", "teacher": "Test Teacher", "capacity": 20}).json
     task = client.post('/api/tasks', json={
         "title": "Test Task", "category": "CLASS_SUPPORT",
         "start_time": "09:00", "end_time": "10:00",
@@ -163,25 +170,30 @@ def test_deleting_absence_does_not_restore_assignments(client):
         "start_time": "09:00", "end_time": "10:00"
     }).json
     
-    # Create absence (releases assignment)
+    # Create absence (moves assignment to Relief Pool)
     absence = client.post('/api/absences', json={
         "aide_id": aide['id'],
         "date": friday.isoformat(),
         "reason": "Test"
     }).json
     
-    # Verify assignment released
+    # Verify assignment moved to Relief Pool
     get_assign = client.get(f'/api/assignments/{assignment["id"]}')
-    assert get_assign.json['status'] == 'UNASSIGNED'
+    assert get_assign.json['status'] == 'RELIEF_POOL'
     
-    # Delete absence
+    # Delete absence - NEW behavior: should attempt restoration
     delete_response = client.delete(f'/api/absences/{absence["id"]}')
-    assert delete_response.status_code in [200, 204]
+    assert delete_response.status_code == 200
     
-    # Verify assignment remains unassigned (NOT automatically restored)
+    # Verify response includes restoration info
+    assert 'restored_tasks' in delete_response.json
+    assert 'restored_count' in delete_response.json
+    
+    # Verify assignment is restored (since slot was available)
     get_assign_after = client.get(f'/api/assignments/{assignment["id"]}')
-    assert get_assign_after.json['status'] == 'UNASSIGNED'
-    assert get_assign_after.json['aide_id'] is None
-
+    assert get_assign_after.json['status'] == 'ASSIGNED'
+    assert get_assign_after.json['aide_id'] == aide['id']
+    # original_aide_id should be cleared after restoration
+    assert get_assign_after.json.get('original_aide_id') is None
 
 

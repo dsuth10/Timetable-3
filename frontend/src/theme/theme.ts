@@ -14,6 +14,7 @@ export const statusColors = {
   UNASSIGNED: '#9E9E9E',
   IN_PROGRESS: '#2196F3',
   COMPLETE: '#8BC34A',
+  RELIEF_POOL: '#FF9800', // Warning/amber color for Relief Pool tasks
 };
 
 // Create custom Material Design theme

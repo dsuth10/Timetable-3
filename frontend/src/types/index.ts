@@ -71,19 +71,25 @@ export interface RecurringSeries {
   assignments_count?: number;
 }
 
+export type AssignmentStatus = 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE' | 'RELIEF_POOL';
+
 export interface Assignment {
   id: ID;
   task_id: ID;
   aide_id: ID | null;
+  original_aide_id?: ID | null; // Stores the original aide when task enters Relief Pool
   recurring_series_id?: ID | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:MM:SS
   end_time: string;   // HH:MM:SS
-  status: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETE';
+  status: AssignmentStatus;
   version: number;
   created_at?: string;
   updated_at?: string;
   aide?: TeacherAide; // Included when fetching with relationships
+  original_aide?: TeacherAide; // Included for Relief Pool tasks
+  task?: Task; // Included when fetching with relationships
+  classroom?: Classroom; // Included for Relief Pool tasks
 }
 
 export interface Absence {
@@ -97,4 +103,39 @@ export interface Absence {
 export interface ApiError {
   error: string;
   message?: string;
+}
+
+// Relief Pool types
+export interface ReliefPoolTask extends Assignment {
+  original_aide_id: ID; // Required for Relief Pool tasks
+  original_aide: TeacherAide;
+  task: Task;
+  classroom?: Classroom;
+}
+
+export interface ReliefPoolByDate {
+  [date: string]: ID[];
+}
+
+export interface ReliefPoolResponse {
+  tasks: ReliefPoolTask[];
+  by_date: ReliefPoolByDate;
+  total_count: number;
+}
+
+export interface ReliefPoolCountResponse {
+  count: number;
+  by_date: { [date: string]: number };
+}
+
+export interface ReliefPoolReassignRequest {
+  aide_id: ID;
+  start_time?: string;
+  end_time?: string;
+  version: number;
+}
+
+export interface ReliefPoolDismissRequest {
+  reason?: string;
+  version: number;
 }

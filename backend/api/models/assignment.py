@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, validates
 from api.models import db
 
 
-ASSIGNMENT_STATUSES = {'UNASSIGNED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETE'}
+ASSIGNMENT_STATUSES = {'UNASSIGNED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETE', 'RELIEF_POOL'}
 
 
 class Assignment(db.Model):
@@ -26,6 +26,7 @@ class Assignment(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False, index=True)
     aide_id = Column(Integer, ForeignKey('teacher_aides.id', ondelete='SET NULL'), nullable=True)
+    original_aide_id = Column(Integer, ForeignKey('teacher_aides.id', ondelete='SET NULL'), nullable=True, index=True)
     recurring_series_id = Column(Integer, ForeignKey('recurring_series.id', ondelete='CASCADE'), nullable=True, index=True)
     date = Column(Date, nullable=False, index=True)
     start_time = Column(Time, nullable=False)
@@ -38,6 +39,7 @@ class Assignment(db.Model):
     # Relationships
     task = relationship('Task', back_populates='assignments')
     aide = relationship('TeacherAide', back_populates='assignments', foreign_keys=[aide_id])
+    original_aide = relationship('TeacherAide', foreign_keys=[original_aide_id])
     recurring_series = relationship('RecurringSeries', back_populates='assignments')
     
     # Indexes for collision detection and weekly queries
@@ -95,9 +97,14 @@ class Assignment(db.Model):
         if value not in ASSIGNMENT_STATUSES:
             raise ValueError(f"Status must be one of {ASSIGNMENT_STATUSES}")
         
-        # Auto-set status based on aide_id
-        if hasattr(self, 'aide_id'):
-            if self.aide_id is None and value not in ['UNASSIGNED']:
+        # RELIEF_POOL status has special rules
+        if value == 'RELIEF_POOL':
+            # RELIEF_POOL tasks should have aide_id = NULL
+            # original_aide_id should be set (handled by service layer)
+            pass
+        # Auto-set status based on aide_id (skip for RELIEF_POOL)
+        elif hasattr(self, 'aide_id'):
+            if self.aide_id is None and value not in ['UNASSIGNED', 'RELIEF_POOL']:
                 value = 'UNASSIGNED'
             elif self.aide_id is not None and value == 'UNASSIGNED':
                 value = 'ASSIGNED'
@@ -107,9 +114,9 @@ class Assignment(db.Model):
     @validates('aide_id')
     def validate_aide_id(self, key, value):
         """Ensure status matches aide_id state"""
-        # If aide_id is None, status should be UNASSIGNED
+        # If aide_id is None, status should be UNASSIGNED or RELIEF_POOL
         if value is None and hasattr(self, 'status'):
-            if self.status not in ['UNASSIGNED', None]:
+            if self.status not in ['UNASSIGNED', 'RELIEF_POOL', None]:
                 self.status = 'UNASSIGNED'
         
         return value
@@ -120,6 +127,7 @@ class Assignment(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'aide_id': self.aide_id,
+            'original_aide_id': self.original_aide_id,
             'recurring_series_id': self.recurring_series_id,
             'date': self.date.isoformat() if self.date else None,
             'start_time': self.start_time.strftime('%H:%M:%S') if self.start_time else None,
@@ -135,6 +143,8 @@ class Assignment(db.Model):
                 data['task'] = self.task.to_dict()
             if self.aide:
                 data['aide'] = self.aide.to_dict()
+            if self.original_aide:
+                data['original_aide'] = self.original_aide.to_dict()
         
         return data
     

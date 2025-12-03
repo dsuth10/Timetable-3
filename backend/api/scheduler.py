@@ -1,16 +1,17 @@
 """
 T041: Background Scheduler
-Extends recurring task assignment horizons
+Extends recurring task assignment horizons and manages Relief Pool cleanup
 """
 from __future__ import annotations
 
 from datetime import date
-from typing import List
+from typing import List, Dict, Any
 
 from api.models import db
 from api.models.task import Task
 from api.models.assignment import Assignment
 from api.services.recurrence_service import RecurrenceService
+from api.services.relief_pool_service import ReliefPoolService
 
 
 class HorizonScheduler:
@@ -70,5 +71,67 @@ class HorizonScheduler:
             db.session.commit()
 
         return created_total
+
+
+class ReliefPoolScheduler:
+    """
+    Manages Relief Pool cleanup jobs.
+    
+    Removes expired Relief Pool tasks at end of day or on demand.
+    Tasks are expired when their date has passed or their end_time has passed today.
+    """
+
+    @staticmethod
+    def cleanup_expired() -> Dict[str, Any]:
+        """
+        Remove all expired Relief Pool tasks.
+        
+        Should be called periodically (e.g., every hour or at end of day)
+        to clean up tasks that are past their scheduled time.
+        
+        Returns:
+            Dictionary with count of cleaned up tasks
+        """
+        return ReliefPoolService.cleanup_expired()
+
+    @staticmethod
+    def run_all_maintenance() -> Dict[str, Any]:
+        """
+        Run all scheduled maintenance tasks.
+        
+        Combines horizon extension and Relief Pool cleanup.
+        
+        Returns:
+            Dictionary with results from each maintenance task
+        """
+        results = {}
+        
+        # Extend recurring task horizons
+        try:
+            created = HorizonScheduler.extend_all_tasks()
+            results['horizon_extension'] = {
+                'success': True,
+                'assignments_created': created
+            }
+        except Exception as e:
+            results['horizon_extension'] = {
+                'success': False,
+                'error': str(e)
+            }
+        
+        # Clean up expired Relief Pool tasks
+        try:
+            cleanup = ReliefPoolScheduler.cleanup_expired()
+            results['relief_pool_cleanup'] = {
+                'success': True,
+                **cleanup
+            }
+        except Exception as e:
+            results['relief_pool_cleanup'] = {
+                'success': False,
+                'error': str(e)
+            }
+        
+        return results
 
 

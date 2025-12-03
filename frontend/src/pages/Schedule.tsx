@@ -27,6 +27,7 @@ import { useDragDrop } from '../hooks/useDragDrop';
 import type { Assignment, Task, Absence } from '../types';
 import { useAbsencesStore } from '../store/stores/absences';
 import { useClassroomsStore } from '../store/stores/classrooms';
+import { useReliefPoolStore } from '../store/stores/reliefPool';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import { TaskSelectionModal } from '../components/Modals/TaskSelectionModal';
@@ -234,6 +235,8 @@ export default function Schedule() {
     try {
       await deleteAbsence(absenceId);
       await refreshData();
+      // Refresh Relief Pool since removing absence may restore tasks from Relief Pool
+      useReliefPoolStore.getState().refresh();
     } catch (e: any) {
       setError(e.message || 'Failed to remove absence');
     }
@@ -663,6 +666,8 @@ export default function Schedule() {
           await listForAide(aideId);
           // Also refresh assignments since absences can release assignments
           await refreshData();
+          // Refresh Relief Pool since absence may have moved tasks there
+          useReliefPoolStore.getState().refresh();
         }}
       />
       <AideFormModal

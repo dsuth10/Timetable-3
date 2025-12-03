@@ -2,11 +2,13 @@ import { useCallback, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { tasksApi } from '../services/tasksApi'; // Import tasksApi
+import { reliefPoolApi } from '../services/reliefPoolApi';
 import ConflictModal from '../components/ConflictModal';
 import AssignmentDurationModal from '../components/TaskModals/AssignmentDurationModal';
 import { useUndoStore } from '../store/stores/undoStore';
 import { useTasksStore } from '../store/stores/tasks'; 
 import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
+import { useReliefPoolStore } from '../store/stores/reliefPool';
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
 import type { TeacherAide, Task } from '../types';
 import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } from '../components/TimetableGrid/timeUtils';
@@ -94,8 +96,9 @@ export function useDragDrop(options?: UseDragDropOptions) {
     const isTaskTemplate = draggableId.startsWith('task-');
     const isAssignment = draggableId.startsWith('asg-');
     const isTeacherAide = draggableId.startsWith('aide-') && !draggableId.includes('date');
+    const isReliefPool = draggableId.startsWith('relief-pool-');
 
-    if (!isTaskTemplate && !isAssignment && !isTeacherAide) return;
+    if (!isTaskTemplate && !isAssignment && !isTeacherAide && !isReliefPool) return;
 
     // Handle destination - could be aide-date-time, aide-date, or unassigned
     const destDroppableId = destination.droppableId;
@@ -261,6 +264,77 @@ export function useDragDrop(options?: UseDragDropOptions) {
             window.dispatchEvent(new CustomEvent('app:error', { detail: { message: e.message || 'Failed to create task' } }));
         }
         return;
+    }
+
+    // --- HANDLE RELIEF POOL TASK DROP ---
+    if (isReliefPool) {
+      const assignmentId = Number(draggableId.replace('relief-pool-', ''));
+      if (!Number.isFinite(assignmentId)) return;
+
+      // If dropped back to relief-pool or unassigned, ignore
+      if (destDroppableId === 'relief-pool' || destDroppableId === 'unassigned') {
+        return;
+      }
+
+      // Must have destination date and aide
+      if (!destDate || destAideId === null) {
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: 'Relief Pool tasks must be assigned to an aide on a specific date' } 
+        }));
+        return;
+      }
+
+      // Fetch the Relief Pool task to get its original date
+      const reliefPoolStore = useReliefPoolStore.getState();
+      const reliefTask = reliefPoolStore.tasks.find(t => t.id === assignmentId);
+      
+      if (!reliefTask) {
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: 'Relief Pool task not found' } 
+        }));
+        return;
+      }
+
+      // DATE RESTRICTION: Relief Pool tasks can only be assigned on their original date
+      if (destDate !== reliefTask.date) {
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: `This task can only be assigned on ${reliefTask.date} (the original absence date)` } 
+        }));
+        return;
+      }
+
+      // Calculate times
+      let startTime = reliefTask.start_time;
+      let endTime = reliefTask.end_time;
+      
+      if (destTime) {
+        // If dropped on specific time slot, use that time
+        const duration = calculateDuration(reliefTask.start_time, reliefTask.end_time);
+        startTime = destTime + ':00';
+        endTime = addMinutesToTime(destTime, duration) + ':00';
+      }
+
+      // Reassign the Relief Pool task
+      try {
+        await reliefPoolApi.reassign(assignmentId, {
+          aide_id: destAideId,
+          start_time: startTime,
+          end_time: endTime,
+          version: reliefTask.version,
+        });
+
+        // Remove from Relief Pool store
+        reliefPoolStore.fetch(); // Refresh the store
+
+        // Refresh the main view
+        options?.onSuccess?.();
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.error || error?.message || 'Failed to reassign task';
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: errorMessage } 
+        }));
+      }
+      return;
     }
 
     // --- HANDLE TASK TEMPLATE DROP ---

@@ -33,6 +33,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Granular Deletion** - Delete individual assignments or entire task series  
 ✅ **Classroom Management** - Manage classrooms, assigned teachers, and room numbers  
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
+✅ **Relief Pool** - Orphaned tasks from absent aides are preserved in a Relief Pool with date-restricted reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
 ✅ **Material Design UI** - Modern, intuitive interface with consistent theming  
