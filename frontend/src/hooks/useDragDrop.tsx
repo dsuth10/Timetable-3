@@ -397,13 +397,14 @@ export function useDragDrop(options?: UseDragDropOptions) {
     const targetDate = destDate || currentAssignment.date;
 
     // Show modal for user to confirm/edit times
+    // In Class View, destAideId is 0 (no aide context), so preserve the original aide
     setPendingAssignment({
       type: 'update',
       task: task,
       assignmentId: assignmentId,
       currentAssignment: currentAssignment,
       initialData: {
-        aideId: destAideId,
+        aideId: destAideId === 0 ? currentAssignment.aide_id : destAideId,
         date: targetDate,
         startTime: startTime,
         endTime: endTime,

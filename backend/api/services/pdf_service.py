@@ -12,6 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from api.models.assignment import Assignment
 from api.models.teacher_aide import TeacherAide
+from api.models.classroom import Classroom
 
 class PdfService:
     """
@@ -23,7 +24,8 @@ class PdfService:
         assignments: List[Assignment], 
         start_date: date,
         end_date: date,
-        aide: Optional[TeacherAide] = None
+        aide: Optional[TeacherAide] = None,
+        classroom: Optional[Classroom] = None
     ) -> bytes:
         """
         Generate a PDF file content for a weekly schedule.
@@ -33,6 +35,7 @@ class PdfService:
             start_date: Start date of the week
             end_date: End date of the week
             aide: Optional TeacherAide object if filtered
+            classroom: Optional Classroom object if filtered
             
         Returns:
             bytes: The generated PDF file content
@@ -52,6 +55,8 @@ class PdfService:
         title_text = f"Weekly Schedule: {start_date.strftime('%b %d, %Y')} - {end_date.strftime('%b %d, %Y')}"
         if aide:
             title_text = f"{aide.name} - {title_text}"
+        elif classroom:
+            title_text = f"{classroom.name} - {title_text}"
             
         elements.append(Paragraph(title_text, styles['Heading1']))
         elements.append(Spacer(1, 12))
@@ -142,9 +147,11 @@ class PdfService:
                     
                     if assignment.task:
                         parts.append(f"<b>{assignment.task.title}</b>")
-                        if assignment.task.classroom:
+                        # Show classroom name when not filtering by classroom
+                        if not classroom and assignment.task.classroom:
                             parts.append(f"<i>{assignment.task.classroom.name}</i>")
                     
+                    # Show aide name when not filtering by aide (i.e., for classroom exports or unfiltered)
                     if not aide and assignment.aide:
                          parts.append(f"({assignment.aide.name})")
                     

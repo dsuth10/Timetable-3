@@ -2,6 +2,7 @@ import { api } from './api';
 
 export interface ExportParams {
   aide_id?: number;
+  classroom_id?: number;
   start_date?: string;
   end_date?: string;
 }

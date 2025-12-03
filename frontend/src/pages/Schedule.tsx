@@ -285,15 +285,20 @@ export default function Schedule() {
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
       
+      // Mode-aware export: use aide_id or classroom_id based on viewMode
       const blob = await calendarApi.export({
         start_date: startDate,
         end_date: endDate,
-        aide_id: selectedAideId || undefined
+        aide_id: viewMode === 'AIDE' ? (selectedAideId || undefined) : undefined,
+        classroom_id: viewMode === 'CLASS' ? (selectedClassId || undefined) : undefined
       });
       
-      const filename = selectedAide 
-        ? `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.ics`
-        : `schedule-${startDate}.ics`;
+      let filename = `schedule-${startDate}.ics`;
+      if (viewMode === 'AIDE' && selectedAide) {
+        filename = `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.ics`;
+      } else if (viewMode === 'CLASS' && selectedClass) {
+        filename = `schedule-${selectedClass.name.replace(/\s+/g, '_')}-${startDate}.ics`;
+      }
         
       downloadBlob(blob, filename);
     } catch (e: any) {
@@ -312,15 +317,20 @@ export default function Schedule() {
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
       
+      // Mode-aware export: use aide_id or classroom_id based on viewMode
       const blob = await calendarApi.exportPdf({
         start_date: startDate,
         end_date: endDate,
-        aide_id: selectedAideId || undefined
+        aide_id: viewMode === 'AIDE' ? (selectedAideId || undefined) : undefined,
+        classroom_id: viewMode === 'CLASS' ? (selectedClassId || undefined) : undefined
       });
       
-      const filename = selectedAide 
-        ? `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.pdf`
-        : `schedule-${startDate}.pdf`;
+      let filename = `schedule-${startDate}.pdf`;
+      if (viewMode === 'AIDE' && selectedAide) {
+        filename = `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
+      } else if (viewMode === 'CLASS' && selectedClass) {
+        filename = `schedule-${selectedClass.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
+      }
         
       downloadBlob(blob, filename);
     } catch (e: any) {
@@ -470,6 +480,64 @@ export default function Schedule() {
                 <Button variant="contained" onClick={() => setDrawerOpen(true)}>
                   Select a Class
                 </Button>
+              </Box>
+            )}
+
+            {viewMode === 'CLASS' && selectedClass && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                {/* Class Selector */}
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel id="class-select-label">Select Class</InputLabel>
+                  <Select
+                    labelId="class-select-label"
+                    value={selectedClassId || ''}
+                    label="Select Class"
+                    onChange={(event: SelectChangeEvent<number>) => {
+                      setSelectedClassId(Number(event.target.value));
+                    }}
+                  >
+                    {classrooms.map((classroom) => (
+                      <MenuItem key={classroom.id} value={classroom.id}>
+                        {classroom.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="Export Schedule">
+                    <Button
+                      startIcon={<FileDownloadIcon />}
+                      onClick={handleExportClick}
+                      disabled={loading}
+                      variant="outlined"
+                      size="small"
+                      aria-controls={exportMenuOpen ? 'export-menu' : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={exportMenuOpen ? 'true' : undefined}
+                    >
+                      Export
+                    </Button>
+                  </Tooltip>
+                  <Menu
+                    id="export-menu-class"
+                    anchorEl={exportAnchorEl}
+                    open={exportMenuOpen}
+                    onClose={handleExportClose}
+                    MenuListProps={{
+                      'aria-labelledby': 'basic-button',
+                    }}
+                  >
+                    <MenuItem onClick={handleExportIcs}>
+                      <CalendarIcon fontSize="small" sx={{ mr: 1 }} />
+                      Export to Calendar (.ics)
+                    </MenuItem>
+                    <MenuItem onClick={handleExportPdf}>
+                      <PdfIcon fontSize="small" sx={{ mr: 1 }} />
+                      Export to PDF
+                    </MenuItem>
+                  </Menu>
+                </Box>
               </Box>
             )}
 
