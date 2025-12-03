@@ -10,7 +10,7 @@ import { useTasksStore } from '../store/stores/tasks';
 import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
 import { useReliefPoolStore } from '../store/stores/reliefPool';
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
-import type { TeacherAide, Task } from '../types';
+import type { TeacherAide, Task, ReliefPoolTask } from '../types';
 import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } from '../components/TimetableGrid/timeUtils';
 
 type UseDragDropOptions = {
@@ -26,10 +26,11 @@ type UseDragDropOptions = {
 };
 
 type PendingAssignment = {
-  type: 'create' | 'update';
+  type: 'create' | 'update' | 'relief-pool-reassign';
   task: Task;
   assignmentId?: number;
   currentAssignment?: any;
+  reliefPoolTask?: ReliefPoolTask; // For relief pool reassignment
   initialData: {
     aideId: number | null;
     date: string;
@@ -303,37 +304,30 @@ export function useDragDrop(options?: UseDragDropOptions) {
         return;
       }
 
-      // Calculate times
+      // Calculate times - preserve original duration
       let startTime = reliefTask.start_time;
       let endTime = reliefTask.end_time;
       
       if (destTime) {
-        // If dropped on specific time slot, use that time
+        // If dropped on specific time slot, use that time but preserve original duration
         const duration = calculateDuration(reliefTask.start_time, reliefTask.end_time);
         startTime = destTime + ':00';
         endTime = addMinutesToTime(destTime, duration) + ':00';
       }
 
-      // Reassign the Relief Pool task
-      try {
-        await reliefPoolApi.reassign(assignmentId, {
-          aide_id: destAideId,
-          start_time: startTime,
-          end_time: endTime,
-          version: reliefTask.version,
-        });
-
-        // Remove from Relief Pool store
-        reliefPoolStore.fetch(); // Refresh the store
-
-        // Refresh the main view
-        options?.onSuccess?.();
-      } catch (error: any) {
-        const errorMessage = error?.response?.data?.error || error?.message || 'Failed to reassign task';
-        window.dispatchEvent(new CustomEvent('app:error', { 
-          detail: { message: errorMessage } 
-        }));
-      }
+      // Show modal for user to confirm/edit times (preserving original duration)
+      setPendingAssignment({
+        type: 'relief-pool-reassign',
+        task: reliefTask.task,
+        assignmentId: assignmentId,
+        reliefPoolTask: reliefTask,
+        initialData: {
+          aideId: destAideId,
+          date: destDate,
+          startTime: startTime,
+          endTime: endTime,
+        },
+      });
       return;
     }
 
@@ -500,7 +494,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
   }) => {
     if (!pendingAssignment) return;
 
-    const { type, task, assignmentId, currentAssignment, sourceData } = pendingAssignment;
+    const { type, task, assignmentId, currentAssignment, sourceData, reliefPoolTask } = pendingAssignment;
 
     // Validate end time doesn't exceed working hours
     if (timeToMinutes(data.endTime.slice(0, 5)) > END_TIME_MINUTES) {
@@ -697,6 +691,30 @@ export function useDragDrop(options?: UseDragDropOptions) {
           setPendingAssignment(null);
         }
         return; // Exit early to prevent clearing pendingAssignment below
+      }
+    } else if (type === 'relief-pool-reassign' && assignmentId && reliefPoolTask) {
+      // Handle Relief Pool task reassignment
+      try {
+        await reliefPoolApi.reassign(assignmentId, {
+          aide_id: data.aideId!,
+          start_time: data.startTime,
+          end_time: data.endTime,
+          version: reliefPoolTask.version,
+        });
+
+        // Refresh the Relief Pool store
+        const reliefPoolStore = useReliefPoolStore.getState();
+        reliefPoolStore.fetch();
+
+        // Refresh the main view
+        options?.onSuccess?.();
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.error || error?.message || 'Failed to reassign task';
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: errorMessage } 
+        }));
+        setPendingAssignment(null);
+        return;
       }
     }
 
