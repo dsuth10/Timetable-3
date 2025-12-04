@@ -161,3 +161,4 @@ class TestAbsencesRestore:
         assert data['restored_tasks'] == []
         assert data['conflict_tasks'] == []
 
+

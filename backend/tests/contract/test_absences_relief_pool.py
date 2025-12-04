@@ -151,3 +151,4 @@ class TestAbsencesReliefPoolCascade:
         assert data['relief_pool_tasks'] == []
         assert data['relief_pool_count'] == 0
 
+

@@ -148,3 +148,4 @@ class TestReliefPoolCount:
         data = response.get_json()
         assert data['count'] == 1
 
+
