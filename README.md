@@ -861,6 +861,76 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
+### Database Access with MCP
+
+The application includes a pre-configured **Model Context Protocol (MCP) database server** that enables natural language interaction with the SQLite database. This is the **recommended way** to query, explore, and edit the database when using AI assistants or natural language interfaces.
+
+#### What is MCP?
+
+MCP (Model Context Protocol) is a standardized protocol that allows AI assistants to interact with external data sources and tools. The `database-server` MCP server provides natural language query capabilities for the timetable database.
+
+#### MCP Server Configuration
+
+The `database-server` MCP server is pre-configured and ready to use:
+- **Database**: SQLite
+- **Location**: `backend/instance/timetable.db`
+- **Connection**: `sqlite+aiosqlite:///c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+
+#### When to Use MCP
+
+**Use MCP for:**
+- **Natural Language Queries**: Ask questions about your data in plain English
+- **Database Exploration**: Discover table structures, relationships, and schema
+- **Data Analysis**: Generate reports, find patterns, or extract insights
+- **Quick Edits**: Make database changes using natural language requests
+- **Schema Inspection**: Understand table columns, indexes, and relationships
+
+**Use Direct SQLAlchemy/ORM for:**
+- Writing programmatic code in Python (models, services, routes)
+- Database migrations (use Alembic as normal)
+- Test fixtures and seed data scripts
+- When MCP server is unavailable
+
+#### Example MCP Queries
+
+You can interact with the database using natural language:
+
+**Data Queries:**
+- "How many teacher aides are in the database?"
+- "Show me all assignments for next week"
+- "List all tasks in the Relief Pool"
+- "What classrooms have the most assignments?"
+- "Show me all absences for this month"
+
+**Schema Exploration:**
+- "What columns does the assignments table have?"
+- "Show me the relationships between tables"
+- "What indexes exist on the assignments table?"
+
+**Data Analysis:**
+- "Find all assignments that conflict with each other"
+- "Show me the busiest aide this week"
+- "List all recurring tasks and their patterns"
+
+#### Available Database Tables
+
+The following tables are available for querying via MCP:
+- `teacher_aides` - Staff members
+- `availability` - Weekly availability patterns
+- `classrooms` - Physical learning spaces
+- `tasks` - Task templates
+- `assignments` - Specific task occurrences (with Relief Pool support)
+- `absences` - Aide unavailability records
+- `requests` - Teacher requests for aide support
+- `recurring_series` - Recurring task series metadata
+- `alembic_version` - Migration tracking
+
+#### Using MCP with AI Assistants
+
+When working with AI coding assistants (like Cursor's AI), the assistant will automatically use the MCP database server for database-related queries and operations. Simply ask questions about your data in natural language, and the assistant will use MCP to retrieve the information.
+
+**Note**: The cursor rule file `.cursor/rules/database-mcp-rules.mdc` ensures that AI assistants always prefer MCP for database operations when available.
+
 ---
 
 ## 🔒 Security

@@ -1,0 +1,77 @@
+---
+alwaysApply: true
+---
+# Database MCP Usage Rules
+
+## Mandatory MCP Usage for Database Operations
+
+When working with the Timetable-3 database, **ALWAYS** use the `database-server` MCP server for any database-related operations. This rule ensures consistent, natural language-based database interactions.
+
+## When to Use MCP Database Server
+
+### Always Use MCP For:
+- **Database Queries**: Any SELECT queries to retrieve data from the database
+- **Data Exploration**: Discovering table structures, relationships, and schema information
+- **Natural Language Queries**: When the user asks questions about the data in natural language
+- **Data Analysis**: Analyzing data, generating reports, or extracting insights
+- **Database Edits via Natural Language**: When users request database changes using natural language
+- **Schema Inspection**: Understanding table structures, columns, indexes, and relationships
+
+### Use Direct SQLAlchemy/ORM Only When:
+- Writing programmatic code in Python files (models, services, routes)
+- MCP server is unavailable or not responding
+- Performing migrations (use Alembic as normal)
+- Writing test fixtures or seed data scripts
+
+## MCP Server Configuration
+
+The `database-server` MCP server is pre-configured with:
+- **Database**: SQLite
+- **Location**: `backend/instance/timetable.db`
+- **Connection String**: `sqlite+aiosqlite:///c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+
+## Database Tables Available
+
+The following tables are available for querying:
+- `teacher_aides` - Staff members
+- `availability` - Weekly availability patterns
+- `classrooms` - Physical learning spaces
+- `tasks` - Task templates
+- `assignments` - Specific task occurrences (with Relief Pool support)
+- `absences` - Aide unavailability records
+- `requests` - Teacher requests for aide support
+- `recurring_series` - Recurring task series metadata
+- `alembic_version` - Migration tracking
+
+## Examples of MCP Usage
+
+### Natural Language Queries
+- "How many teacher aides are in the database?"
+- "Show me all assignments for next week"
+- "List all tasks in the Relief Pool"
+- "What classrooms have the most assignments?"
+- "Show me all absences for this month"
+
+### Schema Exploration
+- "What columns does the assignments table have?"
+- "Show me the relationships between tables"
+- "What indexes exist on the assignments table?"
+
+### Data Analysis
+- "Find all assignments that conflict with each other"
+- "Show me the busiest aide this week"
+- "List all recurring tasks and their patterns"
+
+## Important Notes
+
+1. **Never write direct SQL queries** in responses unless MCP is unavailable
+2. **Always prefer natural language** when interacting with the database through MCP
+3. **Use MCP for exploration** before writing code that interacts with the database
+4. **Document MCP usage** when it's used in code reviews or explanations
+
+## Exception Handling
+
+If the MCP server is unavailable:
+1. Inform the user that MCP is unavailable
+2. Fall back to direct SQLAlchemy queries only if necessary
+3. Note in the response that MCP would normally be used

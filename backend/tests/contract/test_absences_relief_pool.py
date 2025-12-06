@@ -152,3 +152,4 @@ class TestAbsencesReliefPoolCascade:
         assert data['relief_pool_count'] == 0
 
 
+
