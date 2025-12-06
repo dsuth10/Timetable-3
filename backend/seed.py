@@ -34,12 +34,12 @@ def seed_database():
             # Create 2 teacher aides
             aide1 = TeacherAide(
                 name="John Smith",
-                qualifications="Special Education, Behavior Management",
+                details="Special Education, Behavior Management",
                 colour_hex="#FF5733"
             )
             aide2 = TeacherAide(
                 name="Mary Johnson",
-                qualifications="Reading Specialist, ESL Support",
+                details="Reading Specialist, ESL Support",
                 colour_hex="#33C1FF"
             )
 

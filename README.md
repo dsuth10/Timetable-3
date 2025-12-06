@@ -863,18 +863,22 @@ alembic downgrade -1
 
 ### Database Access with MCP
 
-The application includes a pre-configured **Model Context Protocol (MCP) database server** that enables natural language interaction with the SQLite database. This is the **recommended way** to query, explore, and edit the database when using AI assistants or natural language interfaces.
+The application includes a **locally installed SQLite MCP server** that enables natural language interaction with the SQLite database. This is the **recommended way** to query, explore, and edit the database when using AI assistants or natural language interfaces.
 
 #### What is MCP?
 
-MCP (Model Context Protocol) is a standardized protocol that allows AI assistants to interact with external data sources and tools. The `database-server` MCP server provides natural language query capabilities for the timetable database.
+MCP (Model Context Protocol) is a standardized protocol that allows AI assistants to interact with external data sources and tools. The `sqlite-mcp-server` provides 73 tools for comprehensive database operations including queries, schema exploration, JSON manipulation, text search, and statistical analysis.
 
-#### MCP Server Configuration
+#### MCP Server Installation
 
-The `database-server` MCP server is pre-configured and ready to use:
+The `sqlite-mcp-server` is installed locally and configured:
+- **Server Name**: `sqlite-mcp-server`
+- **Installation Location**: `c:/Users/dsuth/Documents/Code Projects/sqlite-mcp-server`
 - **Database**: SQLite
-- **Location**: `backend/instance/timetable.db`
-- **Connection**: `sqlite+aiosqlite:///c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+- **Database Path**: `backend/instance/timetable.db`
+- **Full Path**: `c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+- **Configuration**: Located in `~/.cursor/mcp.json`
+- **Setup Documentation**: See `MCP_SETUP.md` for detailed installation and configuration instructions
 
 #### When to Use MCP
 
@@ -912,7 +916,28 @@ You can interact with the database using natural language:
 - "Show me the busiest aide this week"
 - "List all recurring tasks and their patterns"
 
-#### Available Database Tables
+#### Available MCP Tools
+
+The `sqlite-mcp-server` provides **73 tools** across 14 categories:
+
+**Core Database Operations** (15 tools):
+- `read_query` - Execute SELECT queries to retrieve data
+- `write_query` - Execute INSERT, UPDATE, or DELETE queries
+- `list_tables` - List all tables in the database
+- `describe_table` - Get detailed schema information
+- `create_table` - Create new tables
+
+**Additional Capabilities**:
+- **JSON Helper Tools** (6 tools) - JSON manipulation and querying
+- **Text Processing** (8 tools) - Full-text search capabilities
+- **Statistical Analysis** (8 tools) - Data analysis and reporting
+- **Schema Operations** - Table and index management
+- **Virtual Tables** - Enhanced table capabilities
+- **Vector Search** - Semantic similarity search
+- **Geospatial** - SpatiaLite operations
+- And more...
+
+#### Database Tables Available
 
 The following tables are available for querying via MCP:
 - `teacher_aides` - Staff members
@@ -927,9 +952,13 @@ The following tables are available for querying via MCP:
 
 #### Using MCP with AI Assistants
 
-When working with AI coding assistants (like Cursor's AI), the assistant will automatically use the MCP database server for database-related queries and operations. Simply ask questions about your data in natural language, and the assistant will use MCP to retrieve the information.
+When working with AI coding assistants (like Cursor's AI), the assistant will automatically use the `sqlite-mcp-server` for database-related queries and operations. Simply ask questions about your data in natural language, and the assistant will use MCP tools to retrieve and manipulate the information.
 
-**Note**: The cursor rule file `.cursor/rules/database-mcp-rules.mdc` ensures that AI assistants always prefer MCP for database operations when available.
+**Configuration**: The MCP server is configured in `~/.cursor/mcp.json` and is automatically loaded when Cursor starts.
+
+**Cursor Rules**: The cursor rule file `.cursor/rules/database-mcp-rules.mdc` ensures that AI assistants always prefer MCP for database operations when available. This rule is set to `alwaysApply: true` for consistent database interactions.
+
+**Installation**: For setup instructions, see `MCP_SETUP.md` in the project root.
 
 ---
 

@@ -108,7 +108,7 @@ export default function AideDrawer({
               </ListItemAvatar>
               <ListItemText
                 primary={aide.name}
-                secondary={aide.qualifications || 'No qualifications listed'}
+                secondary={aide.details || 'No details listed'}
               />
             </ListItem>
           );

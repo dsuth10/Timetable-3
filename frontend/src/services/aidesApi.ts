@@ -5,13 +5,13 @@ export const aidesApi = {
   list(): Promise<TeacherAide[]> {
     return api.get('/aides').then((r) => r.data as TeacherAide[]);
   },
-  create(payload: Pick<TeacherAide, 'name' | 'colour_hex'> & { qualifications?: string }): Promise<TeacherAide> {
+  create(payload: Pick<TeacherAide, 'name' | 'colour_hex'> & { details?: string }): Promise<TeacherAide> {
     return api.post('/aides', payload).then((r) => r.data as TeacherAide);
   },
   get(id: ID): Promise<TeacherAide> {
     return api.get(`/aides/${id}`).then((r) => r.data as TeacherAide);
   },
-  update(id: ID, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'qualifications'>>): Promise<TeacherAide> {
+  update(id: ID, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'details'>>): Promise<TeacherAide> {
     return api.put(`/aides/${id}`, payload).then((r) => r.data as TeacherAide);
   },
   availability: {

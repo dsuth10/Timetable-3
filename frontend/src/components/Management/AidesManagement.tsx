@@ -87,9 +87,9 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
                 secondaryTypographyProps={{ component: 'div' }}
                 secondary={
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                    {aide.qualifications && (
+                    {aide.details && (
                       <Chip 
-                        label={aide.qualifications} 
+                        label={aide.details} 
                         size="small" 
                         variant="outlined"
                       />

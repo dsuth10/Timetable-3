@@ -20,7 +20,7 @@ def test_recurring_task_multi_day_selection(client):
     # Setup aide
     aide = client.post('/api/aides', json={
         "name": "Sarah Williams",
-        "qualifications": "Reading Specialist",
+        "details": "Reading Specialist",
         "colour_hex": "#27AE60"
     }).json
     

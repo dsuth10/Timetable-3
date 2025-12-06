@@ -159,7 +159,7 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                               {aide.name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {aide.qualifications || 'No qualifications'}
+                              {aide.details || 'No details'}
                             </Typography>
                           </Box>
                         </CardContent>

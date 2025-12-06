@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Box, 
   FormControl, 
@@ -71,7 +72,7 @@ export default function Schedule() {
     { key: 'TH' as const, label: 'Thursday', selected: false },
     { key: 'FR' as const, label: 'Friday', selected: false },
   ]);
-  const [selectedAideId, setSelectedAideId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTaskId] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { byAide: absencesByAide, listForAide, delete: deleteAbsence } = useAbsencesStore();
@@ -80,6 +81,33 @@ export default function Schedule() {
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
 
+  // Get selectedAideId from URL parameter
+  const selectedAideId = useMemo(() => {
+    const aideIdParam = searchParams.get('aideId');
+    if (aideIdParam) {
+      const aideId = Number(aideIdParam);
+      if (!isNaN(aideId)) {
+        const aide = aides.find(aide => aide.id === aideId);
+        // Only return the aide ID if the aide exists and is visible
+        if (aide && visibleAideIds.has(aideId)) {
+          return aideId;
+        }
+      }
+    }
+    return null;
+  }, [searchParams, aides, visibleAideIds]);
+
+  // Helper function to set selected aide ID and update URL
+  const setSelectedAideId = useCallback((aideId: number | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (aideId !== null) {
+      newParams.set('aideId', String(aideId));
+    } else {
+      newParams.delete('aideId');
+    }
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Initialize visible aides when aides are loaded
   useEffect(() => {
     if (aides.length > 0 && visibleAideIds.size === 0) {
@@ -87,15 +115,16 @@ export default function Schedule() {
     }
   }, [aides, visibleAideIds.size]);
 
-  // Set default selected aide when aides are loaded
+  // Set default selected aide when aides are loaded (only if no URL parameter exists)
   useEffect(() => {
-    if (aides.length > 0 && selectedAideId === null) {
+    const aideIdParam = searchParams.get('aideId');
+    if (aides.length > 0 && visibleAideIds.size > 0 && !aideIdParam) {
       const firstVisibleAide = aides.find(aide => visibleAideIds.has(aide.id));
       if (firstVisibleAide) {
         setSelectedAideId(firstVisibleAide.id);
       }
     }
-  }, [aides, visibleAideIds, selectedAideId]);
+  }, [aides, visibleAideIds, searchParams, setSelectedAideId]);
 
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);

@@ -31,7 +31,7 @@ class TestReliefPoolReassign:
     def test_successful_reassign(self, client, db_session, sample_task, sample_aide):
         """Task moves from RELIEF_POOL to ASSIGNED status on successful reassign."""
         # Create another aide to reassign to
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -63,7 +63,7 @@ class TestReliefPoolReassign:
 
     def test_missing_version(self, client, db_session, sample_task, sample_aide):
         """Returns 400 when version not provided."""
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -102,7 +102,7 @@ class TestReliefPoolReassign:
     def test_not_in_relief_pool(self, client, db_session, sample_task, sample_aide):
         """Returns error when assignment is not in Relief Pool status."""
         # Create another aide
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -130,7 +130,7 @@ class TestReliefPoolReassign:
 
     def test_version_conflict(self, client, db_session, sample_task, sample_aide):
         """Returns 409 when version is stale."""
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -145,7 +145,7 @@ class TestReliefPoolReassign:
 
     def test_time_conflict(self, client, db_session, sample_task, sample_aide):
         """Returns 409 when time slot conflict exists."""
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -175,7 +175,7 @@ class TestReliefPoolReassign:
 
     def test_time_adjustment(self, client, db_session, sample_task, sample_aide):
         """New times are validated and applied."""
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         

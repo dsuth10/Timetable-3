@@ -7,8 +7,8 @@ type AidesState = {
   loading: boolean;
   error?: string;
   fetchAides: (opts?: { includeAvailability?: boolean }) => Promise<void>;
-  createAide: (payload: Pick<TeacherAide, 'name' | 'colour_hex'> & { qualifications?: string }) => Promise<TeacherAide>;
-  updateAide: (id: number, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'qualifications'>>) => Promise<TeacherAide>;
+  createAide: (payload: Pick<TeacherAide, 'name' | 'colour_hex'> & { details?: string }) => Promise<TeacherAide>;
+  updateAide: (id: number, payload: Partial<Pick<TeacherAide, 'name' | 'colour_hex' | 'details'>>) => Promise<TeacherAide>;
   getAvailability: (aideId: number) => Promise<Availability[]>;
 };
 

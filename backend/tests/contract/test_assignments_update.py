@@ -28,7 +28,7 @@ def test_update_assignment_reassign_aide(client, sample_assignment, sample_aide)
     # Create second aide
     aide2 = TeacherAide(
         name="Mary Johnson",
-        qualifications="ESL",
+        details="ESL",
         colour_hex="#33C1FF"
     )
     db.session.add(aide2)

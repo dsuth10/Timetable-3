@@ -32,7 +32,7 @@ def create_aide():
     data = request.get_json(silent=True) or {}
     name = (data.get('name') or '').strip()
     colour_hex = data.get('colour_hex')
-    qualifications = data.get('qualifications')
+    details = data.get('details')
 
     if not name:
         return {'error': 'name is required'}, 400
@@ -42,7 +42,7 @@ def create_aide():
         return {'error': 'colour_hex must match #RRGGBB'}, 400
 
     try:
-        aide = TeacherAide(name=name, colour_hex=colour_hex, qualifications=qualifications)
+        aide = TeacherAide(name=name, colour_hex=colour_hex, details=details)
         db.session.add(aide)
         db.session.commit()
     except ValueError as e:
@@ -71,8 +71,8 @@ def update_aide(aide_id: int):
     try:
         if 'name' in data and data['name'] is not None:
             aide.name = data['name']
-        if 'qualifications' in data:
-            aide.qualifications = data['qualifications']
+        if 'details' in data:
+            aide.details = data['details']
         if 'colour_hex' in data and data['colour_hex'] is not None:
             if not re.match(r'^#[0-9A-Fa-f]{6}$', data['colour_hex']):
                 return {'error': 'colour_hex must match #RRGGBB'}, 400

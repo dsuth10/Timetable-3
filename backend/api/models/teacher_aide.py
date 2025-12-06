@@ -24,7 +24,7 @@ class TeacherAide(db.Model):
     # Columns
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False, index=True)
-    qualifications = Column(Text, nullable=True)
+    details = Column(Text, nullable=True)
     colour_hex = Column(String(7), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -85,7 +85,7 @@ class TeacherAide(db.Model):
         data = {
             'id': self.id,
             'name': self.name,
-            'qualifications': self.qualifications,
+            'details': self.details,
             'colour_hex': self.colour_hex,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

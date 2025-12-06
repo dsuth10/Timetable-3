@@ -10,7 +10,7 @@ def test_update_aide_success(client):
     # First create an aide
     create_payload = {
         "name": "Original Name",
-        "qualifications": "Original Qualifications",
+        "details": "Original Details",
         "colour_hex": "#FF0000"
     }
     create_response = client.post('/api/aides', json=create_payload)
@@ -19,7 +19,7 @@ def test_update_aide_success(client):
     # Update the aide
     update_payload = {
         "name": "Updated Name",
-        "qualifications": "Updated Qualifications",
+        "details": "Updated Details",
         "colour_hex": "#00FF00"
     }
     
@@ -27,7 +27,7 @@ def test_update_aide_success(client):
     
     assert response.status_code == 200
     assert response.json['name'] == "Updated Name"
-    assert response.json['qualifications'] == "Updated Qualifications"
+    assert response.json['details'] == "Updated Details"
     assert response.json['colour_hex'] == "#00FF00"
     assert response.json['id'] == aide_id
     assert 'updated_at' in response.json
@@ -38,7 +38,7 @@ def test_update_aide_partial_fields(client):
     # First create an aide
     create_payload = {
         "name": "Original Name",
-        "qualifications": "Original Qualifications",
+        "details": "Original Details",
         "colour_hex": "#FF0000"
     }
     create_response = client.post('/api/aides', json=create_payload)
@@ -53,30 +53,30 @@ def test_update_aide_partial_fields(client):
     
     assert response.status_code == 200
     assert response.json['name'] == "Updated Name Only"
-    assert response.json['qualifications'] == "Original Qualifications"  # Unchanged
+    assert response.json['details'] == "Original Details"  # Unchanged
     assert response.json['colour_hex'] == "#FF0000"  # Unchanged
 
 
-def test_update_aide_clear_qualifications(client):
-    """Test PUT /api/aides/{id} can clear qualifications"""
-    # First create an aide with qualifications
+def test_update_aide_clear_details(client):
+    """Test PUT /api/aides/{id} can clear details"""
+    # First create an aide with details
     create_payload = {
         "name": "Test Aide",
-        "qualifications": "Some Qualifications",
+        "details": "Some Details",
         "colour_hex": "#FF0000"
     }
     create_response = client.post('/api/aides', json=create_payload)
     aide_id = create_response.json['id']
     
-    # Clear qualifications
+    # Clear details
     update_payload = {
-        "qualifications": None
+        "details": None
     }
     
     response = client.put(f'/api/aides/{aide_id}', json=update_payload)
     
     assert response.status_code == 200
-    assert response.json['qualifications'] is None
+    assert response.json['details'] is None
 
 
 def test_update_aide_not_found(client):

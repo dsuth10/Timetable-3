@@ -20,7 +20,7 @@ def test_absence_cascade_releases_assignments(client):
     # Setup aide
     aide = client.post('/api/aides', json={
         "name": "John Smith",
-        "qualifications": "Special Education",
+        "details": "Special Education",
         "colour_hex": "#E74C3C"
     }).json
     

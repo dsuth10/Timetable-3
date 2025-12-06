@@ -37,7 +37,7 @@ const generateRandomColor = () => {
 
 export default function AideFormModal({ open, onClose, onCreated, onUpdated, aide }: Props) {
   const [name, setName] = useState('');
-  const [qualifications, setQualifications] = useState('');
+  const [details, setDetails] = useState('');
   const [colourHex, setColourHex] = useState(generateRandomColor());
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -51,7 +51,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
       if (aide) {
         // Edit mode - populate with existing data
         setName(aide.name);
-        setQualifications(aide.qualifications || '');
+        setDetails(aide.details || '');
         setColourHex(aide.colour_hex);
         
         // Load availability for existing aide
@@ -59,7 +59,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
       } else {
         // Create mode - reset to defaults
         setName('');
-        setQualifications('');
+        setDetails('');
         setColourHex(generateRandomColor());
         setAvailability([]);
       }
@@ -94,7 +94,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
         // Update existing aide
         const updatedAide = await aidesApi.update(aide.id, {
           name,
-          qualifications: qualifications || undefined,
+          details: details || undefined,
           colour_hex: colourHex,
         });
         onUpdated?.(updatedAide);
@@ -102,7 +102,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
         // Create new aide
         const newAide = await aidesApi.create({
           name,
-          qualifications: qualifications || undefined,
+          details: details || undefined,
           colour_hex: colourHex,
         });
         onCreated?.(newAide);
@@ -150,9 +150,9 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
           />
           
           <TextField
-            label="Qualifications (Optional)"
-            value={qualifications}
-            onChange={(e) => setQualifications(e.target.value)}
+            label="Details (Optional)"
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
             fullWidth
             placeholder="e.g., Special Education, ESL"
           />

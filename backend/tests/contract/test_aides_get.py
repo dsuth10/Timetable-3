@@ -25,7 +25,7 @@ def test_get_aides_returns_list(client, sample_aide):
     aide = response.json[0]
     assert aide['id'] == sample_aide.id
     assert aide['name'] == "John Smith"
-    assert aide['qualifications'] == "Special Education"
+    assert aide['details'] == "Special Education"
     assert aide['colour_hex'] == "#FF5733"
     assert 'created_at' in aide
 

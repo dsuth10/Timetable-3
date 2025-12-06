@@ -84,7 +84,7 @@ def db_session(app):
 def sample_aide(db_session):
     aide = TeacherAide(
         name="John Smith",
-        qualifications="Special Education",
+        details="Special Education",
         colour_hex="#FF5733"
     )
     db_session.add(aide)

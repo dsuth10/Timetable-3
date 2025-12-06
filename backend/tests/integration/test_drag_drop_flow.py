@@ -21,7 +21,7 @@ def test_drag_drop_assignment_flow(client):
     # Step 1: Create teacher aide
     aide_payload = {
         "name": "Sarah Johnson",
-        "qualifications": "Special Education, Reading Support",
+        "details": "Special Education, Reading Support",
         "colour_hex": "#4A90E2"
     }
     aide_response = client.post('/api/aides', json=aide_payload)

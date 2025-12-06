@@ -5,7 +5,7 @@ alwaysApply: true
 
 ## Mandatory MCP Usage for Database Operations
 
-When working with the Timetable-3 database, **ALWAYS** use the `database-server` MCP server for any database-related operations. This rule ensures consistent, natural language-based database interactions.
+When working with the Timetable-3 database, **ALWAYS** use the `sqlite-mcp-server` MCP server for any database-related operations. This rule ensures consistent, natural language-based database interactions.
 
 ## When to Use MCP Database Server
 
@@ -25,10 +25,13 @@ When working with the Timetable-3 database, **ALWAYS** use the `database-server`
 
 ## MCP Server Configuration
 
-The `database-server` MCP server is pre-configured with:
+The `sqlite-mcp-server` MCP server is installed locally and configured with:
+- **Server Name**: `sqlite-mcp-server`
 - **Database**: SQLite
 - **Location**: `backend/instance/timetable.db`
-- **Connection String**: `sqlite+aiosqlite:///c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+- **Database Path**: `c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db`
+- **Server Script**: `c:/Users/dsuth/Documents/Code Projects/sqlite-mcp-server/start_sqlite_mcp.py`
+- **Configuration**: Located in `~/.cursor/mcp.json`
 
 ## Database Tables Available
 
@@ -42,6 +45,27 @@ The following tables are available for querying:
 - `requests` - Teacher requests for aide support
 - `recurring_series` - Recurring task series metadata
 - `alembic_version` - Migration tracking
+
+## Available MCP Tools
+
+The `sqlite-mcp-server` provides 73 tools across 14 categories:
+
+### Core Database Operations (15 tools)
+- `read_query` - Execute SELECT queries to retrieve data
+- `write_query` - Execute INSERT, UPDATE, or DELETE queries
+- `list_tables` - List all tables in the database
+- `describe_table` - Get detailed schema information for a table
+- `create_table` - Create new tables
+
+### Additional Tool Categories
+- **JSON Helper Tools** (6 tools) - JSON manipulation and querying
+- **Text Processing** (8 tools) - Full-text search capabilities
+- **Statistical Analysis** (8 tools) - Data analysis and reporting
+- **Schema Operations** - Table and index management
+- **Virtual Tables** - Enhanced table capabilities
+- **Vector Search** - Semantic similarity search
+- **Geospatial** - SpatiaLite operations
+- And more...
 
 ## Examples of MCP Usage
 
@@ -71,7 +95,314 @@ The following tables are available for querying:
 
 ## Exception Handling
 
-If the MCP server is unavailable:
-1. Inform the user that MCP is unavailable
+If the `sqlite-mcp-server` MCP is unavailable:
+1. Inform the user that the MCP server is unavailable
 2. Fall back to direct SQLAlchemy queries only if necessary
 3. Note in the response that MCP would normally be used
+4. Check that the server is configured in `~/.cursor/mcp.json` and Cursor has been restarted
+
+## Installation Reference
+
+The `sqlite-mcp-server` is installed at:
+- **Repository**: `c:/Users/dsuth/Documents/Code Projects/sqlite-mcp-server`
+- **Setup Documentation**: See `MCP_SETUP.md` in the project root
+- **Configuration Example**: `.cursor/mcp-config-example.json`
+
+---
+
+## Workflow Flows for Common Operations
+
+When using MCP tools to perform database operations, **ALWAYS** follow these step-by-step workflows to ensure data integrity and proper relationships.
+
+### Workflow 1: Creating a Task and Assigning It
+
+**Purpose**: Create a task template and assign it to a teacher aide on specific dates.
+
+**Step-by-Step Process**:
+
+1. **Verify Prerequisites**:
+   - Check that the classroom exists (if classroom_id is provided)
+   - Check that the teacher aide exists (if creating assignments)
+   - Verify valid task category (see below)
+
+2. **Create the Task**:
+   - Use `write_query` to INSERT into `tasks` table
+   - **Required Fields**:
+     - `title`: String (1-200 characters, required)
+     - `category`: Must be one of: `PLAYGROUND`, `CLASS_SUPPORT`, `GROUP_SUPPORT`, `INDIVIDUAL_SUPPORT` (uppercase, required)
+     - `start_time`: TIME format (HH:MM:SS), must be in 5-minute increments
+     - `end_time`: TIME format (HH:MM:SS), must be in 5-minute increments, must be after start_time
+   - **Optional Fields**:
+     - `classroom_id`: INTEGER (foreign key to classrooms.id)
+     - `notes`: TEXT
+     - `status`: Defaults to 'UNASSIGNED' (valid: UNASSIGNED, ASSIGNED, IN_PROGRESS, COMPLETE)
+   - **CRITICAL - Task Times Are Placeholders**:
+     - **Tasks are templates** - they should NOT have actual scheduled times set
+     - When creating a task that will be assigned immediately, use **placeholder/default times** (e.g., '09:00:00' and '10:00:00')
+     - The actual times should ONLY be set when creating the assignment (see Step 4)
+     - This allows the timetable to modify assignment times without being constrained by task template times
+   - **Example** (creating task with placeholder times):
+     ```sql
+     INSERT INTO tasks (title, category, start_time, end_time, classroom_id, status)
+     VALUES ('Math Support', 'CLASS_SUPPORT', '09:00:00', '10:00:00', 3, 'UNASSIGNED')
+     ```
+     Note: The times '09:00:00' and '10:00:00' are placeholders - actual times will be set in the assignment.
+
+3. **Retrieve the Task ID**:
+   - Use `read_query` to get the newly created task ID:
+     ```sql
+     SELECT id FROM tasks WHERE title = 'Math Support' ORDER BY id DESC LIMIT 1
+     ```
+
+4. **Create Assignments** (if assigning to an aide):
+   - Use `write_query` to INSERT into `assignments` table
+   - **Required Fields**:
+     - `task_id`: INTEGER (foreign key to tasks.id, must exist)
+     - `date`: DATE format (YYYY-MM-DD)
+     - `start_time`: TIME format (HH:MM:SS), must be in 30-minute increments for assignments
+     - `end_time`: TIME format (HH:MM:SS), must be in 30-minute increments, must be after start_time
+   - **Optional Fields**:
+     - `aide_id`: INTEGER (foreign key to teacher_aides.id, NULL = unassigned)
+     - `status`: Defaults to 'UNASSIGNED' if aide_id is NULL, 'ASSIGNED' if aide_id is provided
+     - `version`: Defaults to 1 (optimistic locking)
+   - **CRITICAL - Assignment Times Are the Real Times**:
+     - **This is where the actual scheduled times are set** - use the times specified by the user
+     - Assignment times are independent of task template times and can differ
+     - If the user specifies a time (e.g., "9:40"), use the closest valid 30-minute increment (e.g., '09:30:00' or '10:00:00')
+     - The assignment times are what appear in the timetable and can be modified later
+   - **Example**:
+     ```sql
+     INSERT INTO assignments (task_id, aide_id, date, start_time, end_time, status)
+     VALUES (2, 1, '2025-12-08', '09:30:00', '10:00:00', 'ASSIGNED')
+     ```
+     Note: These are the actual scheduled times that will appear in the timetable.
+
+5. **Verify Creation**:
+   - Query the created task and assignments to confirm they were created correctly
+   - Check that task_id in assignments matches the task.id
+   - Verify all foreign key relationships are valid
+
+**Common Mistakes to Avoid**:
+- ❌ Using invalid category values (e.g., "Math", "Reading" - must use valid categories)
+- ❌ Creating assignments before creating the task
+- ❌ Using task_id that doesn't exist
+- ❌ Using times not in 5-minute increments for tasks or 30-minute increments for assignments
+- ❌ Setting end_time before or equal to start_time
+- ❌ **Setting actual times on tasks when creating task+assignment together** - tasks should use placeholder times ('09:00:00', '10:00:00'), actual times go in assignments
+- ❌ **Using user-specified times in task creation** - save those times for the assignment creation step
+
+---
+
+### Workflow 2: Creating a Teacher Aide
+
+**Purpose**: Add a new teacher aide to the system.
+
+**Step-by-Step Process**:
+
+1. **Check for Duplicates**:
+   - Query existing aides to ensure the name doesn't already exist:
+     ```sql
+     SELECT id, name FROM teacher_aides WHERE name = 'John Smith'
+     ```
+
+2. **Create the Teacher Aide**:
+   - Use `write_query` to INSERT into `teacher_aides` table
+   - **Required Fields**:
+     - `name`: VARCHAR(100), required, must be unique
+     - `colour_hex`: VARCHAR(7), required, must match format #RRGGBB (e.g., '#FF5733')
+   - **Optional Fields**:
+     - `details`: TEXT
+   - **Example**:
+     ```sql
+     INSERT INTO teacher_aides (name, colour_hex, details)
+     VALUES ('Jane Doe', '#33C1FF', 'Reading Specialist')
+     ```
+
+3. **Verify Creation**:
+   - Query the newly created aide to confirm:
+     ```sql
+     SELECT * FROM teacher_aides WHERE name = 'Jane Doe'
+     ```
+
+**Common Mistakes to Avoid**:
+- ❌ Using invalid colour_hex format (must be #RRGGBB)
+- ❌ Creating duplicate names
+- ❌ Missing required fields
+
+---
+
+### Workflow 3: Creating an Absence
+
+**Purpose**: Mark a teacher aide as absent on a specific date, which automatically moves their assignments to Relief Pool.
+
+**Step-by-Step Process**:
+
+1. **Verify Prerequisites**:
+   - Check that the teacher aide exists:
+     ```sql
+     SELECT id, name FROM teacher_aides WHERE id = 1
+     ```
+
+2. **Check for Existing Absence**:
+   - Verify no absence already exists for this aide and date:
+     ```sql
+     SELECT id FROM absences WHERE aide_id = 1 AND date = '2025-12-08'
+     ```
+
+3. **Check Assignments That Will Be Affected**:
+   - Query assignments that will be moved to Relief Pool:
+     ```sql
+     SELECT id, task_id, date, start_time, end_time, status
+     FROM assignments
+     WHERE aide_id = 1
+       AND date = '2025-12-08'
+       AND status IN ('ASSIGNED', 'IN_PROGRESS')
+     ```
+
+4. **Create the Absence**:
+   - Use `write_query` to INSERT into `absences` table
+   - **Required Fields**:
+     - `aide_id`: INTEGER (foreign key to teacher_aides.id, must exist)
+     - `date`: DATE format (YYYY-MM-DD)
+   - **Optional Fields**:
+     - `reason`: TEXT
+   - **Important**: The database has a trigger that automatically:
+     - Sets `aide_id = NULL` on all assignments for this aide and date
+     - Sets `status = 'RELIEF_POOL'` on those assignments
+     - Stores original aide in `original_aide_id` field
+   - **Example**:
+     ```sql
+     INSERT INTO absences (aide_id, date, reason)
+     VALUES (1, '2025-12-08', 'Sick leave')
+     ```
+
+5. **Verify Absence and Assignment Updates**:
+   - Confirm absence was created:
+     ```sql
+     SELECT * FROM absences WHERE aide_id = 1 AND date = '2025-12-08'
+     ```
+   - Verify assignments were moved to Relief Pool:
+     ```sql
+     SELECT id, task_id, aide_id, original_aide_id, status
+     FROM assignments
+     WHERE original_aide_id = 1 AND date = '2025-12-08'
+     ```
+   - Should show: `aide_id = NULL`, `status = 'RELIEF_POOL'`, `original_aide_id = 1`
+
+**Common Mistakes to Avoid**:
+- ❌ Creating duplicate absences (unique constraint on aide_id + date)
+- ❌ Using invalid aide_id
+- ❌ Not understanding that assignments are automatically moved to Relief Pool
+
+---
+
+### Workflow 4: Complete Task Creation with Multiple Assignments
+
+**Purpose**: Create a task and assign it to an aide on multiple dates in one workflow.
+
+**Step-by-Step Process**:
+
+1. **Verify Prerequisites**:
+   - Check classroom exists (if needed):
+     ```sql
+     SELECT id, name FROM classrooms WHERE id = 3
+     ```
+   - Check aide exists:
+     ```sql
+     SELECT id, name FROM teacher_aides WHERE id = 1
+     ```
+
+2. **Create the Task** (see Workflow 1, Step 2)
+   - **Remember**: Use placeholder times ('09:00:00', '10:00:00') for the task template
+   - Do NOT use the actual assignment times in the task creation
+
+3. **Retrieve Task ID** (see Workflow 1, Step 3)
+
+4. **Create Multiple Assignments**:
+   - For each date, create an assignment:
+     ```sql
+     -- Assignment 1
+     INSERT INTO assignments (task_id, aide_id, date, start_time, end_time, status)
+     VALUES (2, 1, '2025-12-08', '10:00:00', '10:30:00', 'ASSIGNED')
+     
+     -- Assignment 2
+     INSERT INTO assignments (task_id, aide_id, date, start_time, end_time, status)
+     VALUES (2, 1, '2025-12-10', '13:20:00', '13:50:00', 'ASSIGNED')
+     
+     -- Assignment 3
+     INSERT INTO assignments (task_id, aide_id, date, start_time, end_time, status)
+     VALUES (2, 1, '2025-12-12', '11:10:00', '11:40:00', 'ASSIGNED')
+     ```
+
+5. **Verify All Assignments**:
+   - Query all assignments for the task:
+     ```sql
+     SELECT a.id, a.date, a.start_time, a.end_time, a.status, 
+            t.title as task_title, ta.name as aide_name
+     FROM assignments a
+     JOIN tasks t ON a.task_id = t.id
+     LEFT JOIN teacher_aides ta ON a.aide_id = ta.id
+     WHERE a.task_id = 2
+     ORDER BY a.date, a.start_time
+     ```
+
+**Important Notes**:
+- Each assignment can have different times than the task template
+- Assignment times must be in 30-minute increments
+- All assignments must reference the same task_id
+- Status should be 'ASSIGNED' if aide_id is provided, 'UNASSIGNED' if aide_id is NULL
+
+---
+
+## Valid Values and Constraints
+
+### Task Categories (MUST be uppercase)
+- `PLAYGROUND`
+- `CLASS_SUPPORT`
+- `GROUP_SUPPORT`
+- `INDIVIDUAL_SUPPORT`
+
+### Task Status Values
+- `UNASSIGNED` (default)
+- `ASSIGNED`
+- `IN_PROGRESS`
+- `COMPLETE`
+
+### Assignment Status Values
+- `UNASSIGNED` (when aide_id is NULL)
+- `ASSIGNED` (when aide_id is provided)
+- `IN_PROGRESS`
+- `COMPLETE`
+- `RELIEF_POOL` (set automatically when absence is created)
+
+### Time Format Requirements
+- **Tasks**: Times must be in 5-minute increments (e.g., 08:50:00, 09:05:00, 09:10:00)
+- **Assignments**: Times must be in 30-minute increments (e.g., 09:00:00, 09:30:00, 10:00:00)
+- **Format**: Always use HH:MM:SS format (24-hour time)
+
+### Date Format
+- Always use ISO format: YYYY-MM-DD (e.g., '2025-12-08')
+
+---
+
+## Critical Workflow Rules
+
+1. **Always Create Task Before Assignments**: Tasks are templates; assignments reference tasks. Never create assignments with non-existent task_id.
+
+2. **Tasks Use Placeholder Times**: When creating a task (especially when creating task+assignment together), always use placeholder/default times ('09:00:00', '10:00:00') for the task template. The actual scheduled times should ONLY be set when creating the assignment. This allows the timetable to modify assignment times without constraints.
+
+3. **Assignments Get Real Times**: When creating an assignment, use the actual times specified by the user (adjusted to valid 30-minute increments). These are the times that appear in the timetable.
+
+4. **Verify Foreign Keys**: Before creating records with foreign keys, verify the referenced records exist.
+
+5. **Check for Duplicates**: Before creating aides or absences, check for existing records to avoid constraint violations.
+
+6. **Use Valid Categories**: Task categories are strictly enforced. Use only the four valid categories listed above.
+
+7. **Time Increments**: Respect the 5-minute increment rule for tasks and 30-minute increment rule for assignments.
+
+8. **Status Consistency**: Assignment status should match whether aide_id is NULL (UNASSIGNED) or provided (ASSIGNED).
+
+9. **Absence Cascade**: Understand that creating an absence automatically moves assignments to Relief Pool - this is automatic database behavior.
+
+10. **Verify After Creation**: Always query the created records to confirm they were created correctly and relationships are intact.

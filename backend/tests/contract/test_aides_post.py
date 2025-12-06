@@ -9,7 +9,7 @@ def test_create_aide_success(client):
     """Test POST /api/aides creates aide successfully"""
     payload = {
         "name": "Mary Johnson",
-        "qualifications": "Reading Specialist",
+        "details": "Reading Specialist",
         "colour_hex": "#33C1FF"
     }
     
@@ -17,7 +17,7 @@ def test_create_aide_success(client):
     
     assert response.status_code == 201
     assert response.json['name'] == "Mary Johnson"
-    assert response.json['qualifications'] == "Reading Specialist"
+    assert response.json['details'] == "Reading Specialist"
     assert response.json['colour_hex'] == "#33C1FF"
     assert 'id' in response.json
     assert 'created_at' in response.json
@@ -34,7 +34,7 @@ def test_create_aide_minimal_fields(client):
     
     assert response.status_code == 201
     assert response.json['name'] == "Bob Williams"
-    assert response.json['qualifications'] is None or response.json['qualifications'] == ""
+    assert response.json['details'] is None or response.json['details'] == ""
 
 
 def test_create_aide_missing_name(client):

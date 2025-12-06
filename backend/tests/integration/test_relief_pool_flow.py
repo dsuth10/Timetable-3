@@ -81,7 +81,7 @@ class TestReassignReliefPoolTask:
         )
         db_session.add(relief_task)
         
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         relief_task_id = relief_task.id
@@ -128,7 +128,7 @@ class TestDateRestriction:
         )
         db_session.add(relief_task)
         
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -276,7 +276,7 @@ class TestTimeAdjustmentOnReassign:
         )
         db_session.add(relief_task)
         
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -322,7 +322,7 @@ class TestConflictDuringReassign:
         )
         db_session.add(relief_task)
         
-        new_aide = TeacherAide(name="Jane Doe", qualifications="General", colour_hex="#00FF00")
+        new_aide = TeacherAide(name="Jane Doe", details="General", colour_hex="#00FF00")
         db_session.add(new_aide)
         db_session.commit()
         
@@ -352,6 +352,7 @@ class TestConflictDuringReassign:
         # Verify: Task remains in Relief Pool
         updated = db_session.get(Assignment, relief_task.id)
         assert updated.status == 'RELIEF_POOL'
+
 
 
 

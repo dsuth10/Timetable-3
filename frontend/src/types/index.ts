@@ -7,7 +7,7 @@ export type Weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR';
 export interface TeacherAide {
   id: ID;
   name: string;
-  qualifications?: string | null;
+  details?: string | null;
   colour_hex: string;
   // When fetched with include=availability, this is populated
   availability?: Availability[];

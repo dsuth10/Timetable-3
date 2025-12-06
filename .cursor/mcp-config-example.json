@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "python",
+      "args": [
+        "c:/Users/dsuth/Documents/Code Projects/sqlite-mcp-server/start_sqlite_mcp.py",
+        "--db-path",
+        "c:/Users/dsuth/Documents/Code Projects/Timetable-3/backend/instance/timetable.db"
+      ],
+      "env": {}
+    }
+  }
+}
