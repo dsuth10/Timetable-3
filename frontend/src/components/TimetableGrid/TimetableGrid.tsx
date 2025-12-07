@@ -4,9 +4,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import type { TeacherAide, Assignment, Task, Absence } from '../../types';
 import { TimeSlottedColumn } from './TimeSlottedColumn';
-import { QuickCreateTaskModal } from './QuickCreateTaskModal';
-import { calculateDuration, SCHEDULE_SEGMENTS } from './timeUtils';
-import type { QuickCreateTaskResponse } from '../../services/tasksApi';
 
 type TimetableGridProps = {
   selectedAide: TeacherAide;
@@ -17,10 +14,10 @@ type TimetableGridProps = {
   absences?: Absence[];
   onAddAbsence?: (aideId: number, date: string) => void;
   onRemoveAbsence?: (absenceId: number) => void;
-  onQuickCreateSuccess?: (response: QuickCreateTaskResponse) => void;
+  onCreateTask?: (date: string, timeSlot: string) => void;
 };
 
-export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence, onQuickCreateSuccess }: TimetableGridProps) {
+export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence, onCreateTask }: TimetableGridProps) {
   // Day names for headers
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   
@@ -31,34 +28,9 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
   };
 
   const [legendOpen, setLegendOpen] = useState(false);
-  
-  // Quick-create modal state
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
-  const [quickCreateDate, setQuickCreateDate] = useState<string>('');
-  const [quickCreateTime, setQuickCreateTime] = useState<string>('');
-  const [quickCreateDuration, setQuickCreateDuration] = useState<number>(30);
-
-  // Calculate slot duration from time slot string
-  const getSlotDuration = (timeSlot: string): number => {
-    const segment = SCHEDULE_SEGMENTS.find(s => s.start === timeSlot);
-    if (segment) {
-      return calculateDuration(segment.start, segment.end);
-    }
-    // Default to 30 minutes if segment not found
-    return 30;
-  };
 
   const handleQuickCreateClick = (date: string, timeSlot: string) => {
-    const duration = getSlotDuration(timeSlot);
-    setQuickCreateDate(date);
-    setQuickCreateTime(timeSlot + ':00'); // Add seconds for HH:MM:SS format
-    setQuickCreateDuration(duration);
-    setQuickCreateOpen(true);
-  };
-
-  const handleQuickCreateSuccess = (response: QuickCreateTaskResponse) => {
-    setQuickCreateOpen(false);
-    onQuickCreateSuccess?.(response);
+    onCreateTask?.(date, timeSlot);
   };
 
   return (
@@ -197,17 +169,6 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
           );
         })}
       </Box>
-
-      {/* Quick-Create Task Modal */}
-      <QuickCreateTaskModal
-        open={quickCreateOpen}
-        date={quickCreateDate}
-        startTime={quickCreateTime}
-        duration={quickCreateDuration}
-        aideId={selectedAide.id}
-        onClose={() => setQuickCreateOpen(false)}
-        onSuccess={handleQuickCreateSuccess}
-      />
     </Box>
   );
 }

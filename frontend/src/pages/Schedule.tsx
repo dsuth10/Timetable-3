@@ -17,12 +17,11 @@ import { useAidesStore } from '../store/stores/aides';
 import { useTasksStore } from '../store/stores/tasks';
 import { useAssignmentsStore } from '../store/stores/assignments';
 import { assignmentsApi } from '../services/assignmentsApi';
-import type { QuickCreateTaskResponse } from '../services/tasksApi';
 import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
-import { addMinutesToTime } from '../components/TimetableGrid/timeUtils';
+import { addMinutesToTime, timeToMinutes } from '../components/TimetableGrid/timeUtils';
 import AppDragDropContext from '../components/DragDropContext';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
@@ -52,8 +51,7 @@ import AideFormModal from '../components/AideFormModal';
 export default function Schedule() {
   const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
-  const { tasks, fetchTasks, handleQuickCreate: handleQuickCreateTask } = useTasksStore();
-  const { handleQuickCreate: handleQuickCreateAssignment } = useAssignmentsStore();
+  const { tasks, fetchTasks } = useTasksStore();
   const { classrooms, fetchClassrooms } = useClassroomsStore();
   const [assignmentsByAide, setAssignmentsByAide] = useState<Record<string, Assignment[]>>({});
   const [loading, setLoading] = useState(false);
@@ -83,6 +81,14 @@ export default function Schedule() {
   
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
+
+  // State for default task creation values
+  const [taskCreationDefaults, setTaskCreationDefaults] = useState<{
+    startTime?: string;
+    endTime?: string;
+    date?: string;
+    aideId?: number;
+  } | null>(null);
 
   // Get selectedAideId from URL parameter
   const selectedAideId = useMemo(() => {
@@ -274,19 +280,17 @@ export default function Schedule() {
     }
   };
 
-  const handleQuickCreateSuccess = async (response: QuickCreateTaskResponse) => {
-    try {
-      // Update both stores optimistically
-      handleQuickCreateTask(response);
-      handleQuickCreateAssignment(response);
-      
-      // Refresh assignments to ensure UI is in sync
-      await refreshData();
-    } catch (e: any) {
-      console.error('Failed to update stores after quick-create:', e);
-      // Still refresh data to get server state
-      await refreshData();
-    }
+  // Handler for opening task creation from slot
+  const handleSlotTaskCreate = (date: string, timeSlot: string) => {
+    // Calculate default end time (30 minutes after start)
+    const defaultEndTime = addMinutesToTime(timeSlot, 30);
+    setTaskCreationDefaults({
+      startTime: timeSlot,
+      endTime: defaultEndTime,
+      date: date,
+      aideId: selectedAideId || undefined
+    });
+    setShowCreateTask(true);
   };
 
   const refreshData = async () => {
@@ -609,7 +613,7 @@ export default function Schedule() {
                 absences={absencesByAide[selectedAide.id] as Absence[] || []}
                 onAddAbsence={handleAddAbsence}
                 onRemoveAbsence={handleRemoveAbsence}
-                onQuickCreateSuccess={handleQuickCreateSuccess}
+                onCreateTask={handleSlotTaskCreate}
               />
             )}
 
@@ -653,11 +657,31 @@ export default function Schedule() {
       {/* Modals */}
       <TaskCreationModal 
         open={showCreateTask} 
-        onClose={() => {
+        onClose={async () => {
           setShowCreateTask(false);
-          refreshData();
-          fetchTasks(); // Refresh tasks list
-        }} 
+          setTaskCreationDefaults(null);
+          // Refresh data in parallel, but handle errors gracefully
+          try {
+            await Promise.all([
+              refreshData().catch(err => {
+                console.error('Failed to refresh assignments:', err);
+                // Don't throw - allow tasks refresh to continue
+              }),
+              fetchTasks().catch(err => {
+                console.error('Failed to refresh tasks:', err);
+                // Don't throw - allow assignments refresh to continue
+              })
+            ]);
+          } catch (err) {
+            console.error('Error refreshing data after task creation:', err);
+            // Still set error state so user knows something went wrong
+            setError('Task created but failed to refresh data. Please refresh the page.');
+          }
+        }}
+        defaultStartTime={taskCreationDefaults?.startTime}
+        defaultEndTime={taskCreationDefaults?.endTime}
+        defaultDate={taskCreationDefaults?.date}
+        defaultAideId={taskCreationDefaults?.aideId}
       />
       <MultiDayDialog
         open={showMultiDay}
