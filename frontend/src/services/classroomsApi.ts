@@ -17,4 +17,22 @@ export const classroomsApi = {
   delete(id: ID): Promise<void> {
     return api.delete(`/classrooms/${id}`).then(() => undefined);
   },
+  batchUpload(file: File): Promise<{
+    created: number;
+    skipped_duplicates: number;
+    skipped_existing: number;
+    errors: number;
+    classrooms: Classroom[];
+    skipped_duplicate_names?: string[];
+    skipped_existing_names?: string[];
+    error_details?: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/classrooms/batch', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }).then((r) => r.data);
+  },
 };

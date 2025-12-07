@@ -240,3 +240,5 @@ def test_quick_click_multiple_tasks_created(client, sample_aide):
     assignments = Assignment.query.filter(Assignment.task_id.in_(created_task_ids)).all()
     assert len(assignments) == 3
 
+
+

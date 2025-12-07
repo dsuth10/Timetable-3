@@ -25,6 +25,24 @@ export const aidesApi = {
       return api.delete(`/aides/${aideId}/availability/${id}`).then(() => {});
     },
   },
+  batchUpload(file: File): Promise<{
+    created: number;
+    skipped_duplicates: number;
+    skipped_existing: number;
+    errors: number;
+    aides: TeacherAide[];
+    skipped_duplicate_names?: string[];
+    skipped_existing_names?: string[];
+    error_details?: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/aides/batch', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }).then((r) => r.data);
+  },
 };
 
 

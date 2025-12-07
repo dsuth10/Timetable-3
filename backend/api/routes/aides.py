@@ -5,8 +5,12 @@ from flask import Blueprint, request
 from sqlalchemy.exc import IntegrityError
 from api.models import db
 from api.models.teacher_aide import TeacherAide
-from api.models.availability import Availability
+from api.models.availability import Availability, VALID_WEEKDAYS
 import re
+import csv
+import io
+from datetime import time as dt_time
+import random
 
 bp = Blueprint('aides', __name__, url_prefix='/api/aides')
 
@@ -85,3 +89,159 @@ def update_aide(aide_id: int):
         return {'error': str(e)}, 400
 
     return aide.to_dict(), 200
+
+
+# Color palette matching frontend generateRandomColor function
+_COLOR_PALETTE = [
+    '#1976d2', '#dc004e', '#9c27b0', '#673ab7', '#3f51b5',
+    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
+    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
+    '#ff5722', '#795548', '#607d8b',
+]
+
+
+def _generate_random_color():
+    """Generate a random color from the palette."""
+    return random.choice(_COLOR_PALETTE)
+
+
+@bp.post('/batch')
+def batch_create_aides():
+    """
+    Batch create teacher aides from CSV file.
+    
+    Expected CSV format:
+    - Headers: name, notes (case-insensitive)
+    - name: required
+    - notes: optional
+    
+    Behavior:
+    - Skips duplicate names within CSV (only processes first occurrence)
+    - Skips existing aides in database (only adds new ones)
+    - Sets default availability (08:50-15:00) for all weekdays (MO-FR)
+    - Assigns random color from palette
+    """
+    if 'file' not in request.files:
+        return {'error': 'No file provided'}, 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return {'error': 'No file selected'}, 400
+    
+    if not file.filename.lower().endswith('.csv'):
+        return {'error': 'File must be a CSV file'}, 400
+    
+    try:
+        # Read and parse CSV
+        stream = io.TextIOWrapper(file.stream, encoding='utf-8-sig')  # Handle BOM
+        reader = csv.DictReader(stream)
+        
+        # Normalize header names (case-insensitive)
+        fieldnames = [f.lower().strip() for f in reader.fieldnames or []]
+        
+        if 'name' not in fieldnames:
+            return {'error': 'CSV must contain a "name" column'}, 400
+        
+        # Track processed names to skip duplicates within CSV
+        processed_names = set()
+        # Get existing aide names from database
+        existing_aides = {a.name.lower() for a in TeacherAide.query.all()}
+        
+        created_aides = []
+        skipped_duplicates = []
+        skipped_existing = []
+        errors = []
+        
+        # Default availability times (08:50-15:00)
+        default_start_time = dt_time(8, 50)
+        default_end_time = dt_time(15, 0)
+        
+        for row_num, row in enumerate(reader, start=2):  # Start at 2 (row 1 is header)
+            # Extract name and notes (case-insensitive)
+            name = None
+            notes = None
+            
+            for key, value in row.items():
+                key_lower = key.lower().strip()
+                if key_lower == 'name':
+                    name = (value or '').strip()
+                elif key_lower == 'notes':
+                    notes = (value or '').strip() or None
+            
+            # Validate name
+            if not name:
+                errors.append(f'Row {row_num}: Name is required')
+                continue
+            
+            # Check for duplicate in CSV
+            name_lower = name.lower()
+            if name_lower in processed_names:
+                skipped_duplicates.append(name)
+                continue
+            
+            # Check if aide already exists
+            if name_lower in existing_aides:
+                skipped_existing.append(name)
+                continue
+            
+            # Create aide
+            try:
+                colour_hex = _generate_random_color()
+                aide = TeacherAide(name=name, colour_hex=colour_hex, details=notes)
+                db.session.add(aide)
+                db.session.flush()  # Get the ID
+                
+                # Create default availability for all weekdays
+                for weekday in VALID_WEEKDAYS:
+                    availability = Availability(
+                        aide_id=aide.id,
+                        weekday=weekday,
+                        start_time=default_start_time,
+                        end_time=default_end_time
+                    )
+                    db.session.add(availability)
+                
+                created_aides.append(aide.to_dict())
+                processed_names.add(name_lower)
+                
+            except ValueError as e:
+                errors.append(f'Row {row_num} ({name}): {str(e)}')
+                db.session.rollback()
+                continue
+            except IntegrityError:
+                # Name might have been added by another process
+                db.session.rollback()
+                skipped_existing.append(name)
+                continue
+        
+        # Commit all successful creations
+        if created_aides:
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                return {'error': 'Database error during batch creation'}, 500
+        
+        # Build response
+        result = {
+            'created': len(created_aides),
+            'skipped_duplicates': len(skipped_duplicates),
+            'skipped_existing': len(skipped_existing),
+            'errors': len(errors),
+            'aides': created_aides,
+        }
+        
+        if skipped_duplicates:
+            result['skipped_duplicate_names'] = skipped_duplicates
+        if skipped_existing:
+            result['skipped_existing_names'] = skipped_existing
+        if errors:
+            result['error_details'] = errors
+        
+        return result, 201 if created_aides else 200
+        
+    except csv.Error as e:
+        return {'error': f'CSV parsing error: {str(e)}'}, 400
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Unexpected error: {str(e)}'}, 500
