@@ -566,11 +566,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
           async do() {
             try {
               await assignmentsApi.create(createPayload);
-              // Optimistically add task to store if available (avoids refetching all tasks)
-              const { addTask } = useTasksStore.getState();
-              if (addTask && task) {
-                  addTask(task);
-              }
+              // Note: Task already exists in store from initial creation, no need to add again
             } catch (e: any) {
               if (e?.status === 409) {
                 setConflicts({

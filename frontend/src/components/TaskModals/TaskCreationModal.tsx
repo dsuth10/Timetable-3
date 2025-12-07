@@ -51,6 +51,9 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   
+  // Determine if this is template-only creation (no assignment will be created)
+  const isTemplateOnly = !defaultDate || !defaultAideId;
+  
   // Classrooms
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
@@ -129,33 +132,45 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
     setBusy(true);
     setError(undefined);
     
-    // Validation
-    const startMinutes = timeToMinutes(startTime);
-    const endMinutes = timeToMinutes(endTime);
+    // For template-only creation, use placeholder times and skip validation
+    // For tasks with assignments, validate times
+    let startTimeFormatted: string;
+    let endTimeFormatted: string;
     
-    if (endMinutes <= startMinutes) {
-      setError('End time must be after start time');
-      setBusy(false);
-      return;
-    }
+    if (isTemplateOnly) {
+      // Use placeholder times for template-only tasks
+      startTimeFormatted = '09:00:00';
+      endTimeFormatted = '10:00:00';
+    } else {
+      // Validate times when creating with assignment
+      const startMinutes = timeToMinutes(startTime);
+      const endMinutes = timeToMinutes(endTime);
+      
+      if (endMinutes <= startMinutes) {
+        setError('End time must be after start time');
+        setBusy(false);
+        return;
+      }
 
-    const maxMinutes = END_TIME_MINUTES;
-    if (startMinutes < 0 || startMinutes >= maxMinutes) {
-      setError(`Start time must be within working hours (08:50 - ${minutesToTime(maxMinutes)})`);
-      setBusy(false);
-      return;
-    }
+      const maxMinutes = END_TIME_MINUTES;
+      if (startMinutes < 0 || startMinutes >= maxMinutes) {
+        setError(`Start time must be within working hours (08:50 - ${minutesToTime(maxMinutes)})`);
+        setBusy(false);
+        return;
+      }
 
-    if (endMinutes > maxMinutes) {
-      setError(`End time cannot exceed ${minutesToTime(maxMinutes)} (end of working hours)`);
-      setBusy(false);
-      return;
+      if (endMinutes > maxMinutes) {
+        setError(`End time cannot exceed ${minutesToTime(maxMinutes)} (end of working hours)`);
+        setBusy(false);
+        return;
+      }
+      
+      // Format times as HH:MM:SS for API (append ':00' to seconds)
+      startTimeFormatted = `${startTime}:00`;
+      endTimeFormatted = `${endTime}:00`;
     }
     
     try {
-      // Format times as HH:MM:SS for API (append ':00' to seconds)
-      const startTimeFormatted = `${startTime}:00`;
-      const endTimeFormatted = `${endTime}:00`;
       
       const task = await tasksApi.createOneOff({ 
         title, 
@@ -256,38 +271,40 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
             </Select>
           </FormControl>
 
-          {/* Time Selection */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Start Time</InputLabel>
-              <Select
-                value={startTime}
-                label="Start Time"
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-              >
-                {timeSlots.map(time => (
-                  <MenuItem key={time} value={time}>
-                    {time}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          {/* Time Selection - Only show when creating with assignment */}
+          {!isTemplateOnly && (
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Start Time</InputLabel>
+                <Select
+                  value={startTime}
+                  label="Start Time"
+                  onChange={(e) => handleStartTimeChange(e.target.value)}
+                >
+                  {timeSlots.map(time => (
+                    <MenuItem key={time} value={time}>
+                      {time}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl fullWidth required>
-              <InputLabel>End Time</InputLabel>
-              <Select
-                value={endTime}
-                label="End Time"
-                onChange={(e) => setEndTime(e.target.value)}
-              >
-                {timeSlots.map(time => (
-                  <MenuItem key={time} value={time}>
-                    {time}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+              <FormControl fullWidth required>
+                <InputLabel>End Time</InputLabel>
+                <Select
+                  value={endTime}
+                  label="End Time"
+                  onChange={(e) => setEndTime(e.target.value)}
+                >
+                  {timeSlots.map(time => (
+                    <MenuItem key={time} value={time}>
+                      {time}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
 
           {/* Classroom Selection */}
           <FormControl fullWidth>
