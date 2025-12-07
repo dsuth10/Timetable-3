@@ -19,6 +19,7 @@ type TimeSlottedColumnProps = {
   showAideName?: boolean;
   aides?: TeacherAide[];
   onSlotClick?: (date: string, time: string) => void;
+  onQuickCreate?: (date: string, time: string) => void;
 };
 
 export function TimeSlottedColumn({ 
@@ -33,6 +34,7 @@ export function TimeSlottedColumn({
   showAideName,
   aides = [],
   onSlotClick,
+  onQuickCreate,
 }: TimeSlottedColumnProps) {
   const taskMap = useMemo(() => {
     const map = new Map<number, Task>();
@@ -125,6 +127,7 @@ export function TimeSlottedColumn({
             top={top}
             height={height}
             onClick={onSlotClick}
+            onQuickCreate={onQuickCreate}
           >
             {/* Render task cards that start in this slot */}
             {slotTasks.map((position, taskIndex) => {

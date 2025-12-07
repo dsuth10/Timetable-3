@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
-import { tasksApi } from '../../services/tasksApi';
+import { tasksApi, type QuickCreateTaskResponse } from '../../services/tasksApi';
 import type { Task, ID } from '../../types';
 
 type TasksState = {
@@ -11,6 +11,7 @@ type TasksState = {
   updateTask: (id: ID, payload: Partial<Pick<Task, 'title' | 'category' | 'start_time' | 'end_time' | 'classroom_id' | 'notes' | 'recurrence_rule' | 'expires_on'>> & { aide_id?: number | null; existing_assignment_date?: string }) => Promise<Task>;
   deleteTask: (id: ID, reset?: boolean) => Promise<void>;
   addTask: (task: Task) => void;
+  handleQuickCreate: (response: QuickCreateTaskResponse) => void;
 };
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -30,6 +31,22 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
   addTask(task) {
     set(state => ({ tasks: [...state.tasks, task] }));
+  },
+  handleQuickCreate(response) {
+    // Optimistically add the task to the store
+    set(state => {
+      // Check if task already exists (shouldn't happen, but defensive)
+      const existingIndex = state.tasks.findIndex(t => t.id === response.task.id);
+      if (existingIndex >= 0) {
+        // Update existing task
+        const updatedTasks = [...state.tasks];
+        updatedTasks[existingIndex] = response.task;
+        return { tasks: updatedTasks };
+      } else {
+        // Add new task
+        return { tasks: [...state.tasks, response.task] };
+      }
+    });
   },
   async updateTask(id, payload) {
     try {

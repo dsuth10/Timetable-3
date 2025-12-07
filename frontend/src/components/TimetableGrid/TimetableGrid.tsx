@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Box, Paper, Typography, Chip, Tooltip, IconButton, Collapse, Alert, Stack } from '@mui/material';
+import { Box, Paper, Typography, Chip, Tooltip, IconButton, Button, Collapse, Alert, Stack } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import type { TeacherAide, Assignment, Task, Absence } from '../../types';
 import { TimeSlottedColumn } from './TimeSlottedColumn';
+import { QuickCreateTaskModal } from './QuickCreateTaskModal';
+import { calculateDuration, SCHEDULE_SEGMENTS } from './timeUtils';
+import type { QuickCreateTaskResponse } from '../../services/tasksApi';
 
 type TimetableGridProps = {
   selectedAide: TeacherAide;
@@ -15,9 +17,10 @@ type TimetableGridProps = {
   absences?: Absence[];
   onAddAbsence?: (aideId: number, date: string) => void;
   onRemoveAbsence?: (absenceId: number) => void;
+  onQuickCreateSuccess?: (response: QuickCreateTaskResponse) => void;
 };
 
-export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence }: TimetableGridProps) {
+export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence, onQuickCreateSuccess }: TimetableGridProps) {
   // Day names for headers
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   
@@ -28,6 +31,35 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
   };
 
   const [legendOpen, setLegendOpen] = useState(false);
+  
+  // Quick-create modal state
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quickCreateDate, setQuickCreateDate] = useState<string>('');
+  const [quickCreateTime, setQuickCreateTime] = useState<string>('');
+  const [quickCreateDuration, setQuickCreateDuration] = useState<number>(30);
+
+  // Calculate slot duration from time slot string
+  const getSlotDuration = (timeSlot: string): number => {
+    const segment = SCHEDULE_SEGMENTS.find(s => s.start === timeSlot);
+    if (segment) {
+      return calculateDuration(segment.start, segment.end);
+    }
+    // Default to 30 minutes if segment not found
+    return 30;
+  };
+
+  const handleQuickCreateClick = (date: string, timeSlot: string) => {
+    const duration = getSlotDuration(timeSlot);
+    setQuickCreateDate(date);
+    setQuickCreateTime(timeSlot + ':00'); // Add seconds for HH:MM:SS format
+    setQuickCreateDuration(duration);
+    setQuickCreateOpen(true);
+  };
+
+  const handleQuickCreateSuccess = (response: QuickCreateTaskResponse) => {
+    setQuickCreateOpen(false);
+    onQuickCreateSuccess?.(response);
+  };
 
   return (
     <Box sx={{ display: 'flex', overflow: 'auto', height: '100%' }}>
@@ -128,17 +160,21 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                       </Tooltip>
                     ) : (
                       <Tooltip title="Add absence">
-                        <IconButton
+                        <Button
                           size="small"
                           onClick={() => onAddAbsence(selectedAide.id, date)}
                           sx={{
                             color: 'white',
+                            fontSize: '0.75rem',
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.5,
                             '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
                           }}
                           aria-label="Add absence"
                         >
-                          <AddIcon fontSize="small" />
-                        </IconButton>
+                          Absent.
+                        </Button>
                       </Tooltip>
                     )}
                   </Box>
@@ -155,11 +191,23 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                 onTaskDoubleClick={onTaskDoubleClick}
                 availability={selectedAide.availability || []}
                 absences={absences}
+                onQuickCreate={handleQuickCreateClick}
               />
             </Box>
           );
         })}
       </Box>
+
+      {/* Quick-Create Task Modal */}
+      <QuickCreateTaskModal
+        open={quickCreateOpen}
+        date={quickCreateDate}
+        startTime={quickCreateTime}
+        duration={quickCreateDuration}
+        aideId={selectedAide.id}
+        onClose={() => setQuickCreateOpen(false)}
+        onSuccess={handleQuickCreateSuccess}
+      />
     </Box>
   );
 }

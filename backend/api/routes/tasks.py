@@ -2,12 +2,15 @@
 Tasks routes: list/get and create recurring tasks
 """
 from flask import Blueprint, request
-from datetime import datetime, date as dt_date, time as dt_time
+from datetime import datetime, date as dt_date, time as dt_time, timedelta
 from api.models import db
-from api.models.task import Task
+from api.models.task import Task, TASK_CATEGORIES
 from api.models.assignment import Assignment
 from api.models.recurring_series import RecurringSeries
+from api.models.teacher_aide import TeacherAide
+from api.models.classroom import Classroom
 from api.services.recurrence_service import RecurrenceService
+from api.services.collision_service import CollisionService
 
 bp = Blueprint('tasks', __name__, url_prefix='/api')
 
@@ -85,6 +88,173 @@ def create_task():
 
 # Old /recurring-tasks endpoint removed - recurring tasks are now created
 # by editing an assigned task and enabling recurrence in the Edit Task dialog
+
+
+@bp.post('/quick-create-task')
+def quick_create_task():
+    """
+    Create a task template and an assignment in a single atomic operation.
+    Used by the quick-click feature to create tasks directly from the timetable.
+    """
+    data = request.get_json(silent=True) or {}
+    
+    # Extract and validate required fields
+    title = (data.get('title') or '').strip()
+    category = (data.get('category') or '').strip().upper()
+    date_str = data.get('date')
+    start_time_str = data.get('start_time')
+    duration_minutes = data.get('duration_minutes')
+    aide_id = data.get('aide_id')
+    
+    # Extract optional fields
+    classroom_id = data.get('classroom_id')
+    notes = data.get('notes')
+    
+    # Validate required fields
+    if not title:
+        return {'error': 'Bad request', 'message': 'Missing required fields: title'}, 400
+    
+    if not category:
+        return {'error': 'Bad request', 'message': 'Missing required fields: category'}, 400
+    
+    if category not in TASK_CATEGORIES:
+        return {'error': 'Bad request', 'message': f'Invalid category. Must be one of: {", ".join(TASK_CATEGORIES)}'}, 400
+    
+    if not date_str:
+        return {'error': 'Bad request', 'message': 'Missing required fields: date'}, 400
+    
+    if not start_time_str:
+        return {'error': 'Bad request', 'message': 'Missing required fields: start_time'}, 400
+    
+    if duration_minutes is None:
+        return {'error': 'Bad request', 'message': 'Missing required fields: duration_minutes'}, 400
+    
+    if aide_id is None:
+        return {'error': 'Bad request', 'message': 'Missing required fields: aide_id'}, 400
+    
+    # Validate duration
+    try:
+        duration_minutes = int(duration_minutes)
+        if duration_minutes < 5 or duration_minutes > 60 or duration_minutes % 5 != 0:
+            return {'error': 'Bad request', 'message': 'duration_minutes must be between 5 and 60 and a multiple of 5'}, 400
+    except (ValueError, TypeError):
+        return {'error': 'Bad request', 'message': 'duration_minutes must be an integer'}, 400
+    
+    # Parse and validate date
+    try:
+        assign_date = dt_date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        return {'error': 'Bad request', 'message': 'Invalid date format. Expected YYYY-MM-DD'}, 400
+    
+    # Parse and validate start_time (must be in 5-minute increments)
+    try:
+        time_parts = start_time_str.split(':')
+        if len(time_parts) < 2:
+            return {'error': 'Bad request', 'message': 'Invalid time format. Expected HH:MM or HH:MM:SS'}, 400
+        
+        s_h = int(time_parts[0])
+        s_m = int(time_parts[1])
+        
+        if s_h < 0 or s_h > 23 or s_m < 0 or s_m > 59:
+            return {'error': 'Bad request', 'message': 'Invalid time values'}, 400
+        
+        if s_m % 5 != 0:
+            return {'error': 'Bad request', 'message': 'start_time must be in 5-minute increments'}, 400
+        
+        start_time = dt_time(s_h, s_m)
+    except (ValueError, TypeError, IndexError):
+        return {'error': 'Bad request', 'message': 'Invalid time format. Expected HH:MM or HH:MM:SS'}, 400
+    
+    # Calculate end_time from start_time + duration_minutes
+    start_datetime = datetime.combine(assign_date, start_time)
+    end_datetime = start_datetime + timedelta(minutes=duration_minutes)
+    end_time = end_datetime.time()
+    
+    # Validate end_time is in 5-minute increments
+    if end_time.minute % 5 != 0:
+        return {'error': 'Bad request', 'message': 'Calculated end_time must be in 5-minute increments'}, 400
+    
+    # Validate foreign keys
+    aide = db.session.get(TeacherAide, aide_id)
+    if not aide:
+        return {'error': 'Not found', 'message': f'Aide with id {aide_id} does not exist'}, 404
+    
+    if classroom_id is not None:
+        classroom = db.session.get(Classroom, classroom_id)
+        if not classroom:
+            return {'error': 'Not found', 'message': f'Classroom with id {classroom_id} does not exist'}, 404
+    
+    # Check collision detection before creating anything
+    validation = CollisionService.validate_assignment(
+        aide_id=aide_id,
+        assignment_date=assign_date,
+        start_time=start_time,
+        end_time=end_time
+    )
+    
+    if not validation['valid']:
+        # Format conflicts for response
+        formatted_conflicts = []
+        for conflict in validation['conflicts']:
+            formatted_conflicts.append({
+                'existing_assignment_id': conflict.id,
+                'task_id': conflict.task_id,
+                'date': conflict.date.isoformat(),
+                'start_time': conflict.start_time.strftime('%H:%M'),
+                'end_time': conflict.end_time.strftime('%H:%M'),
+                'status': conflict.status
+            })
+        return {
+            'error': 'Conflict',
+            'message': validation['error'] or 'Assignment conflicts with existing assignment',
+            'conflicts': formatted_conflicts
+        }, 409
+    
+    # Create task and assignment in a single transaction
+    try:
+        # Create task with placeholder times (09:00-10:00)
+        task = Task(
+            title=title,
+            category=category,
+            start_time=dt_time(9, 0),  # Placeholder
+            end_time=dt_time(10, 0),  # Placeholder
+            classroom_id=classroom_id,
+            notes=notes,
+            status='UNASSIGNED'
+        )
+        db.session.add(task)
+        db.session.flush()  # Get task ID before creating assignment
+        
+        # Create assignment with actual times
+        assignment = Assignment(
+            task_id=task.id,
+            aide_id=aide_id,
+            date=assign_date,
+            start_time=start_time,
+            end_time=end_time,
+            status='ASSIGNED',
+            version=1,
+            original_aide_id=None,
+            recurring_series_id=None
+        )
+        db.session.add(assignment)
+        db.session.flush()  # Get assignment ID
+        
+        # Commit transaction
+        db.session.commit()
+        
+        # Return both task and assignment
+        return {
+            'task': task.to_dict(),
+            'assignment': assignment.to_dict()
+        }, 201
+        
+    except ValueError as e:
+        db.session.rollback()
+        return {'error': 'Bad request', 'message': str(e)}, 400
+    except Exception as e:
+        db.session.rollback()
+        return {'error': 'Internal server error', 'message': f'Database transaction failed: {str(e)}'}, 500
 
 
 @bp.put('/tasks/<int:task_id>')

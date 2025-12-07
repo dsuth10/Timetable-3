@@ -14,7 +14,13 @@ import {
 import { PersonAdd, Save, Edit } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
 import AvailabilityEditor from './AvailabilityEditor';
-import type { TeacherAide, Availability } from '../types';
+import type { TeacherAide, Availability, Weekday } from '../types';
+
+type DraftAvailability = {
+  weekday: Weekday;
+  start_time: string;
+  end_time: string;
+};
 
 type Props = {
   open: boolean;
@@ -42,6 +48,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [availability, setAvailability] = useState<Availability[]>([]);
+  const [draftAvailability, setDraftAvailability] = useState<DraftAvailability[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
 
   const isEditMode = !!aide;
@@ -62,6 +69,8 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
         setDetails('');
         setColourHex(generateRandomColor());
         setAvailability([]);
+        // Initialize draft availability with all days enabled (will be set by AvailabilityEditor)
+        setDraftAvailability([]);
       }
       setError(undefined);
     }
@@ -105,9 +114,38 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
           details: details || undefined,
           colour_hex: colourHex,
         });
+        
+        // Create availability records for enabled days
+        if (draftAvailability.length > 0) {
+          const availabilityPromises = draftAvailability.map(draft =>
+            aidesApi.availability.create(newAide.id, {
+              weekday: draft.weekday,
+              start_time: draft.start_time,
+              end_time: draft.end_time,
+            }).catch((err: any) => {
+              console.error(`Failed to create availability for ${draft.weekday}:`, err);
+              // Return null for failed creations so we can track them
+              return null;
+            })
+          );
+          
+          const availabilityResults = await Promise.all(availabilityPromises);
+          const failedDays = availabilityResults
+            .map((result, index) => result === null ? draftAvailability[index].weekday : null)
+            .filter((day): day is Weekday => day !== null);
+          
+          if (failedDays.length > 0) {
+            // Show warning but still proceed - aide is created, user can edit later
+            setError(
+              `Aide created successfully, but failed to set availability for: ${failedDays.join(', ')}. ` +
+              'You can edit the aide to add availability later.'
+            );
+          }
+        }
+        
         onCreated?.(newAide);
+        handleClose();
       }
-      handleClose();
     } catch (e: any) {
       setError(e.message || `Failed to ${isEditMode ? 'update' : 'create'} aide`);
     } finally {
@@ -116,7 +154,19 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
   };
 
   const handleAvailabilityChange = (newAvailability: Availability[]) => {
-    setAvailability(newAvailability);
+    // In edit mode, availability has IDs - use as-is
+    if (isEditMode) {
+      setAvailability(newAvailability);
+    } else {
+      // In create mode (draft), extract just the weekday, start_time, end_time
+      // Draft availability objects may not have IDs yet
+      const draft: DraftAvailability[] = newAvailability.map(avail => ({
+        weekday: avail.weekday,
+        start_time: avail.start_time,
+        end_time: avail.end_time,
+      }));
+      setDraftAvailability(draft);
+    }
   };
 
   return (
@@ -172,12 +222,20 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
 
         <Divider sx={{ my: 3 }} />
 
-        {aide && (
+        {isEditMode && aide ? (
           <AvailabilityEditor
             aideId={aide.id}
             initialAvailability={availability}
             onAvailabilityChange={handleAvailabilityChange}
             disabled={busy || loadingAvailability}
+            draftMode={false}
+          />
+        ) : (
+          <AvailabilityEditor
+            draftMode={true}
+            initialAvailability={[]}
+            onAvailabilityChange={handleAvailabilityChange}
+            disabled={busy}
           />
         )}
       </DialogContent>

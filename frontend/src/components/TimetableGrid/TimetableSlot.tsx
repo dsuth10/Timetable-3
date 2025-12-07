@@ -1,5 +1,6 @@
 import { Droppable } from '@hello-pangea/dnd';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 import { memo } from 'react';
 // import { SLOT_HEIGHT_PX } from './timeUtils'; // No longer using fixed height
 
@@ -12,10 +13,16 @@ type TimetableSlotProps = {
   top: number;
   height: number;
   onClick?: (date: string, time: string) => void;
+  onQuickCreate?: (date: string, time: string) => void;
 };
 
-function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick }: TimetableSlotProps) {
+function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick, onQuickCreate }: TimetableSlotProps) {
   const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
+
+  const handleQuickCreateClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering slot onClick
+    onQuickCreate?.(date, timeSlot);
+  };
 
   return (
     <Droppable droppableId={droppableId}>
@@ -64,6 +71,37 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
           >
             {timeSlot}
           </Typography>
+
+          {/* Quick-create "+" button in top-right corner */}
+          {onQuickCreate && (
+            <IconButton
+              onClick={handleQuickCreateClick}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                width: 20,
+                height: 20,
+                padding: 0,
+                opacity: 0.4,
+                zIndex: 10,
+                '&:hover': {
+                  opacity: 1,
+                },
+                '&:focus-visible': {
+                  opacity: 1,
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: 2,
+                },
+              }}
+              aria-label={`Create task in this time slot (${timeSlot})`}
+              tabIndex={0}
+            >
+              <AddIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
           
           {/* Border highlight during drag over */}
           {snapshot.isDraggingOver && (
@@ -105,6 +143,7 @@ export const TimetableSlot = memo(TimetableSlotBase, (prev, next) => {
     prev.top === next.top &&
     prev.height === next.height &&
     prev.children === next.children &&
-    prev.onClick === next.onClick
+    prev.onClick === next.onClick &&
+    prev.onQuickCreate === next.onQuickCreate
   );
 });

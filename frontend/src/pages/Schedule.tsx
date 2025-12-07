@@ -15,7 +15,9 @@ import { FileDownload as FileDownloadIcon, PictureAsPdf as PdfIcon, CalendarMont
 import { useUiStore } from '../store/stores/uiStore';
 import { useAidesStore } from '../store/stores/aides';
 import { useTasksStore } from '../store/stores/tasks';
+import { useAssignmentsStore } from '../store/stores/assignments';
 import { assignmentsApi } from '../services/assignmentsApi';
+import type { QuickCreateTaskResponse } from '../services/tasksApi';
 import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
@@ -50,7 +52,8 @@ import AideFormModal from '../components/AideFormModal';
 export default function Schedule() {
   const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
-  const { tasks, fetchTasks } = useTasksStore();
+  const { tasks, fetchTasks, handleQuickCreate: handleQuickCreateTask } = useTasksStore();
+  const { handleQuickCreate: handleQuickCreateAssignment } = useAssignmentsStore();
   const { classrooms, fetchClassrooms } = useClassroomsStore();
   const [assignmentsByAide, setAssignmentsByAide] = useState<Record<string, Assignment[]>>({});
   const [loading, setLoading] = useState(false);
@@ -268,6 +271,21 @@ export default function Schedule() {
       useReliefPoolStore.getState().refresh();
     } catch (e: any) {
       setError(e.message || 'Failed to remove absence');
+    }
+  };
+
+  const handleQuickCreateSuccess = async (response: QuickCreateTaskResponse) => {
+    try {
+      // Update both stores optimistically
+      handleQuickCreateTask(response);
+      handleQuickCreateAssignment(response);
+      
+      // Refresh assignments to ensure UI is in sync
+      await refreshData();
+    } catch (e: any) {
+      console.error('Failed to update stores after quick-create:', e);
+      // Still refresh data to get server state
+      await refreshData();
     }
   };
 
@@ -591,6 +609,7 @@ export default function Schedule() {
                 absences={absencesByAide[selectedAide.id] as Absence[] || []}
                 onAddAbsence={handleAddAbsence}
                 onRemoveAbsence={handleRemoveAbsence}
+                onQuickCreateSuccess={handleQuickCreateSuccess}
               />
             )}
 

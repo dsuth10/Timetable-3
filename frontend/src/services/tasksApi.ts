@@ -1,5 +1,21 @@
 import { api } from './api';
-import type { Task, ID } from '../types';
+import type { Task, ID, Assignment } from '../types';
+
+export interface QuickCreateTaskRequest {
+  title: string;
+  category: Task['category'];
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  duration_minutes: number;
+  aide_id: number;
+  classroom_id?: number | null;
+  notes?: string | null;
+}
+
+export interface QuickCreateTaskResponse {
+  task: Task;
+  assignment: Assignment;
+}
 
 export const tasksApi = {
   list(opts?: { category?: Task['category'] }): Promise<Task[]> {
@@ -22,6 +38,9 @@ export const tasksApi = {
   delete(id: ID, reset?: boolean): Promise<void> {
     const query = reset ? '?reset=true' : '';
     return api.delete(`/tasks/${id}${query}`).then(() => undefined);
+  },
+  quickCreateTask(payload: QuickCreateTaskRequest): Promise<QuickCreateTaskResponse> {
+    return api.post('/quick-create-task', payload).then((r) => r.data as QuickCreateTaskResponse);
   },
 };
 

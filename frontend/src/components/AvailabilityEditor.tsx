@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -17,10 +17,11 @@ import { generateAllTimeSlots, timeToMinutes, snapToSlot, minutesToTime, END_TIM
 import type { Availability, ID, Weekday } from '../types';
 
 type AvailabilityEditorProps = {
-  aideId: ID;
+  aideId?: ID;
   initialAvailability?: Availability[];
   onAvailabilityChange?: (availability: Availability[]) => void;
   disabled?: boolean;
+  draftMode?: boolean;
 };
 
 type DayAvailability = {
@@ -47,29 +48,45 @@ export default function AvailabilityEditor({
   initialAvailability = [],
   onAvailabilityChange,
   disabled = false,
+  draftMode = false,
 }: AvailabilityEditorProps) {
   const [dayAvailability, setDayAvailability] = useState<DayAvailability[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const hasNotifiedInitialState = useRef(false);
 
   // Initialize day availability from props or defaults
   useEffect(() => {
-    const initializeAvailability = () => {
-      const days: DayAvailability[] = WEEKDAYS.map(day => {
-        const existing = initialAvailability.find(avail => avail.weekday === day.key);
-        return {
-          weekday: day.key,
-          enabled: !!existing,
-          startTime: existing?.start_time?.substring(0, 5) || DEFAULT_START_TIME,
-          endTime: existing?.end_time?.substring(0, 5) || DEFAULT_END_TIME,
-          availabilityId: existing?.id,
-        };
-      });
-      setDayAvailability(days);
-    };
-
-    initializeAvailability();
-  }, [initialAvailability]);
+    // In draft mode with no initial availability, enable all days by default
+    const shouldEnableAllByDefault = draftMode && initialAvailability.length === 0;
+    
+    const days: DayAvailability[] = WEEKDAYS.map(day => {
+      const existing = initialAvailability.find(avail => avail.weekday === day.key);
+      return {
+        weekday: day.key,
+        enabled: shouldEnableAllByDefault ? true : !!existing,
+        startTime: existing?.start_time?.substring(0, 5) || DEFAULT_START_TIME,
+        endTime: existing?.end_time?.substring(0, 5) || DEFAULT_END_TIME,
+        availabilityId: existing?.id,
+      };
+    });
+    setDayAvailability(days);
+    
+    // Notify parent of initial state in draft mode (only once)
+    if (shouldEnableAllByDefault && !hasNotifiedInitialState.current) {
+      const draftAvailability = days.map(d => ({
+        aide_id: aideId || 0, // Placeholder
+        weekday: d.weekday,
+        start_time: `${d.startTime}:00`,
+        end_time: `${d.endTime}:00`,
+      }));
+      onAvailabilityChange?.(draftAvailability as Availability[]);
+      hasNotifiedInitialState.current = true;
+    } else if (!shouldEnableAllByDefault) {
+      // Reset the ref when not in draft mode or when initial availability exists
+      hasNotifiedInitialState.current = false;
+    }
+  }, [initialAvailability, draftMode, aideId, onAvailabilityChange]);
 
   // Generate time slots for dropdowns - use all 5-minute increments
   const timeSlots = useMemo(() => {
@@ -79,16 +96,38 @@ export default function AvailabilityEditor({
   const handleDayToggle = async (weekday: Weekday, enabled: boolean) => {
     if (disabled) return;
 
+    const dayIndex = dayAvailability.findIndex(day => day.weekday === weekday);
+    const day = dayAvailability[dayIndex];
+
+    // In draft mode, update local state only without API calls
+    if (draftMode) {
+      const updatedDays = [...dayAvailability];
+      updatedDays[dayIndex] = {
+        ...day,
+        enabled,
+        availabilityId: enabled ? day.availabilityId : undefined,
+      };
+      setDayAvailability(updatedDays);
+      
+      // Notify parent of changes (without IDs in draft mode)
+      const draftAvailability = updatedDays.filter(d => d.enabled).map(d => ({
+        aide_id: aideId || 0, // Placeholder
+        weekday: d.weekday,
+        start_time: `${d.startTime}:00`,
+        end_time: `${d.endTime}:00`,
+      }));
+      onAvailabilityChange?.(draftAvailability as Availability[]);
+      return;
+    }
+
+    // Normal mode - make API calls
     setLoading(true);
     setError(undefined);
 
     try {
-      const dayIndex = dayAvailability.findIndex(day => day.weekday === weekday);
-      const day = dayAvailability[dayIndex];
-
       if (enabled) {
         // Create new availability
-        const newAvailability = await aidesApi.availability.create(aideId, {
+        const newAvailability = await aidesApi.availability.create(aideId!, {
           weekday,
           start_time: `${day.startTime}:00`,
           end_time: `${day.endTime}:00`,
@@ -104,7 +143,7 @@ export default function AvailabilityEditor({
         setDayAvailability(updatedDays);
         onAvailabilityChange?.(updatedDays.filter(d => d.enabled).map(d => ({
           id: d.availabilityId!,
-          aide_id: aideId,
+          aide_id: aideId!,
           weekday: d.weekday as Weekday,
           start_time: `${d.startTime}:00`,
           end_time: `${d.endTime}:00`,
@@ -112,7 +151,7 @@ export default function AvailabilityEditor({
       } else {
         // Delete existing availability
         if (day.availabilityId) {
-          await aidesApi.availability.delete(aideId, day.availabilityId);
+          await aidesApi.availability.delete(aideId!, day.availabilityId);
         }
 
         // Update local state
@@ -125,7 +164,7 @@ export default function AvailabilityEditor({
         setDayAvailability(updatedDays);
         onAvailabilityChange?.(updatedDays.filter(d => d.enabled).map(d => ({
           id: d.availabilityId!,
-          aide_id: aideId,
+          aide_id: aideId!,
           weekday: d.weekday as Weekday,
           start_time: `${d.startTime}:00`,
           end_time: `${d.endTime}:00`,
@@ -157,16 +196,38 @@ export default function AvailabilityEditor({
       return;
     }
 
+    // In draft mode, update local state only without API calls
+    if (draftMode) {
+      const updatedDays = [...dayAvailability];
+      updatedDays[dayIndex] = {
+        ...day,
+        startTime,
+        endTime,
+      };
+      setDayAvailability(updatedDays);
+      
+      // Notify parent of changes (without IDs in draft mode)
+      const draftAvailability = updatedDays.filter(d => d.enabled).map(d => ({
+        aide_id: aideId || 0, // Placeholder
+        weekday: d.weekday,
+        start_time: `${d.startTime}:00`,
+        end_time: `${d.endTime}:00`,
+      }));
+      onAvailabilityChange?.(draftAvailability as Availability[]);
+      return;
+    }
+
+    // Normal mode - make API calls
     setLoading(true);
     setError(undefined);
 
     try {
       // Delete existing and create new (since we can only have one per day)
       if (day.availabilityId) {
-        await aidesApi.availability.delete(aideId, day.availabilityId);
+        await aidesApi.availability.delete(aideId!, day.availabilityId);
       }
 
-      const newAvailability = await aidesApi.availability.create(aideId, {
+      const newAvailability = await aidesApi.availability.create(aideId!, {
         weekday,
         start_time: `${startTime}:00`,
         end_time: `${endTime}:00`,
@@ -183,7 +244,7 @@ export default function AvailabilityEditor({
       setDayAvailability(updatedDays);
       onAvailabilityChange?.(updatedDays.filter(d => d.enabled).map(d => ({
         id: d.availabilityId!,
-        aide_id: aideId,
+        aide_id: aideId!,
         weekday: d.weekday,
         start_time: `${d.startTime}:00`,
         end_time: `${d.endTime}:00`,

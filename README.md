@@ -21,6 +21,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Interactive Task Selection** - When assigning aides to classes, choose from existing tasks or create new ones via modal dialog  
 ✅ **Flexible Time Slots** - Support for 5-minute increments (e.g. school bell times)  
 ✅ **Simplified Task Creation** - Create task templates with just title, category, classroom, and notes  
+✅ **Quick-Click Task Creation** - Instant task and assignment creation directly from time slots with "+" button  
 ✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
 ✅ **Automatic Time Assignment** - Times set automatically based on where task is dropped  
 ✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
@@ -164,7 +165,7 @@ timetable-scheduler/
 ├── backend/                      # Python Flask backend
 │   ├── api/
 │   │   ├── models/               # SQLAlchemy models (7 entities)
-│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, etc.)
+│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, quick-create-task, etc.)
 │   │   ├── services/             # Business logic (collision, recurrence, conflicts, relief_pool)
 │   │   ├── middleware/           # Validation middleware
 │   │   ├── scheduler.py          # Background scheduler (horizon extension & Relief Pool cleanup)
@@ -185,6 +186,8 @@ timetable-scheduler/
 │   │   │   ├── Management/       # Management components (Aides, Tasks, Requests, Classrooms)
 │   │   │   ├── common/           # Common UI components (LoadingState, EmptyState)
 │   │   │   ├── TimetableGrid/    # Timetable grid & slots (weekly view)
+│   │   │   │   ├── QuickCreateTaskModal.tsx  # Quick-click task creation modal
+│   │   │   │   └── ...
 │   │   │   ├── TaskModals/       # Task creation/editing modals
 │   │   │   ├── ConflictModal.tsx # Conflict resolution dialog
 │   │   │   ├── MultiDayDialog.tsx# Multi-day assignment dialog
@@ -312,7 +315,7 @@ The application features a modern weekly view that allows administrators to:
 ### 2. Task Creation & Scheduling
 
 ```
-Creating Tasks:
+Creating Tasks (Traditional Method):
 1. Click "Create Task" button
 2. Enter essential information:
    - Task Title (required)
@@ -321,6 +324,25 @@ Creating Tasks:
    - Notes (optional)
 3. Task created and appears in Task Bank as "Not scheduled"
 4. No times or dates set yet - those come when assigned
+
+Quick-Click Task Creation (New):
+1. Navigate to Teacher Aide schedule view
+2. Locate desired time slot (look for subtle "+" button in top-right corner)
+3. Click "+" button to open Quick-Create modal
+4. Modal pre-fills:
+   - Start Time: Locked to clicked slot (cannot be changed)
+   - Duration: Defaults to 30 min (or slot length if <30 min)
+   - Aide: Automatically set to currently-viewed aide
+5. Fill in task details:
+   - Task Title (required)
+   - Category (required) - Playground, Class Support, Group Support, Individual Support
+   - Duration: Select from 5-minute increments (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60)
+   - Classroom (optional) - Empty by default, select from dropdown
+   - Notes (optional)
+6. Click "Create" - Task and assignment created atomically
+7. Task appears in Task Bank (reusable)
+8. Assignment appears immediately in clicked time slot
+9. If conflict detected, error shown and form preserved for retry
 
 Assigning Tasks:
 1. Drag task from Task Bank to calendar time slot
@@ -660,8 +682,8 @@ pytest tests/integration/
 ```
 
 **Test Coverage**:
-- ✅ 20+ contract tests (API endpoint validation)
-- ✅ 5 integration tests (user journey scenarios)
+- ✅ 20+ contract tests (API endpoint validation, including quick-create-task)
+- ✅ 5+ integration tests (user journey scenarios, including quick-click workflow)
 - ✅ Model unit tests
 
 ### Frontend Tests (Vitest)
@@ -680,7 +702,7 @@ npm run test:coverage
 ```
 
 **Test Coverage**:
-- ✅ Component tests (TimetableGrid, UnassignedPanel, modals)
+- ✅ Component tests (TimetableGrid, UnassignedPanel, modals, QuickCreateTaskModal)
 - ✅ Accessibility tests (keyboard nav, ARIA labels, WCAG AA)
 - ✅ Store tests (Zustand state management)
 
@@ -751,6 +773,22 @@ curl http://localhost:5000/api/aides
 curl -X POST http://localhost:5000/api/assignments \
   -H "Content-Type: application/json" \
   -d '{"task_id": 101, "aide_id": 1, "date": "2025-10-06", "start_time": "10:30", "end_time": "11:00"}'
+```
+
+**Quick-create task and assignment** (atomic operation):
+```bash
+curl -X POST http://localhost:5000/api/quick-create-task \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "One-on-one reading with Emma",
+    "category": "INDIVIDUAL_SUPPORT",
+    "date": "2025-01-27",
+    "start_time": "10:00:00",
+    "duration_minutes": 30,
+    "aide_id": 1,
+    "classroom_id": 3,
+    "notes": "Focus on blending and digraphs"
+  }'
 ```
 
 **Get weekly matrix**:
@@ -1100,6 +1138,13 @@ Contributions are welcome! Please follow these steps:
 - [x] Smart aide filtering by availability
 - [x] Flexible time slots (5-min increments)
 
+### Version 1.0.8 (Jan 2025) ✅
+- [x] Quick-Click Task Creation
+- [x] Instant task and assignment creation from time slots
+- [x] Atomic transaction for task+assignment creation
+- [x] 5-minute increment duration support
+- [x] Conflict detection and error handling
+
 ### Version 1.1 (Planned)
 - [ ] User authentication & authorization
 - [ ] Email notifications
@@ -1116,6 +1161,37 @@ Contributions are welcome! Please follow these steps:
 ---
 
 ## 🔄 Recent Updates
+
+### Version 1.0.8 (2025-01-27)
+
+**New Features**:
+- ✅ **Quick-Click Task Creation** - Instant task and assignment creation directly from timetable time slots
+- ✅ **Subtle "+" Button** - Quick-create button appears in top-right corner of every time slot (opacity 0.4, full opacity on hover)
+- ✅ **Context-Aware Modal** - Quick-create modal pre-fills date, start time, duration, and aide from clicked slot
+- ✅ **Flexible Duration Selection** - Duration dropdown supports 5-minute increments (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 minutes)
+- ✅ **Smart Default Duration** - Defaults to 30 minutes for slots ≥30 min, slot length for shorter slots
+- ✅ **Atomic Task Creation** - Single API call creates both task template and assignment in one transaction
+- ✅ **Conflict Detection** - Prevents overlapping assignments with clear error messages
+- ✅ **Form Data Preservation** - Form data preserved on errors for easy retry
+- ✅ **Optimistic Updates** - Immediate UI feedback with automatic state synchronization
+
+**Technical Improvements**:
+- Added `POST /api/quick-create-task` endpoint with atomic transaction support
+- Created `QuickCreateTaskModal` component with Material-UI form controls
+- Enhanced `TimetableSlot` component with "+" button and click handlers
+- Updated tasks and assignments stores with quick-create response handlers
+- Implemented 5-minute increment validation for quick-create assignments
+- Added comprehensive error handling (validation, collision, network errors)
+- Created 13 contract tests covering all API scenarios
+- Added integration tests for full quick-click workflow
+- Component tests for modal interactions and form validation
+
+**User Experience**:
+- 🚀 Faster task creation workflow - no need to switch between Task Bank and schedule
+- 🎯 Context-aware - automatically uses clicked slot's date, time, and aide
+- 🔄 Reusable tasks - Created tasks appear in Task Bank for future use
+- ⚡ Instant feedback - Task and assignment appear immediately after creation
+- 🛡️ Conflict prevention - Clear error messages when scheduling conflicts occur
 
 ### Version 1.0.7 (2025-12-03)
 
@@ -1252,5 +1328,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.7  
-**Last Updated**: 2025-12-03
+**Version**: 1.0.8  
+**Last Updated**: 2025-01-27
