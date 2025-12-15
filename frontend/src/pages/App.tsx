@@ -1,24 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useAidesStore } from '../store/stores/aides';
+import { Routes, Route } from 'react-router-dom';
 import Schedule from './Schedule';
+import Home from './Home';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ToastNotifications from '../components/ToastNotifications';
 
 export default function App() {
-  const { fetchAides } = useAidesStore();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    fetchAides({ includeAvailability: true })
-      .catch(() => undefined)
-      .finally(() => mounted && setReady(true));
-    return () => { mounted = false; };
-  }, [fetchAides]);
-
   return (
     <ErrorBoundary>
-      {ready && <Schedule />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/schedule" element={<Schedule />} />
+      </Routes>
       <ToastNotifications />
     </ErrorBoundary>
   );

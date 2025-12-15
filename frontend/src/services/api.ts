@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
 });
 
@@ -16,7 +16,7 @@ api.interceptors.response.use(
     try {
       // @ts-ignore
       window.dispatchEvent(new CustomEvent('app:error', { detail: { message } }));
-    } catch {}
+    } catch { }
     return Promise.reject(enhanced);
   }
 );

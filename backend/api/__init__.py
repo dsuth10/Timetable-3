@@ -44,7 +44,7 @@ def create_app(config=None):
     db.init_app(app)
     
     # CORS configuration for local development
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app)
     
     # instance folder already ensured above
     

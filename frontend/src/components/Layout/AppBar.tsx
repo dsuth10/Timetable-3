@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-  AppBar as MuiAppBar, 
-  Toolbar, 
-  IconButton, 
-  Typography, 
+import {
+  AppBar as MuiAppBar,
+  Toolbar,
+  IconButton,
+  Typography,
   Button,
   Box,
   ButtonGroup,
@@ -23,7 +23,9 @@ import {
   CalendarMonth,
   School,
   Person,
+  Home as HomeIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -55,20 +57,21 @@ export default function AppBar({
   onToday,
   onCreateTask,
 }: AppBarProps) {
+  const navigate = useNavigate();
   const { getWeekNumber, getWeekDateRange, setWeekStart, viewMode, setViewMode } = useUiStore();
   const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
-  
+
   const weekNumber = getWeekNumber(weekLabel);
   const dateRange = getWeekDateRange(weekLabel);
-  
+
   const handleDatePickerOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setDatePickerAnchor(event.currentTarget);
   };
-  
+
   const handleDatePickerClose = () => {
     setDatePickerAnchor(null);
   };
-  
+
   const handleDateChange = (date: Date | null) => {
     if (date) {
       const monday = getMonday(date);
@@ -90,7 +93,7 @@ export default function AppBar({
       setViewMode(newView);
     }
   };
-  
+
   const datePickerOpen = Boolean(datePickerAnchor);
   return (
     <MuiAppBar position="static" elevation={1}>
@@ -101,9 +104,17 @@ export default function AppBar({
           color="inherit"
           aria-label="menu"
           onClick={onMenuClick}
-          sx={{ mr: 2 }}
+          sx={{ mr: 1 }}
         >
           <MenuIcon />
+        </IconButton>
+        <IconButton
+          color="inherit"
+          aria-label="home"
+          onClick={() => navigate('/')}
+          sx={{ mr: 2 }}
+        >
+          <HomeIcon />
         </IconButton>
         <Typography variant="h6" component="div" sx={{ mr: 2 }}>
           Aide Scheduler
@@ -115,19 +126,19 @@ export default function AppBar({
           onChange={handleViewChange}
           aria-label="view mode"
           size="small"
-          sx={{ 
-            mr: 4, 
+          sx={{
+            mr: 4,
             bgcolor: 'rgba(255,255,255,0.1)',
             '& .MuiToggleButton-root': {
-               color: 'rgba(255,255,255,0.7)',
-               border: '1px solid rgba(255,255,255,0.3)',
-               '&.Mui-selected': {
-                 color: 'white',
-                 bgcolor: 'rgba(255,255,255,0.3)',
-               },
-               '&:hover': {
-                 bgcolor: 'rgba(255,255,255,0.2)',
-               }
+              color: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              '&.Mui-selected': {
+                color: 'white',
+                bgcolor: 'rgba(255,255,255,0.3)',
+              },
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.2)',
+              }
             }
           }}
         >
@@ -144,17 +155,17 @@ export default function AppBar({
         {/* Center: Week Navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <ButtonGroup variant="outlined" sx={{ bgcolor: 'rgba(255,255,255,0.1)' }}>
-            <IconButton 
-              onClick={onPrevWeek} 
-              size="small" 
+            <IconButton
+              onClick={onPrevWeek}
+              size="small"
               sx={{ color: 'white' }}
               data-testid="nav-prev"
               aria-label="Previous week"
             >
               <ChevronLeft />
             </IconButton>
-            <Button 
-              onClick={onToday} 
+            <Button
+              onClick={onToday}
               sx={{ color: 'white', minWidth: 80 }}
               data-testid="nav-today"
               aria-label="Jump to current week"
@@ -162,9 +173,9 @@ export default function AppBar({
               <Today sx={{ mr: 0.5, fontSize: 18 }} />
               Today
             </Button>
-            <IconButton 
-              onClick={onNextWeek} 
-              size="small" 
+            <IconButton
+              onClick={onNextWeek}
+              size="small"
               sx={{ color: 'white' }}
               data-testid="nav-next"
               aria-label="Next week"
@@ -172,10 +183,10 @@ export default function AppBar({
               <ChevronRight />
             </IconButton>
           </ButtonGroup>
-          
+
           <Button
             onClick={handleDatePickerOpen}
-            sx={{ 
+            sx={{
               color: 'white',
               bgcolor: 'rgba(255,255,255,0.1)',
               '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
@@ -188,12 +199,12 @@ export default function AppBar({
           >
             Jump to Week
           </Button>
-          
+
           <Stack direction="row" spacing={1} alignItems="center">
-            <Chip 
+            <Chip
               label={`Week ${weekNumber}`}
               size="small"
-              sx={{ 
+              sx={{
                 bgcolor: 'rgba(255,255,255,0.2)',
                 color: 'white',
                 fontWeight: 600,
@@ -204,7 +215,7 @@ export default function AppBar({
             </Typography>
           </Stack>
         </Box>
-        
+
         {/* Date Picker Popover */}
         <Popover
           open={datePickerOpen}
