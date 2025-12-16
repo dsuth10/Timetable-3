@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Database Backup API
+  description: API endpoints for creating and downloading database backups
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+
+paths:
+  /backup/create:
+    post:
+      summary: Create a database backup
+      description: Creates a backup of the entire database in the specified format. Returns backup ID and initiates backup creation process.
+      operationId: createBackup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - format
+              properties:
+                format:
+                  type: string
+                  enum: [sql, json, csv, sqlite_gz]
+                  description: Backup format to generate
+              example:
+                format: sql
+      responses:
+        '200':
+          description: Backup creation initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupResponse'
+        '400':
+          description: Invalid request (missing or invalid format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during backup creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /backup/{backup_id}/progress:
+    get:
+      summary: Get backup creation progress
+      description: Returns real-time progress updates for a backup being created
+      operationId: getBackupProgress
+      parameters:
+        - name: backup_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the backup
+      responses:
+        '200':
+          description: Progress update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupProgress'
+        '404':
+          description: Backup not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /backup/{backup_id}/download:
+    get:
+      summary: Download backup file
+      description: Downloads the completed backup file. Only available if backup status is 'completed'.
+      operationId: downloadBackup
+      parameters:
+        - name: backup_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the backup
+      responses:
+        '200':
+          description: Backup file download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="timetable_backup_sql_2025-12-16_14-30-45.sql"
+            Content-Type:
+              schema:
+                type: string
+                example: application/octet-stream
+            Content-Length:
+              schema:
+                type: integer
+                example: 1048576
+        '404':
+          description: Backup not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Backup not ready for download (still creating or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    BackupRequest:
+      type: object
+      required:
+        - format
+      properties:
+        format:
+          type: string
+          enum: [sql, json, csv, sqlite_gz]
+          description: Backup format to generate
+
+    BackupResponse:
+      type: object
+      required:
+        - backup_id
+        - format
+        - filename
+        - size_bytes
+        - created_at
+        - status
+      properties:
+        backup_id:
+          type: string
+          description: Unique identifier for this backup
+          example: "abc123-def456-ghi789"
+        format:
+          type: string
+          enum: [sql, json, csv, sqlite_gz]
+          description: The backup format that was created
+        filename:
+          type: string
+          description: Generated filename with timestamp
+          example: "timetable_backup_sql_2025-12-16_14-30-45.sql"
+        size_bytes:
+          type: integer
+          description: Size of backup file in bytes
+          example: 1048576
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when backup was created
+          example: "2025-12-16T14:30:45Z"
+        status:
+          type: string
+          enum: [completed, failed]
+          description: Backup creation status
+        error:
+          type: string
+          description: Error message if status is 'failed'
+          example: "Database locked, please try again"
+        download_url:
+          type: string
+          description: URL to download backup (only if status is 'completed')
+          example: "/api/backup/abc123-def456-ghi789/download"
+
+    BackupProgress:
+      type: object
+      required:
+        - backup_id
+        - progress_percent
+        - status
+      properties:
+        backup_id:
+          type: string
+          description: Unique identifier for the backup
+          example: "abc123-def456-ghi789"
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Percentage complete (0-100)
+          example: 45
+        status:
+          type: string
+          enum: [creating, validating, completed, failed]
+          description: Current stage of backup process
+        current_step:
+          type: string
+          description: Human-readable description of current operation
+          example: "Processing table 3 of 8"
+        error:
+          type: string
+          description: Error message if status is 'failed'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid backup format specified"
+        details:
+          type: string
+          description: Additional error details (optional)
+          example: "Format must be one of: sql, json, csv, sqlite_gz"
+
