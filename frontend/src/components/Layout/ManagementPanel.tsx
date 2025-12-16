@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   SwipeableDrawer,
   Box,
@@ -47,6 +47,7 @@ export default function ManagementPanel({
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
+  const paperRef = useRef<HTMLDivElement>(null);
 
   const toggleDrawer = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -55,6 +56,26 @@ export default function ManagementPanel({
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
+
+  // Fix accessibility: Ensure modal root doesn't have aria-hidden when drawer content is focused
+  useEffect(() => {
+    if (open) {
+      // Find the modal root element and ensure it doesn't incorrectly set aria-hidden
+      // when the drawer content (which is a child) receives focus
+      const timer = setTimeout(() => {
+        // Find the modal root by searching from the paper element or by class
+        const modalRoot = paperRef.current?.closest('.MuiModal-root') || 
+                          document.querySelector('.MuiDrawer-root.MuiModal-root');
+        if (modalRoot) {
+          // Remove aria-hidden from modal root - the drawer content should be accessible
+          // Material-UI sets this, but it causes issues when drawer content is focused
+          modalRoot.removeAttribute('aria-hidden');
+        }
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   return (
     <>
@@ -90,8 +111,12 @@ export default function ManagementPanel({
         disableSwipeToOpen={false}
         ModalProps={{
           keepMounted: true,
+          // Fix accessibility: ensure modal properly manages aria-hidden
+          disableEnforceFocus: false,
+          disableAutoFocus: false,
         }}
         PaperProps={{
+          ref: paperRef,
           sx: {
             height: '60vh',
             overflow: 'hidden',
