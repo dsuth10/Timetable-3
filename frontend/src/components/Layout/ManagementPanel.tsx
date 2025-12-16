@@ -35,15 +35,15 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 type ManagementPanelProps = {
   aidesContent: React.ReactNode;
   tasksContent: React.ReactNode;
-  requestsContent: React.ReactNode;
   classroomsContent: React.ReactNode;
+  backupContent: React.ReactNode;
 };
 
 export default function ManagementPanel({
   aidesContent,
   tasksContent,
-  requestsContent,
   classroomsContent,
+  backupContent,
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
@@ -104,8 +104,8 @@ export default function ManagementPanel({
             <Tabs value={tabIndex} onChange={handleTabChange} sx={{ flex: 1 }}>
               <Tab label="Aides" id="management-tab-0" />
               <Tab label="Tasks" id="management-tab-1" />
-              <Tab label="Requests" id="management-tab-2" />
-              <Tab label="Classes" id="management-tab-3" />
+              <Tab label="Classes" id="management-tab-2" />
+              <Tab label="Backup" id="management-tab-3" />
             </Tabs>
             <IconButton onClick={() => toggleDrawer(false)} sx={{ mr: 1 }}>
               <KeyboardArrowDown />
@@ -121,10 +121,10 @@ export default function ManagementPanel({
               <ErrorBoundary>{tasksContent}</ErrorBoundary>
             </TabPanel>
             <TabPanel value={tabIndex} index={2}>
-              <ErrorBoundary>{requestsContent}</ErrorBoundary>
+              <ErrorBoundary>{classroomsContent}</ErrorBoundary>
             </TabPanel>
             <TabPanel value={tabIndex} index={3}>
-              <ErrorBoundary>{classroomsContent}</ErrorBoundary>
+              <ErrorBoundary>{backupContent}</ErrorBoundary>
             </TabPanel>
           </Box>
         </Box>

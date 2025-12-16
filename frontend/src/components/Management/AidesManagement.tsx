@@ -230,6 +230,11 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
           setSelectedAide(null);
           fetchAides({ includeAvailability: true }).catch(() => undefined);
         }}
+        onDeleted={() => {
+          setShowEditModal(false);
+          setSelectedAide(null);
+          fetchAides({ includeAvailability: true }).catch(() => undefined);
+        }}
       />
 
       {/* Upload CSV Dialog */}

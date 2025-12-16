@@ -10,8 +10,9 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  Typography,
 } from '@mui/material';
-import { PersonAdd, Save, Edit } from '@mui/icons-material';
+import { PersonAdd, Save, Edit, Delete } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
 import AvailabilityEditor from './AvailabilityEditor';
 import type { TeacherAide, Availability, Weekday } from '../types';
@@ -27,6 +28,7 @@ type Props = {
   onClose: () => void;
   onCreated?: (aide: TeacherAide) => void;
   onUpdated?: (aide: TeacherAide) => void;
+  onDeleted?: () => void;
   aide?: TeacherAide | null;
 };
 
@@ -41,7 +43,7 @@ const generateRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export default function AideFormModal({ open, onClose, onCreated, onUpdated, aide }: Props) {
+export default function AideFormModal({ open, onClose, onCreated, onUpdated, onDeleted, aide }: Props) {
   const [name, setName] = useState('');
   const [details, setDetails] = useState('');
   const [colourHex, setColourHex] = useState(generateRandomColor());
@@ -50,6 +52,7 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [draftAvailability, setDraftAvailability] = useState<DraftAvailability[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const isEditMode = !!aide;
 
@@ -169,6 +172,31 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
     }
   };
 
+  const handleDelete = async () => {
+    if (!aide) return;
+
+    setBusy(true);
+    setError(undefined);
+    try {
+      await aidesApi.delete(aide.id);
+      
+      // Dispatch success event for toast notification
+      try {
+        window.dispatchEvent(new CustomEvent('app:success', { 
+          detail: { message: 'Aide deleted successfully' } 
+        }));
+      } catch {}
+      
+      onDeleted?.();
+      handleClose();
+      setShowDeleteDialog(false);
+    } catch (e: any) {
+      setError(e.response?.data?.error || e.message || 'Failed to delete aide');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -239,19 +267,75 @@ export default function AideFormModal({ open, onClose, onCreated, onUpdated, aid
           />
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} disabled={busy}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={busy || !name.trim()}
-          variant="contained"
-          startIcon={busy ? <CircularProgress size={16} /> : <Save />}
-        >
-          {isEditMode ? 'Save Changes' : 'Add Aide'}
-        </Button>
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
+        {isEditMode && (
+          <Button 
+            onClick={() => setShowDeleteDialog(true)} 
+            disabled={busy}
+            color="error"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        )}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button onClick={handleClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={busy || !name.trim()}
+            variant="contained"
+            startIcon={busy ? <CircularProgress size={16} /> : <Save />}
+          >
+            {isEditMode ? 'Save Changes' : 'Add Aide'}
+          </Button>
+        </Box>
       </DialogActions>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onClose={() => {
+          if (!busy) {
+            setShowDeleteDialog(false);
+            setError(undefined);
+          }
+        }}
+      >
+        <DialogTitle>Delete Aide?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete <strong>{aide?.name}</strong>?
+            This action cannot be undone.
+          </Typography>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              setShowDeleteDialog(false);
+              setError(undefined);
+            }} 
+            disabled={busy}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete} 
+            color="error" 
+            variant="contained"
+            disabled={busy}
+            startIcon={busy ? <CircularProgress size={16} /> : <Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

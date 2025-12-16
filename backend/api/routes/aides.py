@@ -91,6 +91,21 @@ def update_aide(aide_id: int):
     return aide.to_dict(), 200
 
 
+@bp.delete('/<int:aide_id>')
+def delete_aide(aide_id: int):
+    aide = db.session.get(TeacherAide, aide_id)
+    if not aide:
+        return {'error': 'Aide not found'}, 404
+    
+    try:
+        db.session.delete(aide)
+        db.session.commit()
+        return {'message': 'Aide deleted successfully'}, 200
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to delete aide: {str(e)}'}, 500
+
+
 # Color palette matching frontend generateRandomColor function
 _COLOR_PALETTE = [
     '#1976d2', '#dc004e', '#9c27b0', '#673ab7', '#3f51b5',

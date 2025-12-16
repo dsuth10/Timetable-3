@@ -29,7 +29,6 @@ import { useUiStore } from '../store/stores/uiStore';
 import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
-import RequestsManagement from '../components/Management/RequestsManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
 
 // Helper to generate initials
@@ -274,7 +273,6 @@ export default function Home() {
       <ManagementPanel
         aidesContent={<AidesManagement />}
         tasksContent={<TasksManagement />}
-        requestsContent={<RequestsManagement />}
         classroomsContent={<ClassroomsManagement />}
       />
     </Box>

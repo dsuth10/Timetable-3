@@ -36,6 +36,7 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Relief Pool** - Orphaned tasks from absent aides are preserved in a Relief Pool with date-restricted reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
+✅ **Database Backup System** - Create complete backups in multiple formats (SQL, JSON, CSV, compressed SQLite) with progress tracking and integrity validation  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
 ✅ **Material Design UI** - Modern, intuitive interface with consistent theming  
 ✅ **Unified Single View** - All management functions accessible without page navigation  
@@ -143,6 +144,7 @@ Open your browser to: **http://localhost:3000**
 - **Database**: SQLite (local file)
 - **Migrations**: Alembic
 - **Recurrence**: python-dateutil (iCal RRULE)
+- **Backup**: SQLite dump, JSON export, CSV collection (ZIP), gzip compression
 - **Testing**: pytest, pytest-flask
 
 #### Frontend
@@ -165,8 +167,8 @@ timetable-scheduler/
 ├── backend/                      # Python Flask backend
 │   ├── api/
 │   │   ├── models/               # SQLAlchemy models (7 entities)
-│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, quick-create-task, etc.)
-│   │   ├── services/             # Business logic (collision, recurrence, conflicts, relief_pool)
+│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, quick-create-task, backup, etc.)
+│   │   ├── services/             # Business logic (collision, recurrence, conflicts, relief_pool, backup)
 │   │   ├── middleware/           # Validation middleware
 │   │   ├── scheduler.py          # Background scheduler (horizon extension & Relief Pool cleanup)
 │   │   └── __init__.py
@@ -183,7 +185,7 @@ timetable-scheduler/
 │   ├── src/
 │   │   ├── components/           # React components
 │   │   │   ├── Layout/           # Layout components (AppBar, AideDrawer, ManagementPanel, TaskBank, ReliefPoolTab)
-│   │   │   ├── Management/       # Management components (Aides, Tasks, Requests, Classrooms)
+│   │   │   ├── Management/       # Management components (Aides, Tasks, Requests, Classrooms, Backup)
 │   │   │   ├── common/           # Common UI components (LoadingState, EmptyState)
 │   │   │   ├── TimetableGrid/    # Timetable grid & slots (weekly view)
 │   │   │   │   ├── QuickCreateTaskModal.tsx  # Quick-click task creation modal
@@ -211,7 +213,8 @@ timetable-scheduler/
 │   └── vitest.config.ts
 │
 ├── instance/
-│   └── timetable.db              # SQLite database file
+│   ├── timetable.db              # SQLite database file
+│   └── backups/                  # Backup files directory
 │
 ├── docs/                         # Documentation
 │   ├── api-reference.md          # API documentation
@@ -820,6 +823,24 @@ curl -X POST http://localhost:5000/api/relief-pool/123/reassign \
 curl http://localhost:5000/api/relief-pool/count
 ```
 
+**Create database backup**:
+```bash
+curl -X POST http://localhost:5000/api/backup/create \
+  -H "Content-Type: application/json" \
+  -d '{"format": "sql"}'
+```
+
+**Get backup progress**:
+```bash
+curl http://localhost:5000/api/backup/{backup_id}/progress
+```
+
+**Download backup file**:
+```bash
+curl http://localhost:5000/api/backup/{backup_id}/download \
+  --output timetable_backup.sql
+```
+
 ---
 
 ## 🚢 Deployment
@@ -1145,6 +1166,12 @@ Contributions are welcome! Please follow these steps:
 - [x] 5-minute increment duration support
 - [x] Conflict detection and error handling
 
+### Version 1.0.9 (Dec 2025) ✅
+- [x] Database Backup System
+- [x] Multiple backup formats (SQL, JSON, CSV, compressed SQLite)
+- [x] Progress tracking and integrity validation
+- [x] Error handling with retry logic
+
 ### Version 1.1 (Planned)
 - [ ] User authentication & authorization
 - [ ] Email notifications
@@ -1161,6 +1188,43 @@ Contributions are welcome! Please follow these steps:
 ---
 
 ## 🔄 Recent Updates
+
+### Version 1.0.9 (2025-12-16)
+
+**New Features**:
+- ✅ **Database Backup System** - Complete backup solution with multiple format support
+- ✅ **Backup Tab** - New tab in management panel for easy access to backup functionality
+- ✅ **Multiple Backup Formats** - Support for SQL dump, JSON export, CSV collection (ZIP), and compressed SQLite
+- ✅ **Progress Tracking** - Real-time progress updates with percentage and status messages
+- ✅ **Integrity Validation** - Automatic validation ensures backup completeness before download
+- ✅ **Error Handling** - Graceful error handling with retry logic for database locks
+- ✅ **One-Click Backup** - Simple interface designed for basic users
+- ✅ **Timestamped Files** - All backups include date and time in filename for easy organization
+
+**Technical Improvements**:
+- Created `BackupService` with format generation methods for all 4 backup types
+- Implemented `BackupManagement` component with format selector and progress indicator
+- Added backup API endpoints: `POST /api/backup/create`, `GET /api/backup/{id}/progress`, `GET /api/backup/{id}/download`
+- Integrated backup tab into `ManagementPanel` component
+- Added progress tracking with in-memory storage for real-time updates
+- Implemented retry logic with exponential backoff for database locks
+- Created comprehensive validation for all backup formats
+- Added 8 test files covering contract, integration, and component tests
+- Error logging with context for troubleshooting
+
+**Backend Technologies**:
+- SQLite `.dump()` method for SQL backup generation
+- Python `json` module for JSON export
+- Python `csv` and `zipfile` modules for CSV collection
+- Python `gzip` module for SQLite compression
+- Flask `send_file()` for secure file downloads
+
+**User Experience**:
+- 🗄️ Complete data protection with multiple backup options
+- 📊 Progress visibility during backup creation
+- ✅ Automatic validation ensures backup integrity
+- 🔄 Retry option for temporary failures
+- 📥 Easy download with properly formatted filenames
 
 ### Version 1.0.8 (2025-01-27)
 
@@ -1328,5 +1392,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.8  
-**Last Updated**: 2025-01-27
+**Version**: 1.0.9  
+**Last Updated**: 2025-12-16

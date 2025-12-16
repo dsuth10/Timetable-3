@@ -41,8 +41,8 @@ import ClassroomDrawer from '../components/Layout/ClassroomDrawer';
 import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
-import RequestsManagement from '../components/Management/RequestsManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
+import BackupManagement from '../components/Management/BackupManagement';
 import UndoRedoControls from '../components/UndoRedoControls';
 import LoadingState from '../components/common/LoadingState';
 import AbsenceModal from '../components/AbsenceModal';
@@ -650,8 +650,8 @@ export default function Schedule() {
       <ManagementPanel
         aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} />}
         tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
-        requestsContent={<RequestsManagement />}
         classroomsContent={<ClassroomsManagement />}
+        backupContent={<BackupManagement />}
       />
 
       {/* Modals */}
