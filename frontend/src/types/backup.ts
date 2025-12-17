@@ -25,3 +25,5 @@ export interface BackupProgress {
   error?: string; // Only present if status is 'failed'
 }
 
+
+

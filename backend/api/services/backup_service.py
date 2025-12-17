@@ -307,10 +307,7 @@ class BackupService:
         # Get column names from first record
         first_record = records[0]
         if hasattr(first_record, 'to_dict'):
-            # Call to_dict() without parameters - models handle defaults differently
-            # Task uses include_assignments=False, Request uses include_classroom=False,
-            # others use include_relationships=False or no params
-            sample_dict = first_record.to_dict()
+            sample_dict = first_record.to_dict(include_relationships=False)
             columns = list(sample_dict.keys())
         else:
             # Fallback to table columns
@@ -323,8 +320,7 @@ class BackupService:
         
         for record in records:
             if hasattr(record, 'to_dict'):
-                # Call to_dict() without parameters - models handle defaults differently
-                row = record.to_dict()
+                row = record.to_dict(include_relationships=False)
                 # Convert values to strings for CSV
                 row = {k: str(v) if v is not None else '' for k, v in row.items()}
                 writer.writerow(row)

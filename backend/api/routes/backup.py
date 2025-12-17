@@ -120,17 +120,8 @@ def download_backup(backup_id: str):
         # Get backup progress to check status
         progress = get_backup_service().get_progress(backup_id)
         
-        # If progress not found, check response (for backups that completed immediately)
         if not progress:
-            response = get_backup_service().get_response(backup_id)
-            if not response:
-                return {'error': 'Backup not found'}, 404
-            # Use response data as progress
-            progress = {
-                'backup_id': backup_id,
-                'status': response.get('status', 'completed'),
-                'format': response.get('format', 'sql')
-            }
+            return {'error': 'Backup not found'}, 404
         
         if progress['status'] != 'completed':
             return {
@@ -138,13 +129,8 @@ def download_backup(backup_id: str):
                 'details': f"Backup status is '{progress['status']}'"
             }, 400
         
-        # Get backup filepath - get format from progress or response
-        format_type = progress.get('format')
-        if not format_type:
-            # Try to get format from response if not in progress
-            response = get_backup_service().get_response(backup_id)
-            format_type = response.get('format') if response else None
-        format_type = format_type or 'sql'  # Final fallback
+        # Get backup filepath
+        format_type = progress.get('format') or 'sql'  # Fallback if not in progress
         filepath = get_backup_service().get_backup_filepath(backup_id, format_type)
         
         if not filepath:

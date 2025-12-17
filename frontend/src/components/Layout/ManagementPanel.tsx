@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import {
   SwipeableDrawer,
   Box,
@@ -35,19 +35,16 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 type ManagementPanelProps = {
   aidesContent: React.ReactNode;
   tasksContent: React.ReactNode;
-  classroomsContent: React.ReactNode;
-  backupContent: React.ReactNode;
+  requestsContent: React.ReactNode;
 };
 
 export default function ManagementPanel({
   aidesContent,
   tasksContent,
-  classroomsContent,
-  backupContent,
+  requestsContent,
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-  const paperRef = useRef<HTMLDivElement>(null);
 
   const toggleDrawer = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -56,26 +53,6 @@ export default function ManagementPanel({
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
-
-  // Fix accessibility: Ensure modal root doesn't have aria-hidden when drawer content is focused
-  useEffect(() => {
-    if (open) {
-      // Find the modal root element and ensure it doesn't incorrectly set aria-hidden
-      // when the drawer content (which is a child) receives focus
-      const timer = setTimeout(() => {
-        // Find the modal root by searching from the paper element or by class
-        const modalRoot = paperRef.current?.closest('.MuiModal-root') || 
-                          document.querySelector('.MuiDrawer-root.MuiModal-root');
-        if (modalRoot) {
-          // Remove aria-hidden from modal root - the drawer content should be accessible
-          // Material-UI sets this, but it causes issues when drawer content is focused
-          modalRoot.removeAttribute('aria-hidden');
-        }
-      }, 0);
-
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
 
   return (
     <>
@@ -111,12 +88,8 @@ export default function ManagementPanel({
         disableSwipeToOpen={false}
         ModalProps={{
           keepMounted: true,
-          // Fix accessibility: ensure modal properly manages aria-hidden
-          disableEnforceFocus: false,
-          disableAutoFocus: false,
         }}
         PaperProps={{
-          ref: paperRef,
           sx: {
             height: '60vh',
             overflow: 'hidden',
@@ -129,8 +102,7 @@ export default function ManagementPanel({
             <Tabs value={tabIndex} onChange={handleTabChange} sx={{ flex: 1 }}>
               <Tab label="Aides" id="management-tab-0" />
               <Tab label="Tasks" id="management-tab-1" />
-              <Tab label="Classes" id="management-tab-2" />
-              <Tab label="Backup" id="management-tab-3" />
+              <Tab label="Requests" id="management-tab-2" />
             </Tabs>
             <IconButton onClick={() => toggleDrawer(false)} sx={{ mr: 1 }}>
               <KeyboardArrowDown />
@@ -146,10 +118,7 @@ export default function ManagementPanel({
               <ErrorBoundary>{tasksContent}</ErrorBoundary>
             </TabPanel>
             <TabPanel value={tabIndex} index={2}>
-              <ErrorBoundary>{classroomsContent}</ErrorBoundary>
-            </TabPanel>
-            <TabPanel value={tabIndex} index={3}>
-              <ErrorBoundary>{backupContent}</ErrorBoundary>
+              <ErrorBoundary>{requestsContent}</ErrorBoundary>
             </TabPanel>
           </Box>
         </Box>
@@ -157,3 +126,4 @@ export default function ManagementPanel({
     </>
   );
 }
+
