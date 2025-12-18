@@ -282,8 +282,10 @@ export default function Schedule() {
 
   // Handler for opening task creation from slot
   const handleSlotTaskCreate = (date: string, timeSlot: string) => {
-    // Calculate default end time (30 minutes after start)
-    const defaultEndTime = addMinutesToTime(timeSlot, 30);
+    // Calculate actual slot duration from SCHEDULE_SEGMENTS
+    const segment = getSegmentForTime(timeSlot);
+    const duration = segment ? calculateDuration(segment.start, segment.end) : 30;
+    const defaultEndTime = addMinutesToTime(timeSlot, duration);
     setTaskCreationDefaults({
       startTime: timeSlot,
       endTime: defaultEndTime,

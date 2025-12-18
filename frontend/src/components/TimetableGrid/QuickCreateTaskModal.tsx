@@ -44,7 +44,7 @@ const DURATION_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
 export function QuickCreateTaskModal({ open, date, startTime, duration, aideId, onClose, onSuccess }: Props) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory | ''>('');
-  const [selectedDuration, setSelectedDuration] = useState<number>(duration >= 30 ? 30 : duration);
+  const [selectedDuration, setSelectedDuration] = useState<number>(duration);
   const [classroomId, setClassroomId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | undefined>();
@@ -57,8 +57,8 @@ export function QuickCreateTaskModal({ open, date, startTime, duration, aideId, 
   // Update default duration when props change
   useEffect(() => {
     if (open) {
-      // Default duration logic: 30 min for slots >=30 min, slot length for <30 min
-      setSelectedDuration(duration >= 30 ? 30 : duration);
+      // Use actual duration passed from caller (no cap)
+      setSelectedDuration(duration);
     }
   }, [open, duration]);
 

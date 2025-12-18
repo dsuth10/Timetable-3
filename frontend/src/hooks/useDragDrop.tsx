@@ -11,7 +11,7 @@ import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
 import { useReliefPoolStore } from '../store/stores/reliefPool';
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
 import type { TeacherAide, Task, ReliefPoolTask } from '../types';
-import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES } from '../components/TimetableGrid/timeUtils';
+import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES, getSegmentForTime } from '../components/TimetableGrid/timeUtils';
 
 type UseDragDropOptions = {
   onSuccess?: () => void;
@@ -45,9 +45,14 @@ type PendingAssignment = {
 };
 
 // Helper function to calculate default duration based on time slot
-// 8:50 slot defaults to 20 minutes, all other slots default to 30 minutes
+// Calculates actual duration from SCHEDULE_SEGMENTS instead of hardcoding
 const getDefaultDuration = (time: string | null): number => {
-  return time === '08:50' ? 20 : 30;
+  if (!time) return 30; // Fallback
+  const segment = getSegmentForTime(time);
+  if (segment) {
+    return calculateDuration(segment.start, segment.end);
+  }
+  return 30; // Fallback if segment not found
 };
 
 export function useDragDrop(options?: UseDragDropOptions) {
