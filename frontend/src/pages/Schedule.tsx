@@ -21,7 +21,7 @@ import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
-import { addMinutesToTime, timeToMinutes } from '../components/TimetableGrid/timeUtils';
+import { addMinutesToTime, timeToMinutes, getSegmentForTime, calculateDuration } from '../components/TimetableGrid/timeUtils';
 import AppDragDropContext from '../components/DragDropContext';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
@@ -421,7 +421,15 @@ export default function Schedule() {
   };
 
   const handleSlotClick = (date: string, time: string) => {
-    setSelectedTimeSlot({ date, time, duration: 60 }); // Default to 60 minutes
+    // Calculate actual slot duration from SCHEDULE_SEGMENTS
+    const segment = getSegmentForTime(time);
+    let duration = 30; // Default fallback duration
+    
+    if (segment) {
+      duration = calculateDuration(segment.start, segment.end);
+    }
+    
+    setSelectedTimeSlot({ date, time, duration });
   };
 
   return (
