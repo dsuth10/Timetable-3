@@ -13,12 +13,17 @@ import {
   Box,
   Alert,
   CircularProgress,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
+  FormLabel,
+  Typography,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Repeat } from '@mui/icons-material';
 import { tasksApi } from '../../services/tasksApi';
 import { classroomsApi } from '../../services/classroomsApi';
 import { assignmentsApi } from '../../services/assignmentsApi';
-import type { Task, TaskCategory, Classroom } from '../../types';
+import type { Task, TaskCategory, Classroom, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
 import { generateAllTimeSlots, timeToMinutes, addMinutesToTime, END_TIME_MINUTES, minutesToTime } from '../TimetableGrid/timeUtils';
 import { useTasksStore } from '../../store/stores/tasks';
@@ -50,6 +55,11 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+
+  // Recurring task fields
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
+  const [numWeeks, setNumWeeks] = useState<number>(4);
   
   // Determine if this is template-only creation (no assignment will be created)
   const isTemplateOnly = !defaultDate || !defaultAideId;
@@ -106,8 +116,19 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
       setClassroomId(null);
       setNotes('');
       setError(undefined);
+      setIsRecurring(false);
+      setSelectedWeekdays([]);
+      setNumWeeks(4);
       onClose();
     }
+  };
+
+  const handleWeekdayToggle = (weekday: Weekday) => {
+    setSelectedWeekdays(prev => 
+      prev.includes(weekday) 
+        ? prev.filter(d => d !== weekday)
+        : [...prev, weekday]
+    );
   };
 
   const handleStartTimeChange = (newStartTime: string) => {
@@ -164,6 +185,20 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
         setBusy(false);
         return;
       }
+
+      // Validation for recurrence
+      if (isRecurring) {
+        if (selectedWeekdays.length === 0) {
+          setError('Please select at least one weekday');
+          setBusy(false);
+          return;
+        }
+        if (!numWeeks || numWeeks < 1) {
+          setError('Please enter a valid number of weeks (at least 1)');
+          setBusy(false);
+          return;
+        }
+      }
       
       // Format times as HH:MM:SS for API (append ':00' to seconds)
       startTimeFormatted = `${startTime}:00`;
@@ -196,6 +231,21 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
             status: 'ASSIGNED',
             auto_shorten: true
           } as any);
+
+          // Handle recurrence if requested
+          if (isRecurring && selectedWeekdays.length > 0 && numWeeks > 0) {
+            const expiresOn = new Date(defaultDate);
+            expiresOn.setDate(expiresOn.getDate() + (numWeeks * 7));
+            
+            await tasksApi.update(task.id, {
+              recurrence_rule: `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`,
+              expires_on: expiresOn.toISOString().split('T')[0],
+              aide_id: defaultAideId,
+              start_time: startTimeFormatted,
+              end_time: endTimeFormatted,
+              existing_assignment_date: defaultDate
+            });
+          }
         } catch (assignmentError: any) {
           // If assignment creation fails, log error but don't fail the whole operation
           // The task was created successfully, assignment can be created later
@@ -303,6 +353,72 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
                   ))}
                 </Select>
               </FormControl>
+            </Box>
+          )}
+
+          {/* Recurring Task Options */}
+          {!isTemplateOnly && (
+            <Box sx={{ mt: 1 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Repeat fontSize="small" color={isRecurring ? "primary" : "action"} />
+                    <Typography variant="body2" sx={{ fontWeight: isRecurring ? 500 : 400 }}>
+                      Make this a recurring task
+                    </Typography>
+                  </Box>
+                }
+              />
+
+              {isRecurring && (
+                <Box sx={{ ml: 4, mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box>
+                    <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.8125rem', color: 'text.secondary' }}>
+                      Repeat on Weekdays *
+                    </FormLabel>
+                    <FormGroup row>
+                      {[
+                        { label: 'Mon', value: 'MO' as Weekday },
+                        { label: 'Tue', value: 'TU' as Weekday },
+                        { label: 'Wed', value: 'WE' as Weekday },
+                        { label: 'Thu', value: 'TH' as Weekday },
+                        { label: 'Fri', value: 'FR' as Weekday },
+                      ].map(day => (
+                        <FormControlLabel
+                          key={day.value}
+                          control={
+                            <Checkbox
+                              size="small"
+                              checked={selectedWeekdays.includes(day.value)}
+                              onChange={() => handleWeekdayToggle(day.value)}
+                            />
+                          }
+                          label={<Typography variant="caption">{day.label}</Typography>}
+                          sx={{ mr: 1 }}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+
+                  <TextField
+                    label="Number of Weeks"
+                    type="number"
+                    size="small"
+                    value={numWeeks}
+                    onChange={(e) => setNumWeeks(Number(e.target.value))}
+                    fullWidth
+                    required
+                    inputProps={{ min: 1, max: 52 }}
+                    helperText="How many weeks this task should recur"
+                  />
+                </Box>
+              )}
             </Box>
           )}
 

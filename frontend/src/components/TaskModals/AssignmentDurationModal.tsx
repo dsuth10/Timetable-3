@@ -14,13 +14,18 @@ import {
   Alert,
   Typography,
   Chip,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
+  FormLabel,
+  TextField,
 } from '@mui/material';
-import { Schedule, Person, CalendarMonth, AccessTime } from '@mui/icons-material';
+import { Schedule, Person, CalendarMonth, AccessTime, Repeat } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import type { Task, TeacherAide } from '../../types';
+import type { Task, TeacherAide, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
 import { 
   timeToMinutes, 
@@ -50,6 +55,9 @@ type Props = {
     date: string;
     startTime: string;
     endTime: string;
+    isRecurring?: boolean;
+    selectedWeekdays?: Weekday[];
+    numWeeks?: number;
   }) => Promise<void> | void;
   task: Task | null;
   aides: TeacherAide[];
@@ -74,6 +82,11 @@ export default function AssignmentDurationModal({
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | undefined>();
+
+  // Recurring task fields
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
+  const [numWeeks, setNumWeeks] = useState<number>(4);
 
   // Initialize state when modal opens or initialData changes
   useEffect(() => {
@@ -101,6 +114,9 @@ export default function AssignmentDurationModal({
       setEndTime(endDate);
       
       setError(undefined);
+      setIsRecurring(false);
+      setSelectedWeekdays([]);
+      setNumWeeks(4);
     }
   }, [open, initialData]);
 
@@ -178,6 +194,18 @@ export default function AssignmentDurationModal({
       setError(`End time cannot exceed ${minutesToTime(END_TIME_MINUTES)} (end of working hours)`);
       return;
     }
+
+    // Validation for recurrence
+    if (isRecurring) {
+      if (selectedWeekdays.length === 0) {
+        setError('Please select at least one weekday');
+        return;
+      }
+      if (!numWeeks || numWeeks < 1) {
+        setError('Please enter a valid number of weeks (at least 1)');
+        return;
+      }
+    }
     
     // Format data for submission
     const dateStr = date.toISOString().slice(0, 10);
@@ -190,6 +218,9 @@ export default function AssignmentDurationModal({
         date: dateStr,
         startTime: startTimeStr,
         endTime: endTimeStr,
+        isRecurring,
+        selectedWeekdays,
+        numWeeks,
       });
     } catch (e: any) {
       console.error('Assignment failed:', e);
@@ -200,6 +231,14 @@ export default function AssignmentDurationModal({
   const handleClose = () => {
     setError(undefined);
     onClose();
+  };
+
+  const handleWeekdayToggle = (weekday: Weekday) => {
+    setSelectedWeekdays(prev => 
+      prev.includes(weekday) 
+        ? prev.filter(d => d !== weekday)
+        : [...prev, weekday]
+    );
   };
 
   if (!task) return null;
@@ -321,6 +360,70 @@ export default function AssignmentDurationModal({
               ))}
             </Select>
           </FormControl>
+
+          {/* Recurring Task Options */}
+          <Box sx={{ mt: 1 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Repeat fontSize="small" color={isRecurring ? "primary" : "action"} />
+                  <Typography variant="body2" sx={{ fontWeight: isRecurring ? 500 : 400 }}>
+                    Make this a recurring task
+                  </Typography>
+                </Box>
+              }
+            />
+
+            {isRecurring && (
+              <Box sx={{ ml: 4, mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.8125rem', color: 'text.secondary' }}>
+                    Repeat on Weekdays *
+                  </FormLabel>
+                  <FormGroup row>
+                    {[
+                      { label: 'Mon', value: 'MO' as Weekday },
+                      { label: 'Tue', value: 'TU' as Weekday },
+                      { label: 'Wed', value: 'WE' as Weekday },
+                      { label: 'Thu', value: 'TH' as Weekday },
+                      { label: 'Fri', value: 'FR' as Weekday },
+                    ].map(day => (
+                      <FormControlLabel
+                        key={day.value}
+                        control={
+                          <Checkbox
+                            size="small"
+                            checked={selectedWeekdays.includes(day.value)}
+                            onChange={() => handleWeekdayToggle(day.value)}
+                          />
+                        }
+                        label={<Typography variant="caption">{day.label}</Typography>}
+                        sx={{ mr: 1 }}
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
+
+                <TextField
+                  label="Number of Weeks"
+                  type="number"
+                  size="small"
+                  value={numWeeks}
+                  onChange={(e) => setNumWeeks(Number(e.target.value))}
+                  fullWidth
+                  required
+                  inputProps={{ min: 1, max: 52 }}
+                  helperText="How many weeks this task should recur"
+                />
+              </Box>
+            )}
+          </Box>
 
           {/* Aide Selection */}
           <FormControl fullWidth>

@@ -496,10 +496,29 @@ export function useDragDrop(options?: UseDragDropOptions) {
     date: string;
     startTime: string;
     endTime: string;
+    isRecurring?: boolean;
+    selectedWeekdays?: Weekday[];
+    numWeeks?: number;
   }) => {
     if (!pendingAssignment) return;
 
     const { type, task, assignmentId, currentAssignment, sourceData, reliefPoolTask } = pendingAssignment;
+
+    const handleRecurrence = async (taskId: number) => {
+      if (data.isRecurring && data.selectedWeekdays && data.numWeeks) {
+        const expiresOn = new Date(data.date);
+        expiresOn.setDate(expiresOn.getDate() + (data.numWeeks * 7));
+        
+        await tasksApi.update(taskId, {
+          recurrence_rule: `FREQ=WEEKLY;BYDAY=${data.selectedWeekdays.join(',')}`,
+          expires_on: expiresOn.toISOString().split('T')[0],
+          aide_id: data.aideId,
+          start_time: data.startTime,
+          end_time: data.endTime,
+          existing_assignment_date: data.date
+        });
+      }
+    };
 
     // Validate end time doesn't exceed working hours
     if (timeToMinutes(data.endTime.slice(0, 5)) > END_TIME_MINUTES) {
@@ -571,6 +590,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
           async do() {
             try {
               await assignmentsApi.create(createPayload);
+              await handleRecurrence(task.id);
               // Note: Task already exists in store from initial creation, no need to add again
             } catch (e: any) {
               if (e?.status === 409) {
@@ -639,6 +659,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
           try {
             await debouncedUpdate(`asg-${assignmentId}`, async () => {
               await assignmentsApi.update(assignmentId, updatePayload);
+              await handleRecurrence(task.id);
             });
           } catch (e: any) {
             if (e?.status === 409) {
@@ -702,6 +723,8 @@ export function useDragDrop(options?: UseDragDropOptions) {
           end_time: data.endTime,
           version: reliefPoolTask.version,
         });
+
+        await handleRecurrence(task.id);
 
         // Refresh the Relief Pool store
         const reliefPoolStore = useReliefPoolStore.getState();
