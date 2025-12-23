@@ -139,3 +139,36 @@ export interface ReliefPoolDismissRequest {
   reason?: string;
   version: number;
 }
+
+// Daily View types
+export interface AideWithStatus extends TeacherAide {
+  is_absent: boolean;
+  assignments: Assignment[];
+}
+
+export interface TimelineSlotConfig {
+  start_time: string; // HH:MM:SS
+  duration_minutes: number;
+}
+
+export interface TimelineConfig {
+  slots: TimelineSlotConfig[];
+}
+
+export interface DailyViewData {
+  aides: AideWithStatus[];
+  relief_pool: Assignment[];
+  task_bank: Task[];
+  timeline_config: TimelineConfig;
+}
+
+export type AssignmentSourceType = 'FROM_BANK' | 'FROM_RELIEF';
+
+export interface AssignTaskPayload {
+  type: AssignmentSourceType;
+  id: ID;
+  date: string;
+  aide_id: ID;
+  start_time: string;
+  end_time: string;
+}

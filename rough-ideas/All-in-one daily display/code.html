@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Teacher Aid Daily Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2563EB", // Blue similar to the screenshot
+                        secondary: "#7C3AED", // Purple accent
+                        "background-light": "#F3F4F6",
+                        "background-dark": "#111827",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1F2937",
+                        "border-light": "#E5E7EB",
+                        "border-dark": "#374151",
+                        // Event Colors
+                        "event-blue": "#DBEAFE",
+                        "event-blue-text": "#1E40AF",
+                        "event-green": "#D1FAE5",
+                        "event-green-text": "#065F46",
+                        "event-purple": "#EDE9FE",
+                        "event-purple-text": "#5B21B6",
+                        "event-red": "#FEE2E2",
+                        "event-red-text": "#991B1B",
+                        "event-orange": "#FFEDD5",
+                        "event-orange-text": "#9A3412",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'lg': '0.75rem',
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .task-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-700 dark:text-gray-200 h-screen overflow-hidden flex transition-colors duration-200">
+<aside class="w-20 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark flex flex-col h-full flex-shrink-0 z-30 transition-all duration-300">
+<div class="h-20 flex items-center justify-center border-b border-transparent">
+<button class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-icons-outlined text-2xl">menu</span>
+</button>
+</div>
+<div class="px-2 py-6 flex justify-center">
+<button class="w-10 h-10 bg-primary hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-sm transition-colors" title="Assign Task">
+<span class="material-icons-outlined text-xl">add</span>
+</button>
+</div>
+<nav class="flex-1 px-2 space-y-4 flex flex-col items-center overflow-y-auto scrollbar-hide">
+<a class="p-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-colors group relative" href="#" title="Dashboard">
+<span class="material-icons-outlined text-xl">dashboard</span>
+</a>
+<a class="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-primary transition-colors group relative" href="#" title="Schedule">
+<span class="material-icons-outlined text-xl">calendar_today</span>
+</a>
+<a class="p-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-colors group relative" href="#" title="Analytics">
+<span class="material-icons-outlined text-xl">analytics</span>
+</a>
+<a class="p-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-colors group relative" href="#" title="Payroll">
+<span class="material-icons-outlined text-xl">payments</span>
+</a>
+<a class="p-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-colors group relative" href="#" title="My Tasks">
+<span class="material-icons-outlined text-xl">task</span>
+</a>
+<a class="p-3 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-colors group relative" href="#" title="Documents">
+<span class="material-icons-outlined text-xl">description</span>
+</a>
+</nav>
+<div class="p-4 border-t border-border-light dark:border-border-dark flex flex-col items-center gap-6">
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors" href="#" title="Get Help">
+<span class="material-icons-outlined text-xl">help_outline</span>
+</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors" href="#" title="Settings">
+<span class="material-icons-outlined text-xl">settings</span>
+</a>
+<div class="pt-2 cursor-pointer" title="Sarah Principal">
+<img alt="Profile" class="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBix9704sZnEzg1yOtjGB6EwKFCHOW--6mFk1sxevJkkEQ4Yii96MfcAN-qEEvFkVblx59tl0ttw5ULaGDrc-EFLUfrPxHTxza0_pYslyH_cADZto664DMJDQ92vYsBG_y-urDW2TcfKZjICe3UVSwIMTRhWoqZUzY0N2aAngmkLt1wMSNLy8jwxkvVRbvLh1mWhLWPTMgKb45qlvQUvYZw-nxwh9VCW9R3B34M0fGpiJCLrwoWsBfKVcvOptdc5Vp-BxFZ2igB0g"/>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-surface-light dark:bg-surface-dark h-full">
+<header class="h-20 border-b border-border-light dark:border-border-dark flex items-center justify-between px-8 bg-surface-light dark:bg-surface-dark flex-shrink-0 z-20 relative">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-8 bg-secondary rounded-full"></div>
+<div>
+<h2 class="text-xl font-bold text-gray-900 dark:text-white">October, 2023</h2>
+</div>
+</div>
+<div class="relative hidden lg:block w-64">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-outlined text-gray-400 text-lg">search</span>
+<input class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-1 focus:ring-primary dark:text-white" placeholder="Search anything..." type="text"/>
+<div class="absolute right-2 top-1/2 -translate-y-1/2 border border-gray-200 dark:border-gray-600 rounded px-1.5 text-xs text-gray-400">/</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+<button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md">Day</button>
+<button class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm rounded-md">Week</button>
+<button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md">Month</button>
+<button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md">Year</button>
+</div>
+<div class="flex items-center gap-2 border border-border-light dark:border-border-dark rounded-lg p-1">
+<button class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-500 dark:text-gray-400">
+<span class="material-icons-outlined text-sm">chevron_left</span>
+</button>
+<span class="text-sm font-medium px-2 text-gray-700 dark:text-gray-200">Today</span>
+<button class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-500 dark:text-gray-400">
+<span class="material-icons-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</header>
+<div class="h-16 border-b border-border-light dark:border-border-dark flex items-center justify-between px-8 bg-surface-light dark:bg-surface-dark flex-shrink-0 z-10">
+<div class="flex items-center gap-6 text-sm">
+<div class="flex items-center gap-2 text-gray-900 dark:text-white font-medium cursor-pointer">
+                    All Aids <span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs">24</span>
+</div>
+<div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 cursor-pointer">
+                    On Duty <span class="bg-gray-50 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">18</span>
+</div>
+<div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 cursor-pointer">
+                    Break <span class="bg-gray-50 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">4</span>
+</div>
+<div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 cursor-pointer">
+                    Absent <span class="bg-gray-50 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">2</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 border border-border-light dark:border-border-dark rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+<span class="material-icons-outlined text-base">filter_list</span> All Roles
+                </button>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 border border-transparent bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white">Special Ed</button>
+<button class="px-3 py-1.5 border border-border-light dark:border-border-dark rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Lunch Duty</button>
+<button class="px-3 py-1.5 border border-border-light dark:border-border-dark rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Library</button>
+</div>
+</div>
+</div>
+<div class="flex flex-1 overflow-hidden">
+<div class="flex-1 overflow-auto bg-white dark:bg-surface-dark relative">
+<div class="sticky top-0 z-10 flex min-w-max bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark text-xs uppercase text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+<div class="w-48 p-4 sticky left-0 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark z-20 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+                    Teacher Aid
+                </div>
+<div class="flex-1 flex">
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">8:00 AM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">9:00 AM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">10:00 AM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">11:00 AM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center bg-blue-50/50 dark:bg-blue-900/10">12:00 PM <span class="bg-primary text-white text-[10px] px-1 rounded ml-1">NOW</span></div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">1:00 PM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">2:00 PM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">3:00 PM</div>
+<div class="w-32 border-r border-border-light/50 dark:border-border-dark/50 py-3 text-center">4:00 PM</div>
+</div>
+</div>
+<div class="min-w-max relative">
+<div class="absolute top-0 bottom-0 left-[calc(12rem+16rem+50%)] w-px bg-primary z-0 pointer-events-none opacity-50 border-dashed border-l border-primary"></div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVro8S9VMWij0z67hPOqUdV9pT0oaZbWpPH7vUaTKXEzLQL9xw-7qjG8bndOHvxwYKBWqpe7nEaysRT_Y1sF57kQ8FizSPCS2z8_V5YLtqV6JDl1mE7s4Mqf5Lthu3iWwSvh57jCvHPPaFKAihTc_RmWqcmiDApGQWur24SAQJwAWwATrOqem3oTxfKlRUGhPoTavqTlNqgNqUzYxmDLoyBwHloLMwpBOBLqjZW6-kKhCczqC_tG4DnLUMXH-1Xv0zQcds2sUU5A"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">Alice Freeman</div>
+<div class="text-xs text-gray-400">Special Ed</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-4 w-56 rounded-md bg-event-blue dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-blue-text dark:text-blue-300 text-sm mr-2">school</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-blue-text dark:text-blue-300 truncate">Class 3B Support</div>
+<div class="text-[10px] text-blue-600 dark:text-blue-400">8:15 AM - 10:00 AM</div>
+</div>
+</div>
+<div class="absolute top-2 bottom-2 left-[17rem] w-32 rounded-md bg-event-green dark:bg-green-900/40 border border-green-200 dark:border-green-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-green-text dark:text-green-300 text-sm mr-2">local_cafe</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-green-text dark:text-green-300 truncate">Recess Duty</div>
+<div class="text-[10px] text-green-700 dark:text-green-400">11:00 - 12:00</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRo1SAwPQ8oFcVvtrsS2tJk7EKOHQoaBmHF3Tv-1ZMXOdZ_c3g2WB9r3kcJ-0SCaj4K1p3mVg112NxrDER35_kD4fEEtC3BuheTkz2edgfySo-skKpwa0DDtWk00dZ_N0alqOPV7iscIdm21W8ek2BLGx8WOABlOJu4SiMQSmQTMvQ99e4EzI6JHQLGYCla93C89cRmN3wln7OaPll0AjlC-SlJRjD7UEcybn_uwCw1wUtIH5tTSsJ8f9ZgprMWQHrxBdCiAiuMg"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">Robert Chen</div>
+<div class="text-xs text-gray-400">Library Asst</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-32 w-48 rounded-md bg-event-purple dark:bg-purple-900/40 border border-purple-200 dark:border-purple-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-purple-text dark:text-purple-300 text-sm mr-2">library_books</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-purple-text dark:text-purple-300 truncate">Library Supervision</div>
+<div class="text-[10px] text-purple-700 dark:text-purple-400">9:00 AM - 10:30 AM</div>
+</div>
+</div>
+<div class="absolute top-2 bottom-2 left-[24rem] w-64 rounded-md bg-event-orange dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-orange-text dark:text-orange-300 text-sm mr-2">inventory</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-orange-text dark:text-orange-300 truncate">Inventory Check</div>
+<div class="text-[10px] text-orange-800 dark:text-orange-400">1:00 PM - 3:00 PM</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8otIuPWpPT3zK5VoLV0M0s0R-nj_sCXyVgH8kbnB4cJGwcxpgUvhIgTHU5sT_KzwJUDgTT6XKIsO_8pLNdjGdFJYnUqp74_sJk3E3crDMDVqW4PocEkP-NuxXwiUnEQYkOt_iGzgdqr5LDj48m2lffV-y7ZQU3NF0DtYh8OUnUC73bILmrP4bFNEqgjNozLhOS7En4OCjVeF6uC8Aniws0P-5I_2tzWfSUulQf9Qh1SWfNoo8Lt1ynRt2nALIISxJMu1gQVlYfQ"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">Maria Sanchez</div>
+<div class="text-xs text-gray-400">Gen Support</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-0 w-full mx-4 rounded-md bg-event-red dark:bg-red-900/40 border border-red-200 dark:border-red-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer opacity-70">
+<span class="material-icons-outlined text-event-red-text dark:text-red-300 text-sm mr-2">sick</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-red-text dark:text-red-300 truncate">Out Sick (Covered by Sub)</div>
+<div class="text-[10px] text-red-800 dark:text-red-400">All Day</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASTKOTpc5vxr7Pvpb4DGdBSJM_74WuweYqXbxLLO6GXFWnoziC-4w5nHzT3sSQVvHkHWNaG5Mr-HI7TdRD4art6xiLY19YOUN8m4AIKSJujeHBvXxSAVHYGflfPueg9Y5wQDbQltawpbH5djFZKA4TmO_QQ0DHfTL_8-JvJH4yKqkj86H7Md9PvwfV6ej_T_lJlv7JTv8W1I9HB4NLP4NZHhafJDyBt7BA6sS7ojB2iypSoZlY0EzcRW-CMkAcWOrAFJ7BTvzqBw"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">James Wilson</div>
+<div class="text-xs text-gray-400">Math Dept</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-[8rem] w-48 rounded-md bg-event-blue dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-blue-text dark:text-blue-300 text-sm mr-2">calculate</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-blue-text dark:text-blue-300 truncate">Algebra Tutoring</div>
+<div class="text-[10px] text-blue-600 dark:text-blue-400">10:00 AM - 11:30 AM</div>
+</div>
+</div>
+<div class="absolute top-2 bottom-2 left-[20rem] w-40 rounded-md bg-event-green dark:bg-green-900/40 border border-green-200 dark:border-green-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-green-text dark:text-green-300 text-sm mr-2">restaurant</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-green-text dark:text-green-300 truncate">Lunch Supervision</div>
+<div class="text-[10px] text-green-700 dark:text-green-400">12:15 PM - 1:30 PM</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAHuQfWDDSb29VK80daexYHQa7pZOL6CA3WNir9yBc77B3RHWsnKb8JYs4g3kGzNhsojB245bw0Y7SX-FZ3t0Ai31_XR4_TV4BXfveJ7NgSJB0sN8Ukj698_N5I6gcXg6fa5NuPw3AL0IfrTsIBui-JUylXm4U1DxWevwUf3jMSMDkeKro-pyDl9PGm6hsQBWJ1V03F3vbsvEn_bX2oGRdul_sDo552f9VGJTNYWwmHCBEoPczoL69rVOTyObhxMSwcu6_HsEcxQ"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">Linda Park</div>
+<div class="text-xs text-gray-400">ESL</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-4 w-96 rounded-md bg-event-purple dark:bg-purple-900/40 border border-purple-200 dark:border-purple-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-purple-text dark:text-purple-300 text-sm mr-2">translate</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-purple-text dark:text-purple-300 truncate">New Student Orientation</div>
+<div class="text-[10px] text-purple-700 dark:text-purple-400">8:00 AM - 11:00 AM</div>
+</div>
+</div>
+<div class="absolute top-2 bottom-2 left-[28rem] w-32 rounded-md bg-event-orange dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-orange-text dark:text-orange-300 text-sm mr-2">content_paste</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-orange-text dark:text-orange-300 truncate">Testing Support</div>
+<div class="text-[10px] text-orange-800 dark:text-orange-400">2:00 PM - 3:00 PM</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex border-b border-border-light/50 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+<div class="w-48 p-3 sticky left-0 bg-surface-light dark:bg-surface-dark group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 border-r border-border-light dark:border-border-dark z-10 flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWdMSEuJu7Bhdqx0mdm07CdP25Pt6paehOaw86wwNI6i2dIZ7iQUMU1ROp2jXPKgRc9OnCaNREWqvGQmwgAEkXrUEaOGCfBN8ih7bews6IQf4-rb7pU7tRIrUJCz0fiHVIctybXtpuZ08O5agAmOrmJRC5gvlW5QdiC1Ia8-dwXGgncB6GO5kRIKO7JsJF8NmeDB-jkZgMA9_o9IMVOeFBF-RdeUPVMWTYony2kGjYUEaTRsQrVoAX9BZdOBbOHvbhE2pwljAaHw"/>
+<div>
+<div class="text-sm font-medium text-gray-900 dark:text-white">Kevin Hart</div>
+<div class="text-xs text-gray-400">PE Asst</div>
+</div>
+</div>
+<div class="flex-1 relative h-16">
+<div class="absolute inset-0 flex pointer-events-none">
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+<div class="w-32 border-r border-dashed border-gray-100 dark:border-gray-800"></div>
+</div>
+<div class="absolute top-2 bottom-2 left-[20rem] w-64 rounded-md bg-event-blue dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 flex items-center px-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons-outlined text-event-blue-text dark:text-blue-300 text-sm mr-2">sports_basketball</span>
+<div class="overflow-hidden">
+<div class="text-xs font-semibold text-event-blue-text dark:text-blue-300 truncate">Gym Setup &amp; Support</div>
+<div class="text-[10px] text-blue-600 dark:text-blue-400">12:15 PM - 2:15 PM</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<aside class="w-80 bg-surface-light dark:bg-surface-dark border-l border-border-light dark:border-border-dark flex flex-col h-full z-20 shadow-xl overflow-hidden">
+<div class="flex border-b border-border-light dark:border-border-dark">
+<button class="flex-1 py-4 text-sm font-semibold text-primary border-b-2 border-primary bg-blue-50/50 dark:bg-blue-900/10 dark:text-blue-400 flex justify-center items-center gap-2">
+<span class="material-icons-outlined text-lg">inventory_2</span>
+            Task Bank
+        </button>
+<button class="flex-1 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex justify-center items-center gap-2">
+<span class="material-icons-outlined text-lg">person_search</span>
+            Relief Pool
+        </button>
+</div>
+<div class="p-4 border-b border-border-light dark:border-border-dark">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-outlined text-gray-400 text-lg">search</span>
+<input class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-primary dark:text-white" placeholder="Search tasks..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<div class="space-y-3">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+<span>Class Support</span>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-[10px]">3</span>
+</div>
+<div class="task-card bg-white dark:bg-gray-800 p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm cursor-grab active:cursor-grabbing border-l-4 border-l-blue-500">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">5C Reading Support</h4>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-1.5 py-0.5 rounded">5C</span>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Mary Johnson</div>
+<div class="flex gap-2">
+<span class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">Class Support</span>
+<span class="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">school</span> 5C
+                    </span>
+</div>
+</div>
+<div class="task-card bg-white dark:bg-gray-800 p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm cursor-grab active:cursor-grabbing border-l-4 border-l-blue-500">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">5C Maths Support</h4>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-1.5 py-0.5 rounded">5C</span>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Mary Johnson</div>
+<div class="flex gap-2">
+<span class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">Class Support</span>
+<span class="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">school</span> 5C
+                    </span>
+</div>
+</div>
+<div class="task-card bg-white dark:bg-gray-800 p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm cursor-grab active:cursor-grabbing border-l-4 border-l-blue-500">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Reading support for 3B</h4>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-1.5 py-0.5 rounded">3B</span>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 mb-2 italic">Not scheduled</div>
+<div class="flex gap-2">
+<span class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">Class Support</span>
+<span class="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">school</span> 3B
+                    </span>
+</div>
+</div>
+</div>
+<div class="space-y-3 pt-2">
+<div class="flex items-center justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+<span>Yard Duty</span>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-[10px]">2</span>
+</div>
+<div class="task-card bg-white dark:bg-gray-800 p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm cursor-grab active:cursor-grabbing border-l-4 border-l-green-500">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Oval Supervision</h4>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-1.5 py-0.5 rounded">L1</span>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Unassigned</div>
+<div class="flex gap-2">
+<span class="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">Duty</span>
+<span class="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">schedule</span> 20m
+                    </span>
+</div>
+</div>
+<div class="task-card bg-white dark:bg-gray-800 p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm cursor-grab active:cursor-grabbing border-l-4 border-l-green-500">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Canteen Line</h4>
+<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-1.5 py-0.5 rounded">L2</span>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Unassigned</div>
+<div class="flex gap-2">
+<span class="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">Duty</span>
+<span class="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">schedule</span> 15m
+                    </span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

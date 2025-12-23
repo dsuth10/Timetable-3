@@ -15,9 +15,10 @@ type TaskCardProps = {
   isPositioned?: boolean; // When true, card is positioned absolutely and doesn't need margin
   showAideName?: boolean;
   aideName?: string;
+  compact?: boolean;
 };
 
-function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName }: TaskCardProps) {
+function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName, compact = false }: TaskCardProps) {
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
 
@@ -32,7 +33,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
           onDoubleClick={() => onDoubleClick?.(assignment, task)}
           sx={{
             mb: isPositioned ? 0 : 1,
-            borderLeft: `4px solid ${aideColor || categoryColor}`,
+            borderLeft: `${compact ? '2px' : '4px'} solid ${aideColor || categoryColor}`,
             cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
             opacity: dragSnapshot.isDragging ? 0.8 : 1,
             transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',
@@ -52,8 +53,8 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
         >
           <CardContent
             sx={{
-              p: 1.75,
-              '&:last-child': { pb: 1.75 },
+              p: compact ? 0.5 : 1.75,
+              '&:last-child': { pb: compact ? 0.5 : 1.75 },
               ...(isPositioned
                 ? {
                     flexGrow: 1,
@@ -65,82 +66,62 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-              <IconButton
-                size="small"
-                {...dragProvided.dragHandleProps}
-                sx={{ p: 0.25, mt: -0.25 }}
-              >
-                <DragIndicator fontSize="small" />
-              </IconButton>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
+              {!compact && (
+                <IconButton
+                  size="small"
+                  {...dragProvided.dragHandleProps}
+                  sx={{ p: 0.25, mt: -0.25 }}
+                >
+                  <DragIndicator fontSize="small" />
+                </IconButton>
+              )}
+              <Box sx={{ flex: 1, minWidth: 0 }} {...(compact ? dragProvided.dragHandleProps : {})}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
                   <Typography 
-                    variant="body2" 
+                    variant={compact ? 'caption' : 'body2'} 
                     sx={{ 
                       fontWeight: 600,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       color: task ? 'text.primary' : 'error.main',
+                      lineHeight: 1.2
                     }}
                   >
                     {showAideName ? (aideName || 'Unknown Aide') : (task?.title || `Missing Task #${assignment.task_id}`)}
                   </Typography>
-                  {task?.classroom && (
-                    <Chip
-                      label={task.classroom.name}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        height: 18,
-                        fontSize: '0.6rem',
-                        flexShrink: 0,
-                        '& .MuiChip-label': { px: 0.75 },
-                      }}
-                    />
-                  )}
                 </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                  {task && (
-                    <Chip
-                      label={task.category.replace(/_/g, ' ')}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.65rem',
-                        bgcolor: categoryColor,
-                        color: 'white',
-                      }}
-                    />
-                  )}
-                  <Chip
-                    label={assignment.status}
-                    size="small"
-                    sx={{
-                      height: 20,
-                      fontSize: '0.65rem',
-                      bgcolor: statusColor,
-                      color: 'white',
-                    }}
-                  />
-                  {task?.classroom && (
-                    <Chip
-                      label={task.classroom.name}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.65rem',
-                      }}
-                    />
-                  )}
-                  {task?.recurrence_rule && (
-                    <Repeat sx={{ fontSize: 16, color: 'text.secondary' }} />
-                  )}
-                </Box>
+                {!compact && (
+                  <>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                      {task && (
+                        <Chip
+                          label={task.category.replace(/_/g, ' ')}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.65rem',
+                            bgcolor: categoryColor,
+                            color: 'white',
+                          }}
+                        />
+                      )}
+                      <Chip
+                        label={assignment.status}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.65rem',
+                          bgcolor: statusColor,
+                          color: 'white',
+                        }}
+                      />
+                    </Box>
+                  </>
+                )}
               </Box>
             </Box>
           </CardContent>
@@ -165,7 +146,8 @@ export const TaskCard = memo(TaskCardBase, (prev, next) => {
     prev.isPositioned === next.isPositioned &&
     prev.onDoubleClick === next.onDoubleClick &&
     prev.showAideName === next.showAideName &&
-    prev.aideName === next.aideName
+    prev.aideName === next.aideName &&
+    prev.compact === next.compact
   );
 });
 

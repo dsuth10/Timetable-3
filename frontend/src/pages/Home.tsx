@@ -21,7 +21,8 @@ import {
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   ArrowForward as ArrowForwardIcon,
-  Schedule as ScheduleIcon
+  Schedule as ScheduleIcon,
+  ViewDay as ViewDayIcon
 } from '@mui/icons-material';
 import { useAidesStore } from '../store/stores/aides';
 import { useClassroomsStore } from '../store/stores/classrooms';
@@ -153,6 +154,28 @@ export default function Home() {
             <Typography color="text.secondary" variant="body1">
               Manage class allocations and teacher aide rosters from your dashboard.
             </Typography>
+          </Box>
+          
+          <Box>
+            <Card 
+              elevation={0} 
+              sx={{ 
+                border: '2px solid', 
+                borderColor: 'primary.main', 
+                borderRadius: 3,
+                bgcolor: 'primary.50',
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'scale(1.02)' }
+              }}
+            >
+              <CardActionArea onClick={() => navigate('/daily')} sx={{ p: 2, display: 'flex', gap: 2 }}>
+                <ViewDayIcon color="primary" sx={{ fontSize: 32 }} />
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">Daily All-in-One</Typography>
+                  <Typography variant="caption" color="text.secondary">Drag & drop assignments across all aides</Typography>
+                </Box>
+              </CardActionArea>
+            </Card>
           </Box>
         </Box>
 

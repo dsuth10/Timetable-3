@@ -1,0 +1,144 @@
+from datetime import date, time
+from typing import Dict, Any, List
+from api.models import db
+from api.models.teacher_aide import TeacherAide
+from api.models.assignment import Assignment
+from api.models.task import Task
+from api.models.absence import Absence
+from api.services.collision_service import CollisionService
+
+class DailyViewService:
+    def __init__(self):
+        self.collision_service = CollisionService()
+
+    def get_daily_data(self, view_date: date) -> Dict[str, Any]:
+        """
+        Fetch all data for the daily display:
+        - All teacher aides with their status (is_absent) and assignments for the day.
+        - Relief pool assignments for the day.
+        - Task bank templates.
+        - Timeline configuration.
+        """
+        # 1. Fetch all teacher aides
+        aides = TeacherAide.query.order_by(TeacherAide.name).all()
+        
+        # 2. Fetch absences for the date
+        absences = {a.aide_id for a in Absence.query.filter(Absence.date == view_date).all()}
+        
+        # 3. Fetch all assignments for the date
+        all_assignments = Assignment.query.filter(Assignment.date == view_date).all()
+        
+        # 4. Fetch task bank templates
+        task_bank = Task.query.order_by(Task.category, Task.title).all()
+        
+        # 5. Group assignments by aide
+        aide_assignments = {}
+        relief_pool = []
+        for assignment in all_assignments:
+            if assignment.status == 'RELIEF_POOL':
+                relief_pool.append(assignment.to_dict(include_relationships=True))
+            elif assignment.aide_id:
+                if assignment.aide_id not in aide_assignments:
+                    aide_assignments[assignment.aide_id] = []
+                aide_assignments[assignment.aide_id].append(assignment.to_dict(include_relationships=True))
+        
+        # 6. Prepare aides with status and assignments
+        aides_data = []
+        for aide in aides:
+            aides_data.append({
+                **aide.to_dict(),
+                "is_absent": aide.id in absences,
+                "assignments": aide_assignments.get(aide.id, [])
+            })
+            
+        # 7. Define timeline configuration
+        # Define custom schedule segments matching the frontend/PDF service
+        schedule_segments = [
+            ("08:50:00", 20), # 08:50 - 09:10
+            ("09:10:00", 30), # 09:10 - 09:40
+            ("09:40:00", 30), # 09:40 - 10:10
+            ("10:10:00", 30), # 10:10 - 10:40
+            ("10:40:00", 30), # 10:40 - 11:10
+            ("11:10:00", 40), # 11:10 - 11:50
+            ("11:50:00", 30), # 11:50 - 12:20
+            ("12:20:00", 30), # 12:20 - 12:50
+            ("12:50:00", 30), # 12:50 - 13:20
+            ("13:20:00", 40), # 13:20 - 14:00
+            ("14:00:00", 30), # 14:00 - 14:30
+            ("14:30:00", 30), # 14:30 - 15:00
+        ]
+        
+        slots = []
+        for start_time, duration in schedule_segments:
+            slots.append({"start_time": start_time, "duration_minutes": duration})
+        
+        return {
+            "aides": aides_data,
+            "relief_pool": relief_pool,
+            "task_bank": [t.to_dict() for t in task_bank],
+            "timeline_config": {
+                "slots": slots
+            }
+        }
+
+    def assign_task(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Assign a task template or reassign a relief assignment.
+        Payload: { type: 'FROM_BANK'|'FROM_RELIEF', id: ID, date: string, aide_id: ID, start_time: string, end_time: string }
+        """
+        assignment_type = data.get('type')
+        item_id = data.get('id')
+        aide_id = data.get('aide_id')
+        assign_date = date.fromisoformat(data.get('date'))
+        
+        def parse_time(t_str):
+            parts = t_str.split(':')
+            return time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+            
+        start_time = parse_time(data.get('start_time'))
+        end_time = parse_time(data.get('end_time'))
+        
+        # Check for collision
+        conflict = self.collision_service.check_collision(
+            aide_id=aide_id,
+            date=assign_date,
+            start_time=start_time,
+            end_time=end_time
+        )
+        
+        if conflict:
+            return {"error": "Collision detected", "conflict": conflict}
+            
+        if assignment_type == 'FROM_BANK':
+            # Create new assignment from template
+            task = Task.query.get(item_id)
+            if not task:
+                return {"error": "Task template not found"}
+                
+            new_assignment = Assignment(
+                task_id=task.id,
+                aide_id=aide_id,
+                date=assign_date,
+                start_time=start_time,
+                end_time=end_time,
+                status='ASSIGNED'
+            )
+            db.session.add(new_assignment)
+            
+        elif assignment_type == 'FROM_RELIEF':
+            # Reassign existing relief assignment
+            assignment = Assignment.query.get(item_id)
+            if not assignment:
+                return {"error": "Relief assignment not found"}
+            if assignment.status != 'RELIEF_POOL':
+                return {"error": "Assignment is not in relief pool"}
+                
+            assignment.aide_id = aide_id
+            assignment.status = 'ASSIGNED'
+            assignment.start_time = start_time
+            assignment.end_time = end_time
+            assignment.original_aide_id = None # Clear original aide reference
+            
+        db.session.commit()
+        return {"success": True}
+

@@ -24,8 +24,9 @@ import {
   School,
   Person,
   Home as HomeIcon,
+  ViewDay,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -58,6 +59,7 @@ export default function AppBar({
   onCreateTask,
 }: AppBarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getWeekNumber, getWeekDateRange, setWeekStart, viewMode, setViewMode } = useUiStore();
   const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
 
@@ -87,10 +89,15 @@ export default function AppBar({
 
   const handleViewChange = (
     event: React.MouseEvent<HTMLElement>,
-    newView: 'AIDE' | 'CLASS' | null,
+    newView: 'AIDE' | 'CLASS' | 'DAILY' | null,
   ) => {
     if (newView !== null) {
-      setViewMode(newView);
+      if (newView === 'DAILY') {
+        navigate('/daily');
+      } else {
+        setViewMode(newView);
+        navigate('/schedule');
+      }
     }
   };
 
@@ -121,7 +128,7 @@ export default function AppBar({
         </Typography>
 
         <ToggleButtonGroup
-          value={viewMode}
+          value={location.pathname === '/daily' ? 'DAILY' : viewMode}
           exclusive
           onChange={handleViewChange}
           aria-label="view mode"
@@ -149,6 +156,10 @@ export default function AppBar({
           <ToggleButton value="CLASS" aria-label="class view">
             <School sx={{ mr: 1, fontSize: 20 }} />
             Classes
+          </ToggleButton>
+          <ToggleButton value="DAILY" aria-label="daily view">
+            <ViewDay sx={{ mr: 1, fontSize: 20 }} />
+            Daily
           </ToggleButton>
         </ToggleButtonGroup>
 
