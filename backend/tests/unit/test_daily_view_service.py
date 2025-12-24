@@ -100,3 +100,4 @@ def test_assign_task_collision(daily_service, app, sample_aide, sample_task):
         assert "error" in result
         assert result["error"] == "Collision detected"
 
+

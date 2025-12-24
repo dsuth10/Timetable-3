@@ -63,6 +63,7 @@ export default function AppBar({
   const { getWeekNumber, getWeekDateRange, setWeekStart, viewMode, setViewMode } = useUiStore();
   const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
 
+  const isDailyView = location.pathname === '/daily';
   const weekNumber = getWeekNumber(weekLabel);
   const dateRange = getWeekDateRange(weekLabel);
 
@@ -76,13 +77,21 @@ export default function AppBar({
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      const monday = getMonday(date);
-      // Use local time components to avoid timezone shifts
-      const year = monday.getFullYear();
-      const month = String(monday.getMonth() + 1).padStart(2, '0');
-      const day = String(monday.getDate()).padStart(2, '0');
-      const mondayISO = `${year}-${month}-${day}`;
-      setWeekStart(mondayISO);
+      const dateStr = String(date.getFullYear()) + '-' + 
+                     String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(date.getDate()).padStart(2, '0');
+      
+      if (isDailyView) {
+        // If in daily view, navigate to the specific date
+        navigate(`/daily?date=${dateStr}`);
+      } else {
+        const monday = getMonday(date);
+        const year = monday.getFullYear();
+        const month = String(monday.getMonth() + 1).padStart(2, '0');
+        const day = String(monday.getDate()).padStart(2, '0');
+        const mondayISO = `${year}-${month}-${day}`;
+        setWeekStart(mondayISO);
+      }
       handleDatePickerClose();
     }
   };
@@ -171,7 +180,7 @@ export default function AppBar({
               size="small"
               sx={{ color: 'white' }}
               data-testid="nav-prev"
-              aria-label="Previous week"
+              aria-label={isDailyView ? "Previous day" : "Previous week"}
             >
               <ChevronLeft />
             </IconButton>
@@ -179,7 +188,7 @@ export default function AppBar({
               onClick={onToday}
               sx={{ color: 'white', minWidth: 80 }}
               data-testid="nav-today"
-              aria-label="Jump to current week"
+              aria-label={isDailyView ? "Today" : "Jump to current week"}
             >
               <Today sx={{ mr: 0.5, fontSize: 18 }} />
               Today
@@ -189,7 +198,7 @@ export default function AppBar({
               size="small"
               sx={{ color: 'white' }}
               data-testid="nav-next"
-              aria-label="Next week"
+              aria-label={isDailyView ? "Next day" : "Next week"}
             >
               <ChevronRight />
             </IconButton>
@@ -206,9 +215,9 @@ export default function AppBar({
             }}
             startIcon={<CalendarMonth />}
             data-testid="date-picker-button"
-            aria-label="Select a specific week"
+            aria-label={isDailyView ? "Select a specific date" : "Select a specific week"}
           >
-            Jump to Week
+            {isDailyView ? "Jump to Date" : "Jump to Week"}
           </Button>
 
           <Stack direction="row" spacing={1} alignItems="center">

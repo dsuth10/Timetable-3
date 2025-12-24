@@ -23,3 +23,4 @@
 - **Decision**: Apply a CSS class `is-absent` to the `AideRow` container.
 - **Rationale**: This class will apply a light red background (`bg-red-50` or similar) and potentially a semi-transparent overlay to "mute" the interactions while keeping existing assignments visible. This matches the existing individual schedule styling.
 
+

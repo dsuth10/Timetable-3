@@ -24,3 +24,4 @@ def test_assign_task_missing_body(client):
     response = client.post('/api/daily-view/assign', json={})
     assert response.status_code == 400
 
+

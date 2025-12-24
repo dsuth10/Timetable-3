@@ -103,7 +103,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
           flexShrink: 0, 
           position: 'sticky', 
           left: 0, 
-          bgcolor: aide.is_absent ? '#ffcdd2' : aide.colour_hex,
+          bgcolor: aide.is_absent ? '#ffcdd2' : (aide.colour_hex || 'primary.main'),
           color: aide.is_absent ? 'error.dark' : 'white',
           p: 1,
           display: 'flex',

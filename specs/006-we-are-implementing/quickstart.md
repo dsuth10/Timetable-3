@@ -45,3 +45,4 @@ Run the following to verify frontend component behavior:
 npm run test frontend/src/components/DailyTimeline.test.tsx
 ```
 
+

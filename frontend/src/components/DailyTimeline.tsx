@@ -11,10 +11,10 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
   const { aides, timeline_config } = data;
 
   return (
-    <Paper elevation={1} sx={{ overflow: 'hidden' }}>
+    <Paper elevation={1} sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Timeline Header (Sticky) */}
-      <Box sx={{ display: 'flex', borderBottom: 2, borderColor: 'divider', bgcolor: 'grey.100' }}>
-        <Box sx={{ width: 150, flexShrink: 0, position: 'sticky', left: 0, p: 1, zIndex: 6, bgcolor: 'grey.100' }}>
+      <Box sx={{ display: 'flex', borderBottom: 2, borderColor: 'divider', bgcolor: 'grey.100', position: 'sticky', top: 0, zIndex: 10, minWidth: 'fit-content' }}>
+        <Box sx={{ width: 150, flexShrink: 0, position: 'sticky', left: 0, p: 1, zIndex: 11, bgcolor: 'grey.100', boxShadow: 2, borderRight: 1, borderColor: 'divider' }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
             Teacher Aide
           </Typography>
@@ -44,7 +44,7 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
       </Box>
 
       {/* Aide Rows */}
-      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 'fit-content' }}>
         {aides.map((aide) => (
           <AideRow 
             key={aide.id} 

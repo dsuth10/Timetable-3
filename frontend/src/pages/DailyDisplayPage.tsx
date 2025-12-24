@@ -7,6 +7,7 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
+import { addDays, subDays, format } from 'date-fns';
 import AppBar from '../components/Layout/AppBar';
 import { useDailyDisplayStore } from '../store/stores/dailyDisplay';
 import DailyTimeline from '../components/DailyTimeline';
@@ -18,7 +19,7 @@ import AssignmentConfirmationDialog from '../components/AssignmentConfirmationDi
 
 export default function DailyDisplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const dateParam = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const dateParam = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   
   const { data, loading, error, fetchDailyData, assignTask } = useDailyDisplayStore();
   const [activeTab, setActiveTab] = useState<'bank' | 'relief'>('bank');
@@ -100,14 +101,30 @@ export default function DailyDisplayPage() {
     setSearchParams(newParams);
   };
 
+  const handlePrevDay = () => {
+    const current = new Date(dateParam + 'T00:00:00');
+    const prev = subDays(current, 1);
+    handleDateChange(format(prev, 'yyyy-MM-dd'));
+  };
+
+  const handleNextDay = () => {
+    const current = new Date(dateParam + 'T00:00:00');
+    const next = addDays(current, 1);
+    handleDateChange(format(next, 'yyyy-MM-dd'));
+  };
+
+  const handleToday = () => {
+    handleDateChange(format(new Date(), 'yyyy-MM-dd'));
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <AppBar 
         weekLabel={dateParam}
         onMenuClick={() => {}}
-        onPrevWeek={() => {}}
-        onNextWeek={() => {}}
-        onToday={() => {}}
+        onPrevWeek={handlePrevDay}
+        onNextWeek={handleNextDay}
+        onToday={handleToday}
         onCreateTask={() => {}}
       />
       
@@ -121,7 +138,7 @@ export default function DailyDisplayPage() {
 
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Timeline Area (Horizontal Scroll) */}
-          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <Box sx={{ flex: 1, overflow: 'hidden', p: 2 }}>
             {loading && !data ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                 <CircularProgress />

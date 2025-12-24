@@ -44,3 +44,4 @@ Used to determine if an aide row should be "reddened out".
 - **Time Increments**: Assignments MUST align with school-defined slots (usually 30m, first is 20m).
 - **Date Consistency**: All operations on the Daily Display are pinned to the active `date` context.
 
+
