@@ -10,7 +10,7 @@
 
 ## 📋 Overview
 
-The Teacher Aide Scheduler is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system features a modern Material Design UI with a weekly view that allows administrators to see individual aide schedules across Monday-Friday, supports cross-day task dragging, and operates completely offline using a local SQLite database with real-time conflict detection.
+The Teacher Aide Scheduler is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system features a modern Material Design UI with multiple view modes: a weekly view that allows administrators to see individual aide schedules across Monday-Friday, a daily view for focused single-day scheduling with all aides visible simultaneously, and supports cross-day task dragging. The application operates completely offline using a local SQLite database with real-time conflict detection.
 
 ### Key Features
 
@@ -25,6 +25,8 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
 ✅ **Automatic Time Assignment** - Times set automatically based on where task is dropped  
 ✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
+✅ **Daily Display** - Single-day view showing all aides simultaneously with timeline slots and drag-and-drop assignment  
+✅ **Set Assignment Details Dialog** - Comprehensive dialog for configuring assignment details when dropping tasks in Daily View  
 ✅ **Enhanced Week Navigation** - Navigate weeks with previous/next/today buttons plus date picker for jumping to specific weeks  
 ✅ **Cross-Day Dragging** - Drag tasks between different days with automatic date updates and persistence  
 ✅ **Aide Availability Management** - Set weekly availability patterns with visual grid editor and time slot management  
@@ -259,9 +261,13 @@ See [data-model.md](specs/001-create-a-drag/data-model.md) for full entity defin
 
 ---
 
-## 🗓️ Weekly View Interface
+## 🗓️ View Modes
 
-The application features a modern weekly view that allows administrators to:
+The application offers multiple view modes for different scheduling needs:
+
+### Weekly View Interface
+
+The weekly view allows administrators to:
 
 - **Select Individual Aides**: Use the dropdown to switch between different teacher aides
 - **View Full Week**: See Monday-Friday schedule for the selected aide
@@ -289,11 +295,59 @@ The application features a modern weekly view that allows administrators to:
 └─────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
 
+### Daily Display Interface
+
+The Daily Display provides a focused single-day view showing all teacher aides simultaneously, making it ideal for day-of scheduling and quick adjustments:
+
+- **All Aides Visible**: See all teacher aides in a single scrollable timeline
+- **Date Navigation**: Use date picker or previous/next day buttons to navigate
+- **Flexible Time Slots**: Support for variable-duration slots (20, 30, 40 minutes) matching school bell times
+- **Taskbank Integration**: Right-side panel with Task Bank and Relief Pool tabs
+- **Drag-and-Drop Assignment**: Drag tasks from Task Bank directly onto aide time slots
+- **Set Assignment Details Dialog**: Comprehensive dialog appears when dropping tasks, allowing you to:
+  - Modify start and end times
+  - Change assigned aide
+  - Select or change classroom
+  - Set recurring task options
+  - Adjust duration (15, 20, 30, 40, 45, 60, 75, 90, 105, 120 minutes)
+- **Absent Aide Protection**: Drops on absent aides are automatically blocked
+- **Vertical Stacking**: Overlapping assignments stack vertically within the same row for visibility
+- **Availability Validation**: System validates aide availability before assignment
+- **Visual Indicators**: 
+  - Color-coded aide rows matching aide colors
+  - Red highlighting for absent aides
+  - "ABSENT" label on absent aide rows
+  - Task cards showing time ranges and task titles
+
+### Daily Display Layout
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Daily Display                    [Date Picker: 2025-12-25]         │
+├──────────┬──────────────────────────────────────────────────────────┤
+│          │ 08:50 │ 09:10 │ 09:40 │ 10:10 │ 10:40 │ 11:10 │ ...     │
+│          │  20m  │  30m  │  30m  │  30m  │  30m  │  40m  │         │
+├──────────┼───────┼───────┼───────┼───────┼───────┼───────┼─────────┤
+│ Jane Doe │       │ [Task]│       │       │       │       │ Task    │
+│          │       │ 09:10 │       │       │       │       │ Bank    │
+│          │       │ 09:40 │       │       │       │       │         │
+├──────────┼───────┼───────┼───────┼───────┼───────┼───────┤         │
+│ John     │ [Task]│       │ [Task]│       │       │       │ [Task]  │
+│ Smith    │ 08:50 │       │ 09:40 │       │       │       │ [Task]  │
+│          │ 09:10 │       │ 10:10 │       │       │       │         │
+├──────────┼───────┼───────┼───────┼───────┼───────┼───────┤ Relief  │
+│ Absent   │       │       │       │       │       │       │ Pool    │
+│ Aide     │       │       │       │       │       │       │         │
+│ ABSENT   │       │       │       │       │       │       │         │
+└──────────┴───────┴───────┴───────┴───────┴───────┴───────┴─────────┘
+```
+
 ---
 
 ## 🎯 Core Workflows
 
 ### 1. Drag-and-Drop Assignment
+
+#### Weekly View Workflow
 
 ```
 1. Navigate to desired week using:
@@ -313,6 +367,32 @@ The application features a modern weekly view that allows administrators to:
 7. Update reflected in grid immediately with automatic refresh
 8. All changes persisted to backend with version control
 9. Cross-day moves update task date and persist across page refreshes
+```
+
+#### Daily Display Workflow
+
+```
+1. Navigate to Daily Display page (/daily)
+2. Select desired date using date picker or previous/next day buttons
+3. View all aides in a single timeline with their assignments for the day
+4. Open Task Bank tab in right-side panel to see available tasks
+5. Drag task from Task Bank onto an aide's time slot:
+   - System validates aide availability and absence status
+   - "Set Assignment Details" dialog appears automatically
+6. Configure assignment in dialog:
+   - Date: Pre-filled from selected date
+   - Start Time: Pre-filled from dropped slot
+   - End Time: Pre-filled based on slot duration
+   - Duration: Matches slot size (20, 30, or 40 minutes)
+   - Teacher Aide: Pre-filled from drop target
+   - Classroom: Optional, can be selected or changed
+   - Recurring: Toggle to make task recurring with weekday selection
+7. Modify any fields as needed (times, aide, classroom, recurrence)
+8. Click "Confirm Assignment" to create the assignment
+9. Assignment appears immediately in the timeline
+10. If overlapping with existing assignment, both stack vertically
+11. Task Bank remains open and accessible during dialog interaction
+12. System validates conflicts and availability before confirmation
 ```
 
 ### 2. Task Creation & Scheduling
@@ -464,7 +544,38 @@ The application allows administrators to manage a database of classrooms, each w
 7. Assignment created with the selected or newly created task
 ```
 
-### 8. Relief Pool Management
+### 8. Daily Display Assignment
+
+```
+Using the Daily Display for Day-of Scheduling:
+
+1. Navigate to Daily Display (/daily)
+2. Select the target date using date picker
+3. View all aides and their current assignments for the day
+4. Drag tasks from Task Bank to aide time slots:
+   - System blocks drops on absent aides (red rows with "ABSENT" label)
+   - Drops on available aides trigger "Set Assignment Details" dialog
+5. Configure assignment details:
+   - Adjust times if needed (must match slot boundaries)
+   - Change assigned aide if desired
+   - Select or modify classroom assignment
+   - Enable recurring task if applicable
+6. Confirm assignment:
+   - System validates availability and conflicts
+   - Assignment appears immediately in timeline
+   - Overlapping assignments stack vertically
+7. Task Bank remains accessible:
+   - Dialog doesn't close Task Bank panel
+   - Can drag multiple tasks in sequence
+   - Relief Pool tab available for reassigning orphaned tasks
+8. Visual feedback:
+   - Color-coded aide rows
+   - Task cards show time ranges clearly
+   - Absent aides clearly marked
+   - Overlapping tasks visible via vertical stacking
+```
+
+### 9. Relief Pool Management
 
 ```
 Viewing Relief Pool Tasks:
@@ -797,6 +908,25 @@ curl -X POST http://localhost:5000/api/quick-create-task \
 **Get weekly matrix**:
 ```bash
 curl http://localhost:5000/api/assignments/weekly-matrix?week=2025-W41
+```
+
+**Get daily view data**:
+```bash
+curl http://localhost:5000/api/daily-view/2025-12-25
+```
+
+**Assign task from Daily View**:
+```bash
+curl -X POST http://localhost:5000/api/daily-view/assign \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "FROM_BANK",
+    "id": 101,
+    "date": "2025-12-25",
+    "aide_id": 1,
+    "start_time": "09:00:00",
+    "end_time": "09:30:00"
+  }'
 ```
 
 **Mark aide absent**:
@@ -1170,6 +1300,14 @@ Contributions are welcome! Please follow these steps:
 - [x] Database Backup System
 - [x] Multiple backup formats (SQL, JSON, CSV, compressed SQLite)
 - [x] Progress tracking and integrity validation
+
+### Version 1.0.10 (Dec 2025) ✅
+- [x] Daily Display View
+- [x] Set Assignment Details Dialog in Daily View
+- [x] Drag-and-drop assignment from Task Bank
+- [x] Absent aide protection and validation
+- [x] Vertical stacking for overlapping assignments
+- [x] Flexible time slot durations (20, 30, 40 minutes)
 - [x] Error handling with retry logic
 
 ### Version 1.1 (Planned)
@@ -1188,6 +1326,41 @@ Contributions are welcome! Please follow these steps:
 ---
 
 ## 🔄 Recent Updates
+
+### Version 1.0.10 (2025-12-25)
+
+**New Features**:
+- ✅ **Daily Display View** - New single-day view showing all teacher aides simultaneously
+- ✅ **Set Assignment Details Dialog** - Comprehensive dialog for configuring assignment details when dropping tasks
+- ✅ **Daily View Drag-and-Drop** - Drag tasks from Task Bank directly onto aide time slots in Daily View
+- ✅ **Flexible Slot Durations** - Support for 20, 30, and 40-minute time slots matching school bell times
+- ✅ **Absent Aide Protection** - Automatic blocking of drops on absent aides with visual indicators
+- ✅ **Vertical Task Stacking** - Overlapping assignments stack vertically within the same row for visibility
+- ✅ **Availability Validation** - System validates aide availability before assignment creation
+- ✅ **Task Bank Integration** - Task Bank and Relief Pool tabs accessible in Daily View side panel
+- ✅ **Date Navigation** - Easy date selection with date picker and previous/next day buttons
+- ✅ **Duration Options** - Extended duration dropdown includes 40-minute option for Daily View slots
+
+**Technical Improvements**:
+- Created `DailyDisplayPage` component with timeline view for all aides
+- Implemented `DailyTimeline` and `AideRow` components for aide row rendering
+- Enhanced `useDragDrop` hook to support Daily View's `aide-{id}-slot-{time}` format
+- Added `defaultDate` parameter to `useDragDrop` for Daily View compatibility
+- Integrated `AssignmentDurationModal` into Daily View drag-and-drop workflow
+- Updated backend `DailyViewService` to include availability data in API response
+- Added absent aide validation in drag-drop hook
+- Implemented vertical stacking algorithm for overlapping assignments
+- Created comprehensive integration tests for Daily View assignment workflow
+- Added 4 test cases covering dialog appearance, absent aide blocking, recurring toggle, and field editing
+
+**User Experience**:
+- 📅 Focused single-day scheduling with all aides visible at once
+- 🎯 Context-aware assignment dialog with pre-filled values
+- 🛡️ Automatic protection against invalid assignments (absent aides)
+- 📊 Clear visual hierarchy with color-coded aide rows
+- 🔄 Seamless integration with existing Task Bank and Relief Pool
+- ⚡ Immediate visual feedback on assignment creation
+- 📐 Flexible time slot support matching real school schedules
 
 ### Version 1.0.9 (2025-12-16)
 
@@ -1392,5 +1565,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.9  
-**Last Updated**: 2025-12-16
+**Version**: 1.0.10  
+**Last Updated**: 2025-12-25

@@ -13,8 +13,8 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
   return (
     <Paper elevation={1} sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Timeline Header (Sticky) */}
-      <Box sx={{ display: 'flex', borderBottom: 2, borderColor: 'divider', bgcolor: 'grey.100', position: 'sticky', top: 0, zIndex: 10, minWidth: 'fit-content' }}>
-        <Box sx={{ width: 150, flexShrink: 0, position: 'sticky', left: 0, p: 1, zIndex: 11, bgcolor: 'grey.100', boxShadow: 2, borderRight: 1, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', borderBottom: 2, borderColor: 'divider', bgcolor: 'grey.100', position: 'sticky', top: 0, zIndex: 20, minWidth: 'fit-content' }}>
+        <Box sx={{ width: 150, flexShrink: 0, position: 'sticky', left: 0, p: 1, zIndex: 21, bgcolor: 'grey.100', boxShadow: 2, borderRight: 1, borderColor: 'divider' }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
             Teacher Aide
           </Typography>

@@ -16,6 +16,7 @@ import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES, g
 type UseDragDropOptions = {
   onSuccess?: () => void;
   aides?: TeacherAide[];
+  defaultDate?: string; // Fallback date for Daily View (when date not in droppableId)
   onClassroomDrop?: (data: {
     aideId: number;
     classroomId: number;
@@ -134,6 +135,18 @@ export function useDragDrop(options?: UseDragDropOptions) {
           destDate = parts.slice(dateIndex + 1).join('-');
         }
       }
+    } else if (destDroppableId.startsWith('aide-') && destDroppableId.includes('-slot-')) {
+      // Parse Daily View format: "aide-{id}-slot-{HH:MM:SS}"
+      const parts = destDroppableId.split('-');
+      if (parts.length >= 4) {
+        destAideId = Number(parts[1]);
+        const slotIndex = parts.indexOf('slot');
+        if (slotIndex !== -1) {
+          const timeStr = parts.slice(slotIndex + 1).join('-'); // Rejoin in case of HH:MM:SS
+          destTime = timeStr.substring(0, 5); // Extract HH:MM from HH:MM:SS
+          destDate = options?.defaultDate || null; // Use defaultDate from options
+        }
+      }
     } else {
       // Fallback for old format (just aide ID)
       destAideId = Number(destDroppableId);
@@ -163,16 +176,17 @@ export function useDragDrop(options?: UseDragDropOptions) {
         if (targetAideId !== 0) console.error('Aide not found:', targetAideId);
         // If 0, we continue (Class View logic will handle it)
       } else {
-          const availability = aide.availability || [];
-          
-          if (availability.length === 0) {
-            const weekday = new Date(destDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
-            const errorMessage = `Cannot assign: No availability set for ${aide.name} on ${weekday}`;
+          // Check if aide is absent (T008: Block drops on absent aides)
+          if ((aide as any).is_absent) {
+            const errorMessage = `Cannot assign: ${aide.name} is marked as absent for this date`;
             window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
             return;
           }
+
+          const availability = aide.availability || [];
           
-          if (destTime) {
+          // Only validate availability if we have availability data AND destTime
+          if (availability.length > 0 && destTime) {
             // Use default duration based on time slot (20 minutes for 8:50, 30 for others)
             // This ensures availability validation matches the default duration that will be used
             const duration = getDefaultDuration(destTime);

@@ -34,6 +34,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
           sx={{
             mb: isPositioned ? 0 : 1,
             borderLeft: `${compact ? '2px' : '4px'} solid ${aideColor || categoryColor}`,
+            borderRadius: compact ? 0 : 1,
             cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
             opacity: dragSnapshot.isDragging ? 0.8 : 1,
             transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',

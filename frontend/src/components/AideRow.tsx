@@ -109,7 +109,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          zIndex: 5,
+          zIndex: 15,
           boxShadow: 2,
           borderRight: 1,
           borderColor: 'divider'
@@ -163,17 +163,17 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
                         // Adjust style to be relative to this slot
                         left: 0, // Since we are starting at this slot
                         width: `${(startTimeToMinutes(layout.assignment.end_time) - startTimeToMinutes(layout.assignment.start_time)) / slot.duration_minutes * 100}%`,
-                        overflow: 'hidden'
                       }}
                     >
-                      <TaskCard 
-                        assignment={layout.assignment}
-                        task={layout.assignment.task}
-                        index={index}
-                        aideColor={aide.colour_hex}
-                        onDoubleClick={() => onTaskDoubleClick?.(layout.assignment)}
-                        compact={true} 
-                      />
+              <TaskCard 
+                assignment={layout.assignment}
+                task={layout.assignment.task}
+                index={index}
+                aideColor={aide.colour_hex}
+                onDoubleClick={() => onTaskDoubleClick?.(layout.assignment)}
+                compact={true} 
+                isPositioned={true}
+              />
                     </Box>
                   ))}
                   {provided.placeholder}

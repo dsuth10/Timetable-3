@@ -46,7 +46,7 @@ class DailyViewService:
         aides_data = []
         for aide in aides:
             aides_data.append({
-                **aide.to_dict(),
+                **aide.to_dict(include_relationships=True),  # Include availability for validation
                 "is_absent": aide.id in absences,
                 "assignments": aide_assignments.get(aide.id, [])
             })

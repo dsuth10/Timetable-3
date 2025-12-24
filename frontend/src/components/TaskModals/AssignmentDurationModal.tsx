@@ -39,6 +39,7 @@ const DURATION_OPTIONS = [
   { value: 15, label: '15 minutes' },
   { value: 20, label: '20 minutes' },
   { value: 30, label: '30 minutes' },
+  { value: 40, label: '40 minutes' },  // Added for Daily View 40-min slots
   { value: 45, label: '45 minutes' },
   { value: 60, label: '1 hour' },
   { value: 75, label: '1 hour 15 minutes' },

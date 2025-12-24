@@ -16,6 +16,7 @@ import ReliefPool from '../components/ReliefPool';
 import AppDragDropContext from '../components/DragDropContext';
 import DailyDatePicker from '../components/DailyDatePicker';
 import AssignmentConfirmationDialog from '../components/AssignmentConfirmationDialog';
+import { useDragDrop } from '../hooks/useDragDrop';
 
 export default function DailyDisplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,13 +28,24 @@ export default function DailyDisplayPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAssignment, setPendingAssignment] = useState<any>(null);
 
+  // Use the standardized drag-drop hook with Daily View specific options
+  const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
+    defaultDate: dateParam, // Provide the current date for Daily View
+    aides: data?.aides || [],
+    onSuccess: () => {
+      // Refresh daily data after successful assignment
+      fetchDailyData(dateParam);
+    }
+  });
+
   useEffect(() => {
     fetchDailyData(dateParam);
   }, [dateParam, fetchDailyData]);
 
-  const onDragEnd = async (result: any) => {
+  // Handler for relief pool drops (still uses the confirmation dialog)
+  const handleReliefPoolDrop = async (result: any) => {
     const { source, destination, draggableId } = result;
-    if (!destination) return;
+    if (!destination || source.droppableId !== 'relief-pool') return;
 
     const destMatch = destination.droppableId.match(/aide-(\d+)-slot-(.+)/);
     if (!destMatch) return;
@@ -49,35 +61,19 @@ export default function DailyDisplayPage() {
     dateObj.setHours(h, m + duration, 0);
     const endTime = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}:00`;
 
-    if (source.droppableId === 'daily-task-bank' || source.droppableId === 'task-bank') {
-      const taskId = parseInt(draggableId.replace('task-', ''));
-      try {
-        await assignTask({
-          type: 'FROM_BANK',
-          id: taskId,
-          date: dateParam,
-          aide_id: aideId,
-          start_time: startTime,
-          end_time: endTime
-        });
-      } catch (e) {
-        console.error('Failed to assign task from bank', e);
-      }
-    } else if (source.droppableId === 'relief-pool') {
-      const assignmentId = parseInt(draggableId.replace('relief-', ''));
-      const reliefTask = data?.relief_pool.find(t => t.id === assignmentId);
-      
-      setPendingAssignment({
-        type: 'FROM_RELIEF',
-        id: assignmentId,
-        date: dateParam,
-        aide_id: aideId,
-        start_time: startTime,
-        end_time: reliefTask ? reliefTask.end_time : endTime, 
-        title: reliefTask?.task?.title || 'Relief Task'
-      });
-      setConfirmOpen(true);
-    }
+    const assignmentId = parseInt(draggableId.replace('relief-', ''));
+    const reliefTask = data?.relief_pool.find(t => t.id === assignmentId);
+    
+    setPendingAssignment({
+      type: 'FROM_RELIEF',
+      id: assignmentId,
+      date: dateParam,
+      aide_id: aideId,
+      start_time: startTime,
+      end_time: reliefTask ? reliefTask.end_time : endTime, 
+      title: reliefTask?.task?.title || 'Relief Task'
+    });
+    setConfirmOpen(true);
   };
 
   const handleConfirm = async (start: string, end: string) => {
@@ -90,8 +86,23 @@ export default function DailyDisplayPage() {
       });
       setConfirmOpen(false);
       setPendingAssignment(null);
+      // Refresh after relief pool assignment
+      fetchDailyData(dateParam);
     } catch (e) {
       console.error('Failed to confirm assignment', e);
+    }
+  };
+
+  // Combined drag end handler
+  const handleDragEnd = (result: any) => {
+    const { source } = result;
+    
+    // Handle relief pool drops separately
+    if (source.droppableId === 'relief-pool') {
+      handleReliefPoolDrop(result);
+    } else {
+      // Use the standard hook for task bank drops
+      onDragEnd(result);
     }
   };
 
@@ -128,7 +139,7 @@ export default function DailyDisplayPage() {
         onCreateTask={() => {}}
       />
       
-      <AppDragDropContext onDragEnd={onDragEnd}>
+      <AppDragDropContext onDragEnd={handleDragEnd}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="h5">Daily Display</Typography>
           <DailyDatePicker value={dateParam} onChange={handleDateChange} />
@@ -193,7 +204,7 @@ export default function DailyDisplayPage() {
             
             <Box sx={{ flex: 1, overflow: 'auto' }}>
               {activeTab === 'bank' ? (
-                <TaskBank />
+                <TaskBank tasks={data?.task_bank} />
               ) : (
                 <ReliefPool />
               )}
@@ -202,6 +213,7 @@ export default function DailyDisplayPage() {
         </Box>
       </AppDragDropContext>
 
+      {/* Relief Pool Confirmation Dialog */}
       {pendingAssignment && (
         <AssignmentConfirmationDialog
           open={confirmOpen}
@@ -215,6 +227,10 @@ export default function DailyDisplayPage() {
           title={pendingAssignment.title}
         />
       )}
+
+      {/* Render modals from useDragDrop hook */}
+      {ConflictUI}
+      {DurationModal}
     </Box>
   );
 }

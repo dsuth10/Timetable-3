@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -17,9 +17,17 @@ import { TaskTemplateCard } from './TaskTemplateCard';
 import LoadingState from './common/LoadingState';
 import EmptyState from './common/EmptyState';
 
-export default function TaskBank() {
+export default function TaskBank({ tasks: propTasks }: { tasks?: Task[] }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { tasks, loading, error } = useTasksStore();
+  const { tasks: storeTasks, loading, error, fetchTasks } = useTasksStore();
+  
+  const tasks = propTasks || storeTasks;
+
+  useEffect(() => {
+    if (!propTasks) {
+      fetchTasks();
+    }
+  }, [propTasks, fetchTasks]);
 
   const groupedTasks = useMemo(() => {
     const filtered = tasks.filter(task => 
