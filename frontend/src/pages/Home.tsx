@@ -80,6 +80,11 @@ export default function Home() {
     navigate(`/schedule?aideId=${id}`);
   };
 
+  const handleRefresh = () => {
+    fetchAides();
+    fetchClassrooms();
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
       {/* Header */}
@@ -296,9 +301,9 @@ export default function Home() {
 
       {/* Bottom Management Panel */}
       <ManagementPanel
-        aidesContent={<AidesManagement />}
-        classroomsContent={<ClassroomsManagement />}
-        tasksContent={<TasksManagement />}
+        aidesContent={<AidesManagement onChanged={handleRefresh} />}
+        classroomsContent={<ClassroomsManagement onChanged={handleRefresh} />}
+        tasksContent={<TasksManagement onChanged={handleRefresh} />}
         requestsContent={<RequestsManagement />}
         backupContent={<BackupManagement />}
       />

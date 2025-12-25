@@ -90,7 +90,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
         display: 'flex', 
         borderBottom: 1, 
         borderColor: 'divider',
-        minHeight: 100, // Slightly taller to accommodate overlaps
+        minHeight: 66, // Slightly taller to accommodate overlaps
         '&:hover': { bgcolor: 'action.hover' },
         bgcolor: aide.is_absent ? 'error.light' : 'inherit',
         position: 'relative'

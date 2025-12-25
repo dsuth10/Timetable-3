@@ -23,9 +23,10 @@ import { type Task, type Assignment, type TeacherAide } from '../../types';
 
 type Props = {
   refreshTrigger?: number;
+  onChanged?: () => void;
 };
 
-export default function TasksManagement({ refreshTrigger }: Props) {
+export default function TasksManagement({ refreshTrigger, onChanged }: Props) {
   const { tasks, loading, error, fetchTasks } = useTasksStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -254,6 +255,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           assignmentsApi.assigned()
             .then(setAssignments)
             .catch(() => undefined);
+          onChanged?.();
         }}
       />
 
@@ -274,6 +276,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           assignmentsApi.assigned()
             .then(setAssignments)
             .catch(() => undefined);
+          onChanged?.();
         }}
         onDeleted={() => {
           setShowEditModal(false);
@@ -283,6 +286,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           assignmentsApi.assigned()
             .then(setAssignments)
             .catch(() => undefined);
+          onChanged?.();
         }}
       />
 
@@ -301,6 +305,7 @@ export default function TasksManagement({ refreshTrigger }: Props) {
           assignmentsApi.assigned()
             .then(setAssignments)
             .catch(() => undefined);
+          onChanged?.();
         }}
       />
     </Box>

@@ -27,7 +27,7 @@ import { classroomsApi } from '../../services/classroomsApi';
 import { downloadSampleClassroomsCSV } from '../../utils/download';
 import type { Classroom } from '../../types';
 
-export default function ClassroomsManagement() {
+export default function ClassroomsManagement({ onChanged }: { onChanged?: () => void }) {
   const { classrooms, loading, error, fetchClassrooms, deleteClassroom } = useClassroomsStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -68,6 +68,7 @@ export default function ClassroomsManagement() {
       // Refresh classrooms list if any were created
       if (result.created > 0) {
         await fetchClassrooms();
+        onChanged?.();
       }
     } catch (err: any) {
       setUploadError(err.response?.data?.error || err.message || 'Failed to upload CSV file');
@@ -101,6 +102,7 @@ export default function ClassroomsManagement() {
         await deleteClassroom(selectedClassroom.id);
         setShowDeleteDialog(false);
         setSelectedClassroom(null);
+        onChanged?.();
       } catch (e) {
         // Error is handled in store
       }
@@ -253,7 +255,10 @@ export default function ClassroomsManagement() {
       {/* Create Modal */}
       <ClassroomFormModal
         open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          onChanged?.();
+        }}
       />
 
       {/* Edit Modal */}
@@ -263,6 +268,7 @@ export default function ClassroomsManagement() {
         onClose={() => {
           setShowEditModal(false);
           setSelectedClassroom(null);
+          onChanged?.();
         }}
       />
 

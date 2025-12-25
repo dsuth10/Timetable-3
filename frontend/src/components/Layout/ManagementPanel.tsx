@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  SwipeableDrawer,
+  Drawer,
   Box,
   Tabs,
   Tab,
@@ -68,36 +68,47 @@ export default function ManagementPanel({
 
   return (
     <>
-      {/* Toggle Button - Always visible at bottom */}
+      {/* Toggle Button - Now part of layout, not fixed */}
       {!open && (
-        <Paper
+        <Box
           sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            bgcolor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
             zIndex: 1200,
-            borderRadius: '8px 8px 0 0',
-            boxShadow: 3,
+            boxShadow: '0 -2px 5px rgba(0,0,0,0.1)',
           }}
         >
-          <IconButton
-            onClick={() => toggleDrawer(true)}
-            sx={{ px: 4, borderRadius: '8px 8px 0 0' }}
+          <Paper
+            elevation={2}
+            sx={{
+              borderRadius: '8px 8px 0 0',
+              bgcolor: 'background.paper',
+              mt: -1,
+              border: 1,
+              borderBottom: 0,
+              borderColor: 'divider',
+            }}
           >
-            <KeyboardArrowUp />
-          </IconButton>
-        </Paper>
+            <IconButton
+              onClick={() => toggleDrawer(true)}
+              sx={{ px: 4, borderRadius: '8px 8px 0 0' }}
+              title="Open Management Panel"
+            >
+              <KeyboardArrowUp />
+            </IconButton>
+          </Paper>
+        </Box>
       )}
 
-      {/* Swipeable Drawer */}
-      <SwipeableDrawer
+      {/* Drawer */}
+      <Drawer
         anchor="bottom"
         open={open}
         onClose={() => toggleDrawer(false)}
-        onOpen={() => toggleDrawer(true)}
-        swipeAreaWidth={56}
-        disableSwipeToOpen={false}
         ModalProps={{
           keepMounted: true,
         }}
@@ -130,7 +141,7 @@ export default function ManagementPanel({
             ))}
           </Box>
         </Box>
-      </SwipeableDrawer>
+      </Drawer>
     </>
   );
 }

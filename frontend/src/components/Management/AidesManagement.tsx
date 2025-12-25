@@ -30,9 +30,10 @@ import type { TeacherAide } from '../../types';
 
 type AidesManagementProps = {
   onAddAide?: () => void;
+  onChanged?: () => void;
 };
 
-export default function AidesManagement({ onAddAide: _onAddAide }: AidesManagementProps) {
+export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: AidesManagementProps) {
   const { aides, loading, error, fetchAides, updateAide: _updateAide } = useAidesStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -72,6 +73,7 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
       // Refresh aides list if any were created
       if (result.created > 0) {
         await fetchAides({ includeAvailability: true });
+        onChanged?.();
       }
     } catch (err: any) {
       setUploadError(err.response?.data?.error || err.message || 'Failed to upload CSV file');
@@ -214,6 +216,7 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
         onCreated={() => {
           setShowCreateModal(false);
           fetchAides({ includeAvailability: true }).catch(() => undefined);
+          onChanged?.();
         }}
       />
 
@@ -229,11 +232,13 @@ export default function AidesManagement({ onAddAide: _onAddAide }: AidesManageme
           setShowEditModal(false);
           setSelectedAide(null);
           fetchAides({ includeAvailability: true }).catch(() => undefined);
+          onChanged?.();
         }}
         onDeleted={() => {
           setShowEditModal(false);
           setSelectedAide(null);
           fetchAides({ includeAvailability: true }).catch(() => undefined);
+          onChanged?.();
         }}
       />
 

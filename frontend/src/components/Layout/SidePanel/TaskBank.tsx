@@ -13,7 +13,7 @@ import {
   Tab,
   Badge,
 } from '@mui/material';
-import { Search, ExpandMore, AssignmentLate, Inventory, PersonOff } from '@mui/icons-material';
+import { Search, ExpandMore, AssignmentLate, Inventory, PersonOff, School } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
 import { useTasksStore } from '../../../store/stores/tasks';
 import { useAidesStore } from '../../../store/stores/aides';
@@ -117,8 +117,10 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
   const groupedTasks = useMemo(() => {
     const filtered = tasks.filter(task => {
       if (!searchQuery) return true;
-      return task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             task.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const query = searchQuery.toLowerCase();
+      return task.title.toLowerCase().includes(query) ||
+             task.category.toLowerCase().includes(query) ||
+             task.classroom?.name.toLowerCase().includes(query);
     });
 
     const groups = new Map<string, Task[]>();
@@ -130,6 +132,32 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
     });
 
     return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [tasks, searchQuery]);
+
+  // Group tasks by classroom
+  const groupedTasksByClass = useMemo(() => {
+    const filtered = tasks.filter(task => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return task.title.toLowerCase().includes(query) ||
+             task.category.toLowerCase().includes(query) ||
+             task.classroom?.name.toLowerCase().includes(query);
+    });
+
+    const groups = new Map<string, Task[]>();
+    filtered.forEach(task => {
+      const className = task.classroom?.name || 'No Classroom';
+      if (!groups.has(className)) {
+        groups.set(className, []);
+      }
+      groups.get(className)!.push(task);
+    });
+
+    return Array.from(groups.entries()).sort((a, b) => {
+      if (a[0] === 'No Classroom') return 1;
+      if (b[0] === 'No Classroom') return -1;
+      return a[0].localeCompare(b[0]);
+    });
   }, [tasks, searchQuery]);
 
   // Handle Relief Pool task dismiss
@@ -159,9 +187,16 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
           <Tab 
             icon={<Inventory fontSize="small" />}
             iconPosition="start"
-            label="Task Bank"
+            label="By Category"
             {...a11yProps(0)}
-            sx={{ minHeight: 48, textTransform: 'none' }}
+            sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
+          />
+          <Tab 
+            icon={<School fontSize="small" />}
+            iconPosition="start"
+            label="By Class"
+            {...a11yProps(1)}
+            sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
           />
           <Tab 
             icon={
@@ -175,13 +210,13 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
             }
             iconPosition="start"
             label="Relief Pool"
-            {...a11yProps(1)}
-            sx={{ minHeight: 48, textTransform: 'none' }}
+            {...a11yProps(2)}
+            sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
           />
         </Tabs>
       </Box>
 
-      {/* Task Bank Tab Content */}
+      {/* Task Bank Tab Content (By Category) */}
       <TabPanel value={activeTab} index={0}>
         {/* Search */}
         <Box sx={{ p: 2 }}>
@@ -286,8 +321,113 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
         </Box>
       </TabPanel>
 
-      {/* Relief Pool Tab Content */}
+      {/* Task Bank Tab Content (By Class) */}
       <TabPanel value={activeTab} index={1}>
+        {/* Search */}
+        <Box sx={{ p: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            aria-label="Search tasks"
+          />
+        </Box>
+        <Divider />
+
+        {/* Content */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          {loading && tasks.length === 0 && <LoadingState variant="skeleton" rows={5} />}
+          {error && (
+            <Typography color="error" role="alert" sx={{ p: 2 }}>
+              {error}
+            </Typography>
+          )}
+          {!loading && !error && tasks.length === 0 && (
+            <EmptyState
+              icon={<AssignmentLate />}
+              title="No Tasks"
+              description="Create tasks to see them here."
+            />
+          )}
+          {!loading && !error && groupedTasksByClass.length === 0 && searchQuery && (
+            <EmptyState
+              title="No Results"
+              description={`No tasks found matching "${searchQuery}"`}
+            />
+          )}
+          
+          {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
+          <Droppable droppableId="unassigned">
+            {(provided, snapshot) => {
+              let globalIndex = 0; // Track index across all classes
+              
+              return (
+                <Box
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  sx={{ 
+                    minHeight: '100%',
+                    bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
+                    transition: 'background-color 0.2s',
+                    borderRadius: 1,
+                  }}
+                >
+                  {!loading && !error && groupedTasksByClass.map(([className, classTasks]) => (
+                    <Accordion key={className} defaultExpanded>
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {className}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ ml: 1, color: 'text.secondary' }}
+                        >
+                          ({classTasks.length})
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ p: 1 }}>
+                        {classTasks.map((task, taskIndex) => {
+                          const currentIndex = globalIndex++;
+                          // Use combination of className, task.id, and index to ensure unique keys
+                          const uniqueKey = `${className}-${task.id}-${taskIndex}`;
+                          return (
+                            <Box key={uniqueKey}>
+                              <TaskTemplateCard
+                                task={task}
+                                index={currentIndex}
+                                assignments={assignments}
+                                aides={aides}
+                                onDoubleClick={(t) => {
+                                  if (onTaskDoubleClick) {
+                                    // Handle double click if needed, though card currently doesn't provide assignment here
+                                  }
+                                }}
+                              />
+                            </Box>
+                          );
+                        })}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                  {provided.placeholder}
+                </Box>
+              );
+            }}
+          </Droppable>
+        </Box>
+      </TabPanel>
+
+      {/* Relief Pool Tab Content */}
+      <TabPanel value={activeTab} index={2}>
         <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
           <ReliefPoolTab onDismiss={handleDismiss} />
         </Box>

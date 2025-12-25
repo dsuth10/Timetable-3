@@ -435,6 +435,13 @@ export default function Schedule() {
     setSelectedTimeSlot({ date, time, duration });
   };
 
+  const handleManagementChange = () => {
+    refreshData();
+    fetchAides({ includeAvailability: true }).catch(() => undefined);
+    fetchTasks().catch(() => undefined);
+    fetchClassrooms().catch(() => undefined);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Top App Bar */}
@@ -543,7 +550,7 @@ export default function Schedule() {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 <Button variant="contained" onClick={() => setDrawerOpen(true)}>
                   Select a Class
-                </Button>
+                 </Button>
               </Box>
             )}
 
@@ -658,9 +665,9 @@ export default function Schedule() {
 
       {/* Bottom Management Panel */}
       <ManagementPanel
-        aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} />}
-        classroomsContent={<ClassroomsManagement />}
-        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
+        aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} onChanged={handleManagementChange} />}
+        classroomsContent={<ClassroomsManagement onChanged={handleManagementChange} />}
+        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} onChanged={handleManagementChange} />}
         requestsContent={<RequestsManagement />}
         backupContent={<BackupManagement />}
       />

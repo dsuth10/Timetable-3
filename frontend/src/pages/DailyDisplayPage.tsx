@@ -160,6 +160,12 @@ export default function DailyDisplayPage() {
     fetchTasks();
   };
 
+  const handleRefresh = () => {
+    fetchDailyData(dateParam);
+    fetchTasks();
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <AppBar 
@@ -215,9 +221,9 @@ export default function DailyDisplayPage() {
 
       {/* Bottom Management Panel */}
       <ManagementPanel
-        aidesContent={<AidesManagement />}
-        classroomsContent={<ClassroomsManagement />}
-        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
+        aidesContent={<AidesManagement onChanged={handleRefresh} />}
+        classroomsContent={<ClassroomsManagement onChanged={handleRefresh} />}
+        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} onChanged={handleRefresh} />}
         requestsContent={<RequestsManagement />}
         backupContent={<BackupManagement />}
       />
