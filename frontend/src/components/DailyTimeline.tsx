@@ -11,48 +11,80 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
   const { aides, timeline_config } = data;
 
   return (
-    <Paper elevation={1} sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Timeline Header (Sticky) */}
-      <Box sx={{ display: 'flex', borderBottom: 2, borderColor: 'divider', bgcolor: 'grey.100', position: 'sticky', top: 0, zIndex: 20, minWidth: 'fit-content' }}>
-        <Box sx={{ width: 150, flexShrink: 0, position: 'sticky', left: 0, p: 1, zIndex: 21, bgcolor: 'grey.100', boxShadow: 2, borderRight: 1, borderColor: 'divider' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            Teacher Aide
-          </Typography>
-        </Box>
-        <Box sx={{ flex: 1, display: 'flex', minWidth: 2000 }}>
-          {timeline_config.slots.map((slot) => {
-            const totalMinutes = timeline_config.slots.reduce((acc, s) => acc + s.duration_minutes, 0);
-            return (
-              <Box 
-                key={slot.start_time}
-                sx={{ 
-                  flex: `0 0 ${(slot.duration_minutes / totalMinutes) * 100}%`,
-                  p: 0.5,
-                  pl: 1,
-                  borderRight: 1,
-                  borderColor: 'divider',
-                  textAlign: 'left'
-                }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                  {slot.start_time.substring(0, 5)}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
+    <Paper 
+      elevation={1} 
+      sx={{ 
+        overflowY: 'auto', 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        bgcolor: 'background.paper'
+      }}
+    >
+      <Box sx={{ overflowX: 'auto', width: '100%' }}>
+        <Box sx={{ minWidth: 'fit-content', display: 'flex', flexDirection: 'column' }}>
+          {/* Timeline Header (Sticky) */}
+          <Box sx={{ 
+            display: 'flex', 
+            borderBottom: 2, 
+            borderColor: 'divider', 
+            bgcolor: 'grey.100', 
+            position: 'sticky', 
+            top: 0, 
+            zIndex: 20 
+          }}>
+            <Box sx={{ 
+              width: 150, 
+              flexShrink: 0, 
+              position: 'sticky', 
+              left: 0, 
+              p: 1, 
+              zIndex: 21, 
+              bgcolor: 'grey.100', 
+              boxShadow: 2, 
+              borderRight: 1, 
+              borderColor: 'divider' 
+            }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                Teacher Aide
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1, display: 'flex', minWidth: 2000 }}>
+              {timeline_config.slots.map((slot) => {
+                const totalMinutes = timeline_config.slots.reduce((acc, s) => acc + s.duration_minutes, 0);
+                return (
+                  <Box 
+                    key={slot.start_time}
+                    sx={{ 
+                      flex: `0 0 ${(slot.duration_minutes / totalMinutes) * 100}%`,
+                      p: 0.5,
+                      pl: 1,
+                      borderRight: 1,
+                      borderColor: 'divider',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      {slot.start_time.substring(0, 5)}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
 
-      {/* Aide Rows */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 'fit-content' }}>
-        {aides.map((aide) => (
-          <AideRow 
-            key={aide.id} 
-            aide={aide} 
-            timelineConfig={timeline_config}
-            onTaskDoubleClick={onTaskDoubleClick}
-          />
-        ))}
+          {/* Aide Rows */}
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            {aides.map((aide) => (
+              <AideRow 
+                key={aide.id} 
+                aide={aide} 
+                timelineConfig={timeline_config}
+                onTaskDoubleClick={onTaskDoubleClick}
+              />
+            ))}
+          </Box>
+        </Box>
       </Box>
     </Paper>
   );

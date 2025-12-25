@@ -42,6 +42,7 @@ import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
+import RequestsManagement from '../components/Management/RequestsManagement';
 import BackupManagement from '../components/Management/BackupManagement';
 import UndoRedoControls from '../components/UndoRedoControls';
 import LoadingState from '../components/common/LoadingState';
@@ -443,7 +444,6 @@ export default function Schedule() {
         onPrevWeek={prevWeek}
         onNextWeek={nextWeek}
         onToday={thisWeek}
-        onCreateTask={() => setShowCreateTask(true)}
       />
 
       {/* Main Content Area */}
@@ -659,8 +659,9 @@ export default function Schedule() {
       {/* Bottom Management Panel */}
       <ManagementPanel
         aidesContent={<AidesManagement onAddAide={() => setShowAideFormModal(true)} />}
-        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
         classroomsContent={<ClassroomsManagement />}
+        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
+        requestsContent={<RequestsManagement />}
         backupContent={<BackupManagement />}
       />
 

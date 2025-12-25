@@ -31,6 +31,8 @@ import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
 import TasksManagement from '../components/Management/TasksManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
+import RequestsManagement from '../components/Management/RequestsManagement';
+import BackupManagement from '../components/Management/BackupManagement';
 
 // Helper to generate initials
 const getInitials = (name: string) => {
@@ -295,8 +297,10 @@ export default function Home() {
       {/* Bottom Management Panel */}
       <ManagementPanel
         aidesContent={<AidesManagement />}
-        tasksContent={<TasksManagement />}
         classroomsContent={<ClassroomsManagement />}
+        tasksContent={<TasksManagement />}
+        requestsContent={<RequestsManagement />}
+        backupContent={<BackupManagement />}
       />
     </Box>
   );

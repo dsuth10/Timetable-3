@@ -10,23 +10,36 @@ import {
 import { addDays, subDays, format } from 'date-fns';
 import AppBar from '../components/Layout/AppBar';
 import { useDailyDisplayStore } from '../store/stores/dailyDisplay';
+import { useTasksStore } from '../store/stores/tasks';
 import DailyTimeline from '../components/DailyTimeline';
-import TaskBank from '../components/TaskBank';
-import ReliefPool from '../components/ReliefPool';
+import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import AppDragDropContext from '../components/DragDropContext';
 import DailyDatePicker from '../components/DailyDatePicker';
 import AssignmentConfirmationDialog from '../components/AssignmentConfirmationDialog';
+import TaskEditModal from '../components/TaskModals/TaskEditModal';
+import ManagementPanel from '../components/Layout/ManagementPanel';
+import AidesManagement from '../components/Management/AidesManagement';
+import TasksManagement from '../components/Management/TasksManagement';
+import ClassroomsManagement from '../components/Management/ClassroomsManagement';
+import RequestsManagement from '../components/Management/RequestsManagement';
+import BackupManagement from '../components/Management/BackupManagement';
 import { useDragDrop } from '../hooks/useDragDrop';
+import type { Task, Assignment } from '../types';
 
 export default function DailyDisplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const dateParam = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   
   const { data, loading, error, fetchDailyData, assignTask } = useDailyDisplayStore();
-  const [activeTab, setActiveTab] = useState<'bank' | 'relief'>('bank');
+  const { fetchTasks } = useTasksStore();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAssignment, setPendingAssignment] = useState<any>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [showEditTask, setShowEditTask] = useState(false);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
+  const [selectedAssignmentForEdit, setSelectedAssignmentForEdit] = useState<Assignment | null>(null);
 
   // Use the standardized drag-drop hook with Daily View specific options
   const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
@@ -35,6 +48,7 @@ export default function DailyDisplayPage() {
     onSuccess: () => {
       // Refresh daily data after successful assignment
       fetchDailyData(dateParam);
+      setRefreshTrigger(prev => prev + 1);
     }
   });
 
@@ -61,7 +75,8 @@ export default function DailyDisplayPage() {
     dateObj.setHours(h, m + duration, 0);
     const endTime = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}:00`;
 
-    const assignmentId = parseInt(draggableId.replace('relief-', ''));
+    // Draggable ID format for Relief Pool in unified component is `relief-pool-${task.id}`
+    const assignmentId = parseInt(draggableId.replace('relief-pool-', ''));
     const reliefTask = data?.relief_pool.find(t => t.id === assignmentId);
     
     setPendingAssignment({
@@ -88,6 +103,7 @@ export default function DailyDisplayPage() {
       setPendingAssignment(null);
       // Refresh after relief pool assignment
       fetchDailyData(dateParam);
+      setRefreshTrigger(prev => prev + 1);
     } catch (e) {
       console.error('Failed to confirm assignment', e);
     }
@@ -128,6 +144,22 @@ export default function DailyDisplayPage() {
     handleDateChange(format(new Date(), 'yyyy-MM-dd'));
   };
 
+  const handleTaskDoubleClick = (assignment: Assignment) => {
+    if (assignment.task) {
+      setSelectedTaskForEdit(assignment.task);
+      setSelectedAssignmentForEdit(assignment);
+      setShowEditTask(true);
+    }
+  };
+
+  const handleTaskUpdated = () => {
+    setShowEditTask(false);
+    setSelectedTaskForEdit(null);
+    setSelectedAssignmentForEdit(null);
+    fetchDailyData(dateParam);
+    fetchTasks();
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <AppBar 
@@ -136,7 +168,6 @@ export default function DailyDisplayPage() {
         onPrevWeek={handlePrevDay}
         onNextWeek={handleNextDay}
         onToday={handleToday}
-        onCreateTask={() => {}}
       />
       
       <AppDragDropContext onDragEnd={handleDragEnd}>
@@ -155,7 +186,7 @@ export default function DailyDisplayPage() {
                 <CircularProgress />
               </Box>
             ) : data ? (
-              <DailyTimeline data={data} />
+              <DailyTimeline data={data} onTaskDoubleClick={handleTaskDoubleClick} />
             ) : null}
           </Box>
 
@@ -168,50 +199,28 @@ export default function DailyDisplayPage() {
               flexDirection: 'column', 
               borderLeft: 1, 
               borderColor: 'divider',
-              zIndex: 10
+              zIndex: 10,
+              overflow: 'hidden'
             }}
           >
-            <Box sx={{ display: 'flex', borderBottom: 1, borderColor: 'divider' }}>
-              <Box 
-                onClick={() => setActiveTab('bank')}
-                sx={{ 
-                  flex: 1, 
-                  p: 1.5, 
-                  textAlign: 'center', 
-                  cursor: 'pointer',
-                  borderBottom: activeTab === 'bank' ? 2 : 0,
-                  borderColor: 'primary.main',
-                  fontWeight: activeTab === 'bank' ? 'bold' : 'normal'
-                }}
-              >
-                Task Bank
-              </Box>
-              <Box 
-                onClick={() => setActiveTab('relief')}
-                sx={{ 
-                  flex: 1, 
-                  p: 1.5, 
-                  textAlign: 'center', 
-                  cursor: 'pointer',
-                  borderBottom: activeTab === 'relief' ? 2 : 0,
-                  borderColor: 'primary.main',
-                  fontWeight: activeTab === 'relief' ? 'bold' : 'normal'
-                }}
-              >
-                Relief Pool
-              </Box>
-            </Box>
-            
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
-              {activeTab === 'bank' ? (
-                <TaskBank tasks={data?.task_bank} />
-              ) : (
-                <ReliefPool />
-              )}
-            </Box>
+            <TaskBank 
+              noDrawer 
+              dateISO={dateParam} 
+              tasks={data?.task_bank} 
+              refreshTrigger={refreshTrigger}
+            />
           </Paper>
         </Box>
       </AppDragDropContext>
+
+      {/* Bottom Management Panel */}
+      <ManagementPanel
+        aidesContent={<AidesManagement />}
+        classroomsContent={<ClassroomsManagement />}
+        tasksContent={<TasksManagement refreshTrigger={refreshTrigger} />}
+        requestsContent={<RequestsManagement />}
+        backupContent={<BackupManagement />}
+      />
 
       {/* Relief Pool Confirmation Dialog */}
       {pendingAssignment && (
@@ -231,6 +240,19 @@ export default function DailyDisplayPage() {
       {/* Render modals from useDragDrop hook */}
       {ConflictUI}
       {DurationModal}
+
+      <TaskEditModal
+        open={showEditTask}
+        task={selectedTaskForEdit}
+        assignment={selectedAssignmentForEdit}
+        onClose={() => {
+          setShowEditTask(false);
+          setSelectedTaskForEdit(null);
+          setSelectedAssignmentForEdit(null);
+        }}
+        onUpdated={handleTaskUpdated}
+        onDeleted={handleTaskUpdated}
+      />
     </Box>
   );
 }

@@ -38,7 +38,6 @@ type AppBarProps = {
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
-  onCreateTask: () => void;
 };
 
 // Helper to get Monday of any given date
@@ -56,7 +55,6 @@ export default function AppBar({
   onPrevWeek,
   onNextWeek,
   onToday,
-  onCreateTask,
 }: AppBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -261,15 +259,6 @@ export default function AppBar({
 
         {/* Right: Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            onClick={onCreateTask}
-            data-testid="create-task-btn"
-          >
-            Create Task
-          </Button>
           <IconButton color="inherit" aria-label="settings">
             <SettingsIcon />
           </IconButton>

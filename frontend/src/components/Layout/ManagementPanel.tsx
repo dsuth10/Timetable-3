@@ -33,18 +33,30 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 }
 
 type ManagementPanelProps = {
-  aidesContent: React.ReactNode;
-  tasksContent: React.ReactNode;
-  requestsContent: React.ReactNode;
+  aidesContent?: React.ReactNode;
+  classroomsContent?: React.ReactNode;
+  tasksContent?: React.ReactNode;
+  requestsContent?: React.ReactNode;
+  backupContent?: React.ReactNode;
 };
 
 export default function ManagementPanel({
   aidesContent,
+  classroomsContent,
   tasksContent,
   requestsContent,
+  backupContent,
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
+
+  const tabs = [
+    { label: 'Aides', content: aidesContent },
+    { label: 'Classes', content: classroomsContent },
+    { label: 'Tasks', content: tasksContent },
+    { label: 'Requests', content: requestsContent },
+    { label: 'Backup', content: backupContent },
+  ].filter(tab => tab.content !== undefined);
 
   const toggleDrawer = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -100,9 +112,9 @@ export default function ManagementPanel({
           {/* Header with Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center' }}>
             <Tabs value={tabIndex} onChange={handleTabChange} sx={{ flex: 1 }}>
-              <Tab label="Aides" id="management-tab-0" />
-              <Tab label="Tasks" id="management-tab-1" />
-              <Tab label="Requests" id="management-tab-2" />
+              {tabs.map((tab, index) => (
+                <Tab key={tab.label} label={tab.label} id={`management-tab-${index}`} />
+              ))}
             </Tabs>
             <IconButton onClick={() => toggleDrawer(false)} sx={{ mr: 1 }}>
               <KeyboardArrowDown />
@@ -111,15 +123,11 @@ export default function ManagementPanel({
 
           {/* Tab Content */}
           <Box sx={{ flex: 1, overflow: 'auto' }}>
-            <TabPanel value={tabIndex} index={0}>
-              <ErrorBoundary>{aidesContent}</ErrorBoundary>
-            </TabPanel>
-            <TabPanel value={tabIndex} index={1}>
-              <ErrorBoundary>{tasksContent}</ErrorBoundary>
-            </TabPanel>
-            <TabPanel value={tabIndex} index={2}>
-              <ErrorBoundary>{requestsContent}</ErrorBoundary>
-            </TabPanel>
+            {tabs.map((tab, index) => (
+              <TabPanel key={tab.label} value={tabIndex} index={index}>
+                <ErrorBoundary>{tab.content}</ErrorBoundary>
+              </TabPanel>
+            ))}
           </Box>
         </Box>
       </SwipeableDrawer>
