@@ -11,23 +11,30 @@ describe('TimetableGrid', () => {
       { id: 2, name: 'A2', colour_hex: '#111' },
     ] as any[];
 
-    const assignmentsByAide = {
-      '1': [
+    const assignmentsByDay = {
+      '2025-10-01': [
         { id: 10, task_id: 101, aide_id: 1, date: '2025-10-01', start_time: '09:00:00', end_time: '09:30:00', status: 'ASSIGNED', version: 1 },
-      ],
-      '2': [
-        { id: 11, task_id: 102, aide_id: 2, date: '2025-10-01', start_time: '10:00:00', end_time: '10:30:00', status: 'ASSIGNED', version: 1 },
       ],
     } as any;
 
+    const tasks = [
+      { id: 101, title: 'Task #101', category: 'CLASS_SUPPORT' }
+    ] as any[];
+
+    const weekDates = ['2025-10-01', '2025-10-02', '2025-10-03', '2025-10-04', '2025-10-05'];
+
     render(
       <AppDragDropContext onDragEnd={() => {}}>
-        <TimetableGrid aides={aides as any} assignmentsByAide={assignmentsByAide} />
+        <TimetableGrid 
+          selectedAide={aides[0]} 
+          assignmentsByDay={assignmentsByDay} 
+          weekDates={weekDates}
+          tasks={tasks}
+        />
       </AppDragDropContext>
     );
 
     expect(screen.getByText(/Task #101/)).toBeInTheDocument();
-    expect(screen.getByText(/Task #102/)).toBeInTheDocument();
   });
 });
 

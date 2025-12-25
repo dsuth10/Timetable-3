@@ -173,6 +173,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
                 onDoubleClick={() => onTaskDoubleClick?.(layout.assignment)}
                 compact={true} 
                 isPositioned={true}
+                viewMode="aide"
               />
                     </Box>
                   ))}

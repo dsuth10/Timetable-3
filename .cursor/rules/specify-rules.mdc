@@ -18,6 +18,7 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - SQLite (`timetable.db`) (006-we-are-implementing)
 - TypeScript 5.x, React 18, Python 3.12+ + Material UI v5, Zustand, @hello-pangea/dnd, SQLAlchemy (007-when-assigning-tasks)
 - SQLite (backend/instance/timetable.db) (007-when-assigning-tasks)
+- Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd (008-each-task-card)
 
 ## Project Structure
 ```
@@ -33,9 +34,9 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 008-each-task-card: Added Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
 - 007-when-assigning-tasks: Added TypeScript 5.x, React 18, Python 3.12+ + Material UI v5, Zustand, @hello-pangea/dnd, SQLAlchemy
 - 006-we-are-implementing: Added Python 3.12+ (Backend), TypeScript / React 18+ (Frontend) + Flask, SQLAlchemy, Zustand, @hello-pangea/dnd (or similar for complex timeline DND)
-- 005-we-want-to: Added Python 3.12+ (backend), TypeScript (frontend) + Flask 3.0.2, SQLAlchemy 2.0.32, React 18+, Material-UI v5
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

@@ -1,7 +1,7 @@
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
 import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
-import { DragIndicator, Repeat } from '@mui/icons-material';
+import { DragIndicator, Repeat, Park, School, Groups, Person, Place } from '@mui/icons-material';
 import type { Assignment, Task } from '../../types';
 import { categoryColors, statusColors } from '../../theme/theme';
 
@@ -16,11 +16,21 @@ type TaskCardProps = {
   showAideName?: boolean;
   aideName?: string;
   compact?: boolean;
+  viewMode?: 'aide' | 'class';
 };
 
-function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName, compact = false }: TaskCardProps) {
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  'PLAYGROUND': <Park fontSize="inherit" />,
+  'CLASS_SUPPORT': <School fontSize="inherit" />,
+  'GROUP_SUPPORT': <Groups fontSize="inherit" />,
+  'INDIVIDUAL_SUPPORT': <Person fontSize="inherit" />,
+};
+
+function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName, compact = false, viewMode = 'aide' }: TaskCardProps) {
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
+
+  const CategoryIcon = task ? CATEGORY_ICONS[task.category] : null;
 
   return (
     <Draggable draggableId={`asg-${assignment.id}`} index={index}>
@@ -54,8 +64,8 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
         >
           <CardContent
             sx={{
-              p: compact ? 0.5 : 1.75,
-              '&:last-child': { pb: compact ? 0.5 : 1.75 },
+              p: compact ? 0.5 : 1.25, // Slightly reduced padding to fit icons
+              '&:last-child': { pb: compact ? 0.5 : 1.25 },
               ...(isPositioned
                 ? {
                     flexGrow: 1,
@@ -66,7 +76,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                 : {}),
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, height: '100%' }}>
               {!compact && (
                 <IconButton
                   size="small"
@@ -76,8 +86,9 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                   <DragIndicator fontSize="small" />
                 </IconButton>
               )}
-              <Box sx={{ flex: 1, minWidth: 0 }} {...(compact ? dragProvided.dragHandleProps : {})}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+              
+              <Box sx={{ display: 'flex', flex: 1, minWidth: 0, height: '100%' }}>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }} {...(compact ? dragProvided.dragHandleProps : {})}>
                   <Typography 
                     variant={compact ? 'caption' : 'body2'} 
                     sx={{ 
@@ -89,40 +100,72 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                       lineHeight: 1.2
                     }}
                   >
-                    {showAideName ? (aideName || 'Unknown Aide') : (task?.title || `Missing Task #${assignment.task_id}`)}
+                    {task?.title || `Missing Task #${assignment.task_id}`}
                   </Typography>
-                </Box>
-                {!compact && (
-                  <>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
+
+                  {viewMode === 'class' && (
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        fontStyle: 'italic',
+                        color: 'text.secondary',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'block'
+                      }}
+                    >
+                      {aideName || 'Unassigned'}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                      {task && (
-                        <Chip
-                          label={task.category.replace(/_/g, ' ')}
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.65rem',
-                            bgcolor: categoryColor,
-                            color: 'white',
-                          }}
-                        />
-                      )}
-                      <Chip
-                        label={assignment.status}
-                        size="small"
-                        sx={{
-                          height: 20,
-                          fontSize: '0.65rem',
-                          bgcolor: statusColor,
-                          color: 'white',
-                        }}
-                      />
+                  )}
+
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {assignment.start_time.slice(0, 5)} – {assignment.end_time.slice(0, 5)}
+                  </Typography>
+
+                  {viewMode === 'aide' && task?.classroom && (
+                    <Chip
+                      icon={<School sx={{ fontSize: '12px !important' }} />}
+                      label={task.classroom.name}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        height: compact ? 18 : 20,
+                        fontSize: compact ? '0.6rem' : '0.65rem',
+                        mt: 0.5,
+                        maxWidth: 'fit-content',
+                        '& .MuiChip-label': { px: compact ? 0.5 : 1 },
+                        '& .MuiChip-icon': { ml: 0.5 }
+                      }}
+                    />
+                  )}
+
+                  {viewMode === 'aide' && !task?.classroom && (
+                    <Chip
+                      icon={<School sx={{ fontSize: '12px !important' }} />}
+                      label="School"
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        height: compact ? 18 : 20,
+                        fontSize: compact ? '0.6rem' : '0.65rem',
+                        mt: 0.5,
+                        maxWidth: 'fit-content',
+                        '& .MuiChip-label': { px: compact ? 0.5 : 1 },
+                        '& .MuiChip-icon': { ml: 0.5 }
+                      }}
+                    />
+                  )}
+                </Box>
+
+                {/* Icons on the right */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', ml: 0.5, gap: 0.25 }}>
+                  {CategoryIcon && (
+                    <Box sx={{ color: categoryColor, fontSize: compact ? 16 : 20, display: 'flex' }}>
+                      {CategoryIcon}
                     </Box>
-                  </>
-                )}
+                  )}
+                </Box>
               </Box>
             </Box>
           </CardContent>
@@ -148,7 +191,8 @@ export const TaskCard = memo(TaskCardBase, (prev, next) => {
     prev.onDoubleClick === next.onDoubleClick &&
     prev.showAideName === next.showAideName &&
     prev.aideName === next.aideName &&
-    prev.compact === next.compact
+    prev.compact === next.compact &&
+    prev.viewMode === next.viewMode
   );
 });
 

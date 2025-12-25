@@ -42,9 +42,37 @@ export function TimeSlottedColumn({
     return map;
   }, [tasks]);
 
-  const taskPositions = useMemo(() => calculateTaskPositions(assignments), [assignments]);
   const totalHeight = TOTAL_HEIGHT_PX;
   const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  // Group assignments by task instance for Class View
+  const processedAssignments = useMemo(() => {
+    if (!showAideName) return assignments;
+
+    const grouped = new Map<string, { assignment: Assignment; aideNames: string[] }>();
+    
+    assignments.forEach(asg => {
+      const key = `${asg.task_id}-${asg.start_time}-${asg.end_time}`;
+      const aide = aides.find(a => a.id === asg.aide_id);
+      
+      if (grouped.has(key)) {
+        if (aide) grouped.get(key)!.aideNames.push(aide.name);
+      } else {
+        grouped.set(key, { 
+          assignment: asg, 
+          aideNames: aide ? [aide.name] : [] 
+        });
+      }
+    });
+
+    return Array.from(grouped.values()).map(g => ({
+      ...g.assignment,
+      // Store names in a temp property that TaskCard can use
+      _aideNames: g.aideNames.join(', ')
+    }));
+  }, [assignments, showAideName, aides]);
+
+  const taskPositions = useMemo(() => calculateTaskPositions(processedAssignments), [processedAssignments]);
 
   // Map task positions to their starting time slots
   const tasksBySlot = useMemo(() => {
@@ -153,7 +181,8 @@ export function TimeSlottedColumn({
                     isPositioned={true}
                     onDoubleClick={onTaskDoubleClick}
                     showAideName={showAideName}
-                    aideName={aide?.name}
+                    aideName={(position.assignment as any)._aideNames || aide?.name}
+                    viewMode={showAideName ? 'class' : 'aide'}
                   />
                 </Box>
               );
