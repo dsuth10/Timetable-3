@@ -72,6 +72,16 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
   const { count: reliefPoolCount, fetchCount: fetchReliefPoolCount, dismiss } = useReliefPoolStore();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
+  // Accordion expansion states
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('taskBank_expandedCategories');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('taskBank_expandedClasses');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
   const tasks = propTasks || storeTasks;
 
   // Fetch tasks if not provided
@@ -160,6 +170,34 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
       return a[0].localeCompare(b[0]);
     });
   }, [tasks, searchQuery]);
+
+  // Persist expansion states
+  useEffect(() => {
+    localStorage.setItem('taskBank_expandedCategories', JSON.stringify(Array.from(expandedCategories)));
+  }, [expandedCategories]);
+
+  useEffect(() => {
+    localStorage.setItem('taskBank_expandedClasses', JSON.stringify(Array.from(expandedClasses)));
+  }, [expandedClasses]);
+
+  // Handle accordion toggles
+  const handleCategoryToggle = (category: string) => (_: any, expanded: boolean) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (expanded) next.add(category);
+      else next.delete(category);
+      return next;
+    });
+  };
+
+  const handleClassToggle = (className: string) => (_: any, expanded: boolean) => {
+    setExpandedClasses(prev => {
+      const next = new Set(prev);
+      if (expanded) next.add(className);
+      else next.delete(className);
+      return next;
+    });
+  };
 
   // Handle Relief Pool task dismiss
   const handleDismiss = useCallback(async (task: ReliefPoolTask) => {
@@ -278,7 +316,11 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                   }}
                 >
                   {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
-                    <Accordion key={category} defaultExpanded>
+                    <Accordion 
+                      key={category} 
+                      expanded={expandedCategories.has(category)}
+                      onChange={handleCategoryToggle(category)}
+                    >
                       <AccordionSummary expandIcon={<ExpandMore />}>
                         <Typography variant="body2" fontWeight={600}>
                           {category.replace(/_/g, ' ')}
@@ -387,7 +429,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                     return (
                       <Accordion 
                         key={className} 
-                        defaultExpanded
+                        expanded={expandedClasses.has(className)}
+                        onChange={handleClassToggle(className)}
                         sx={{
                           '&.Mui-expanded': {
                             m: 0,
