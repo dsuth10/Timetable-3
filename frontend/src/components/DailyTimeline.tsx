@@ -61,7 +61,8 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
                       pl: 1,
                       borderRight: 1,
                       borderColor: 'divider',
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      bgcolor: (['11:10:00', '13:20:00'].includes(slot.start_time)) ? '#e8f5e9' : 'inherit',
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: 'bold' }}>

@@ -1,6 +1,6 @@
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
-import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Box, IconButton, alpha } from '@mui/material';
 import { DragIndicator, Repeat, Park, School, Groups, Person, Place } from '@mui/icons-material';
 import type { Assignment, Task } from '../../types';
 import { categoryColors, statusColors } from '../../theme/theme';
@@ -30,6 +30,13 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
 
+  // Determine which color to use based on viewMode
+  // In 'aide' view (Aide Schedule), color by classroom/teacher
+  // In 'class' view (Class Schedule), color by teacher aide
+  const displayColor = viewMode === 'aide' 
+    ? (task?.classroom?.colour_hex || categoryColor)
+    : (aideColor || categoryColor);
+
   const CategoryIcon = task ? CATEGORY_ICONS[task.category] : null;
 
   return (
@@ -43,9 +50,10 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
           onDoubleClick={() => onDoubleClick?.(assignment, task)}
           sx={{
             mb: isPositioned ? 0 : 1,
-            borderLeft: `${compact ? '2px' : '4px'} solid ${aideColor || categoryColor}`,
+            borderLeft: `${compact ? '2px' : '4px'} solid ${displayColor}`,
             borderRadius: compact ? 0 : 1,
             cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
+            bgcolor: displayColor ? alpha(displayColor, 0.08) : (dragSnapshot.isDragging ? 'action.hover' : 'background.paper'),
             opacity: dragSnapshot.isDragging ? 0.8 : 1,
             transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',
             transition: 'all 0.2s ease',
@@ -55,6 +63,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
             '&:hover': {
               boxShadow: 3,
               transform: 'translateY(-2px)',
+              bgcolor: displayColor ? alpha(displayColor, 0.15) : 'action.hover',
               '& .action-buttons': {
                 opacity: 1,
               },

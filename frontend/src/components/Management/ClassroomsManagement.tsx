@@ -18,6 +18,7 @@ import {
   Alert,
   Stack,
   Divider,
+  alpha,
 } from '@mui/material';
 import { Add as AddIcon, Edit, Delete, School, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { useClassroomsStore } from '../../store/stores/classrooms';
@@ -169,6 +170,9 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
           <Paper key={classroom.id} sx={{ mb: 1 }}>
             <ListItem
               sx={{
+                borderLeft: `4px solid ${classroom.colour_hex || '#1976d2'}`,
+                mb: 1,
+                bgcolor: 'background.paper',
                 '&:hover': {
                   bgcolor: 'action.hover',
                 },
@@ -178,7 +182,7 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <School fontSize="small" color="action" />
+                    <School fontSize="small" sx={{ color: classroom.colour_hex || 'action.active' }} />
                     <Typography variant="subtitle1" component="span" fontWeight="medium">
                       {classroom.name}
                     </Typography>
@@ -186,7 +190,12 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
                       label={`Room: ${classroom.room_number}`} 
                       size="small" 
                       variant="outlined" 
-                      sx={{ fontSize: '0.75rem', height: 24 }}
+                      sx={{ 
+                        fontSize: '0.75rem', 
+                        height: 24,
+                        borderColor: alpha(classroom.colour_hex || '#1976d2', 0.3),
+                        bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.05)
+                      }}
                     />
                     {(classroom.is_composite || classroom.year_level) && (
                       <Chip
@@ -196,9 +205,14 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
                             : `Year: ${classroom.year_level}`
                         }
                         size="small"
-                        color="primary"
                         variant="outlined"
-                        sx={{ fontSize: '0.75rem', height: 24 }}
+                        sx={{ 
+                          fontSize: '0.75rem', 
+                          height: 24,
+                          color: classroom.colour_hex || 'primary.main',
+                          borderColor: alpha(classroom.colour_hex || '#1976d2', 0.5),
+                          bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.1)
+                        }}
                       />
                     )}
                   </Box>

@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
   Badge,
+  alpha,
 } from '@mui/material';
 import { Search, ExpandMore, AssignmentLate, Inventory, PersonOff, School } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
@@ -381,43 +382,77 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                     borderRadius: 1,
                   }}
                 >
-                  {!loading && !error && groupedTasksByClass.map(([className, classTasks]) => (
-                    <Accordion key={className} defaultExpanded>
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {className}
-                        </Typography>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ ml: 1, color: 'text.secondary' }}
+                  {!loading && !error && groupedTasksByClass.map(([className, classTasks]) => {
+                    const classColor = classTasks[0]?.classroom?.colour_hex;
+                    return (
+                      <Accordion 
+                        key={className} 
+                        defaultExpanded
+                        sx={{
+                          '&.Mui-expanded': {
+                            m: 0,
+                            borderBottom: classColor ? `1px solid ${classColor}` : 'inherit'
+                          },
+                          border: classColor ? `1px solid ${alpha(classColor, 0.2)}` : 'inherit',
+                          mb: 1,
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <AccordionSummary 
+                          expandIcon={<ExpandMore sx={{ color: classColor || 'inherit' }} />}
+                          sx={{
+                            bgcolor: classColor ? alpha(classColor, 0.1) : 'transparent',
+                            color: classColor ? 'text.primary' : 'inherit',
+                            borderLeft: classColor ? `4px solid ${classColor}` : 'none',
+                            minHeight: 40,
+                            '&.Mui-expanded': {
+                              minHeight: 40,
+                            },
+                            '& .MuiAccordionSummary-content': {
+                              my: 1,
+                              '&.Mui-expanded': { my: 1 },
+                              '& .MuiTypography-root': {
+                                color: classColor ? classColor : 'inherit',
+                                fontWeight: 700
+                              }
+                            }
+                          }}
                         >
-                          ({classTasks.length})
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ p: 1 }}>
-                        {classTasks.map((task, taskIndex) => {
-                          const currentIndex = globalIndex++;
-                          // Use combination of className, task.id, and index to ensure unique keys
-                          const uniqueKey = `${className}-${task.id}-${taskIndex}`;
-                          return (
-                            <Box key={uniqueKey}>
-                              <TaskTemplateCard
-                                task={task}
-                                index={currentIndex}
-                                assignments={assignments}
-                                aides={aides}
-                                onDoubleClick={(t) => {
-                                  if (onTaskDoubleClick) {
-                                    // Handle double click if needed, though card currently doesn't provide assignment here
-                                  }
-                                }}
-                              />
-                            </Box>
-                          );
-                        })}
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
+                          <Typography variant="body2">
+                            {className}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+                          >
+                            ({classTasks.length})
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 1, bgcolor: classColor ? alpha(classColor, 0.05) : 'transparent' }}>
+                          {classTasks.map((task, taskIndex) => {
+                            const currentIndex = globalIndex++;
+                            // Use combination of className, task.id, and index to ensure unique keys
+                            const uniqueKey = `${className}-${task.id}-${taskIndex}`;
+                            return (
+                              <Box key={uniqueKey}>
+                                <TaskTemplateCard
+                                  task={task}
+                                  index={currentIndex}
+                                  assignments={assignments}
+                                  aides={aides}
+                                  onDoubleClick={(t) => {
+                                    if (onTaskDoubleClick) {
+                                      // Handle double click if needed, though card currently doesn't provide assignment here
+                                    }
+                                  }}
+                                />
+                              </Box>
+                            );
+                          })}
+                        </AccordionDetails>
+                      </Accordion>
+                    );
+                  })}
                   {provided.placeholder}
                 </Box>
               );

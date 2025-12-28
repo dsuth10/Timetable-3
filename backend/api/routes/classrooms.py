@@ -7,8 +7,24 @@ from api.models import db
 from api.models.classroom import Classroom
 import csv
 import io
+import random
+import re
 
 bp = Blueprint('classrooms', __name__, url_prefix='/api/classrooms')
+
+
+# Color palette matching aide palette and frontend generateRandomColor function
+_COLOR_PALETTE = [
+    '#1976d2', '#dc004e', '#9c27b0', '#673ab7', '#3f51b5',
+    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
+    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
+    '#ff5722', '#795548', '#607d8b',
+]
+
+
+def _generate_random_color():
+    """Generate a random color from the palette."""
+    return random.choice(_COLOR_PALETTE)
 
 
 @bp.post('')
@@ -22,6 +38,7 @@ def create_classroom():
     year_level = data.get('year_level')
     is_composite = data.get('is_composite', False)
     composite_year_levels = data.get('composite_year_levels')
+    colour_hex = data.get('colour_hex') or _generate_random_color()
 
     if not name:
         return {'error': 'Name is required'}, 400
@@ -29,6 +46,8 @@ def create_classroom():
         return {'error': 'Room number is required'}, 400
     if not teacher:
         return {'error': 'Teacher name is required'}, 400
+    if colour_hex and not re.match(r'^#[0-9A-Fa-f]{6}$', colour_hex):
+        return {'error': 'colour_hex must match #RRGGBB'}, 400
 
     # Check for duplicates (name must be unique)
     if Classroom.query.filter_by(name=name).first():
@@ -42,7 +61,8 @@ def create_classroom():
         notes=notes,
         year_level=year_level,
         is_composite=is_composite,
-        composite_year_levels=composite_year_levels
+        composite_year_levels=composite_year_levels,
+        colour_hex=colour_hex
     )
     try:
         db.session.add(c)
@@ -103,6 +123,12 @@ def update_classroom(classroom_id):
         
     if 'composite_year_levels' in data:
         c.composite_year_levels = data.get('composite_year_levels')
+
+    if 'colour_hex' in data:
+        colour_hex = data.get('colour_hex')
+        if colour_hex and not re.match(r'^#[0-9A-Fa-f]{6}$', colour_hex):
+            return {'error': 'colour_hex must match #RRGGBB'}, 400
+        c.colour_hex = colour_hex
 
     try:
         db.session.commit()
@@ -237,11 +263,13 @@ def batch_create_classrooms():
             
             # Create classroom
             try:
+                colour_hex = _generate_random_color()
                 classroom = Classroom(
                     name=name,
                     year_level=year_level,
                     room_number=room_number,
-                    teacher=teacher
+                    teacher=teacher,
+                    colour_hex=colour_hex
                 )
                 db.session.add(classroom)
                 db.session.flush()  # Get the ID

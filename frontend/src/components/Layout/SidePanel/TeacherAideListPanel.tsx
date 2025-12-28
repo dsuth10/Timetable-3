@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   Drawer,
+  alpha,
 } from '@mui/material';
 import { Search, Person, DragIndicator } from '@mui/icons-material';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
@@ -137,7 +138,12 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                           mb: 1,
                           cursor: 'grab',
                           borderLeft: `4px solid ${aide.colour_hex}`,
-                          bgcolor: dragSnapshot.isDragging ? 'action.hover' : 'background.paper',
+                          bgcolor: dragSnapshot.isDragging 
+                            ? 'action.hover' 
+                            : alpha(aide.colour_hex || '#1976d2', 0.08),
+                          '&:hover': {
+                            bgcolor: alpha(aide.colour_hex || '#1976d2', 0.15),
+                          },
                           opacity: dragSnapshot.isDragging ? 0.8 : 1,
                           ...dragProvided.draggableProps.style,
                         }}

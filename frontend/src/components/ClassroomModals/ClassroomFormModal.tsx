@@ -22,6 +22,17 @@ import type { Classroom } from '../../types';
 
 const YEAR_LEVELS = ['Prep', '1', '2', '3', '4', '5', '6'];
 
+// Generate a random color hex from the same palette as aides
+const generateRandomColor = () => {
+  const colors = [
+    '#1976d2', '#dc004e', '#9c27b0', '#673ab7', '#3f51b5',
+    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
+    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
+    '#ff5722', '#795548', '#607d8b',
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -43,6 +54,7 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
   const [yearLevel, setYearLevel] = useState('');
   const [isComposite, setIsComposite] = useState(false);
   const [compositeYearLevels, setCompositeYearLevels] = useState<string[]>([]);
+  const [colourHex, setColourHex] = useState(generateRandomColor());
 
   // Initialize form when classroom changes or modal opens
   useEffect(() => {
@@ -59,6 +71,7 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
             ? classroom.composite_year_levels.split(',').map((s) => s.trim())
             : []
         );
+        setColourHex(classroom.colour_hex || generateRandomColor());
       } else {
         // Reset for create mode
         setName('');
@@ -68,6 +81,7 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
         setYearLevel('');
         setIsComposite(false);
         setCompositeYearLevels([]);
+        setColourHex(generateRandomColor());
       }
       setError(undefined);
     }
@@ -103,14 +117,6 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
        setError('Please select at least one year level for composite class');
        return;
     }
-    if (!isComposite && !yearLevel) {
-      // Optional: decide if year level is strictly required for non-composite.
-      // For now let's make it optional or required based on user preference?
-      // The prompt says "add to that a set year level", implies it should be set.
-      // Let's enforce it for better data quality, or leave optional.
-      // User said "set year level... can be prep...".
-      // Let's make it required if they don't want composite.
-    }
 
     setLoading(true);
     setError(undefined);
@@ -124,6 +130,7 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
         year_level: !isComposite ? yearLevel : null,
         is_composite: isComposite,
         composite_year_levels: isComposite ? compositeYearLevels.join(',') : null,
+        colour_hex: colourHex,
       };
 
       if (classroom) {
@@ -229,6 +236,18 @@ export default function ClassroomFormModal({ open, onClose, classroom, onCreated
               </Select>
             </FormControl>
           )}
+
+          <Box>
+            <TextField
+              label="Color"
+              type="color"
+              value={colourHex}
+              onChange={(e) => setColourHex(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="This color will be used to identify the class in the dashboard"
+            />
+          </Box>
 
           <TextField
             label="Notes"

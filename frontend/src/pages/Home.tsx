@@ -12,7 +12,8 @@ import {
   InputAdornment,
   Chip,
   IconButton,
-  Paper
+  Paper,
+  alpha
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -206,7 +207,13 @@ export default function Home() {
                       borderColor: 'divider',
                       borderRadius: 2,
                       transition: 'all 0.2s',
-                      '&:hover': { borderColor: 'primary.main', boxShadow: 2, transform: 'translateY(-2px)' }
+                      bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.08),
+                      '&:hover': { 
+                        borderColor: 'primary.main', 
+                        boxShadow: 2, 
+                        transform: 'translateY(-2px)',
+                        bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.15)
+                      }
                     }}
                   >
                     <CardActionArea onClick={() => handleClassClick(classroom.id)} sx={{ p: 2 }}>
@@ -214,7 +221,13 @@ export default function Home() {
                         <Typography variant="subtitle1" fontWeight="bold" noWrap>
                           {classroom.name}
                         </Typography>
-                        <Box sx={{ bgcolor: 'primary.50', color: 'primary.main', p: 0.5, borderRadius: '50%', display: 'flex' }}>
+                        <Box sx={{ 
+                          bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.1), 
+                          color: classroom.colour_hex || 'primary.main', 
+                          p: 0.5, 
+                          borderRadius: '50%', 
+                          display: 'flex' 
+                        }}>
                           <ArrowForwardIcon sx={{ fontSize: 14 }} />
                         </Box>
                       </Box>
@@ -249,19 +262,23 @@ export default function Home() {
                 <Grid item xs={12} sm={6} key={aide.id}>
                   <Card
                     elevation={0}
-                    sx={{
-                      height: '100%',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 3,
-                      transition: 'all 0.2s',
-                      '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.50' }
-                    }}
-                  >
-                    <CardActionArea
-                      onClick={() => handleAideClick(aide.id)}
-                      sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
+                      sx={{
+                        height: '100%',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 3,
+                        transition: 'all 0.2s',
+                        bgcolor: alpha(aide.colour_hex || '#1976d2', 0.08),
+                        '&:hover': { 
+                          borderColor: 'primary.main', 
+                          bgcolor: alpha(aide.colour_hex || '#1976d2', 0.15) 
+                        }
+                      }}
                     >
+                      <CardActionArea
+                        onClick={() => handleAideClick(aide.id)}
+                        sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
+                      >
                       <Box sx={{ position: 'relative', mr: 2 }}>
                         <Avatar
                           sx={{

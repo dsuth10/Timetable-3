@@ -77,11 +77,11 @@ def seed_database():
             print("\n=== Seeding Classrooms ===")
 
             classrooms = [
-                Classroom(name="Grade 3A", room_number="101", teacher="Mrs. Anderson", capacity=25, notes="Grade 3A - Mrs. Anderson"),
-                Classroom(name="Grade 3B", room_number="102", teacher="Mr. Thompson", capacity=22, notes="Grade 3B - Mr. Thompson"),
-                Classroom(name="Grade 4A", room_number="201", teacher="Ms. Rodriguez", capacity=28, notes="Grade 4A - Ms. Rodriguez"),
-                Classroom(name="Library", room_number="LIB", teacher="Mrs. Librarian", capacity=50, notes="Multi-purpose learning space"),
-                Classroom(name="Playground", room_number="OUT", teacher="N/A", capacity=100, notes="Outdoor supervision area")
+                Classroom(name="Grade 3A", room_number="101", teacher="Mrs. Anderson", capacity=25, notes="Grade 3A - Mrs. Anderson", colour_hex="#4caf50"),
+                Classroom(name="Grade 3B", room_number="102", teacher="Mr. Thompson", capacity=22, notes="Grade 3B - Mr. Thompson", colour_hex="#2196f3"),
+                Classroom(name="Grade 4A", room_number="201", teacher="Ms. Rodriguez", capacity=28, notes="Grade 4A - Ms. Rodriguez", colour_hex="#9c27b0"),
+                Classroom(name="Library", room_number="LIB", teacher="Mrs. Librarian", capacity=50, notes="Multi-purpose learning space", colour_hex="#ff9800"),
+                Classroom(name="Playground", room_number="OUT", teacher="N/A", capacity=100, notes="Outdoor supervision area", colour_hex="#f44336")
             ]
             session.add_all(classrooms)
             session.flush()

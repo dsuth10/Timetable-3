@@ -29,6 +29,7 @@ class Classroom(db.Model):
     year_level = Column(String(50), nullable=True)
     is_composite = Column(Boolean, default=False, nullable=False)
     composite_year_levels = Column(String(50), nullable=True)
+    colour_hex = Column(String(7), nullable=False, server_default='#1976d2')
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships
@@ -113,6 +114,7 @@ class Classroom(db.Model):
             'year_level': self.year_level,
             'is_composite': self.is_composite,
             'composite_year_levels': self.composite_year_levels,
+            'colour_hex': self.colour_hex,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     

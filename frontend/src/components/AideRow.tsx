@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar } from '@mui/material';
+import { Box, Typography, Avatar, alpha } from '@mui/material';
 import type { AideWithStatus, TimelineConfig, Assignment } from '../types';
 import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
@@ -123,7 +123,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
             p: 1,
             width: '100%',
             height: 50,
-            bgcolor: 'background.paper',
+            bgcolor: alpha(aide.colour_hex || '#1976d2', 0.08),
             borderRadius: 2,
             borderLeft: `4px solid ${aide.colour_hex || '#1976d2'}`,
             boxShadow: 1,
@@ -178,7 +178,9 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
                     borderRight: 1,
                     borderColor: 'divider',
                     height: '100%',
-                    bgcolor: snapshot.isDraggingOver ? 'action.selected' : 'transparent',
+                    bgcolor: snapshot.isDraggingOver 
+                      ? 'action.selected' 
+                      : (['11:10:00', '13:20:00'].includes(slotStartTime) ? '#e8f5e9' : 'transparent'),
                     transition: 'background-color 0.2s',
                     position: 'relative' // To position tasks relative to their starting slot
                   }}

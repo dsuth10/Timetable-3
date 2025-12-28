@@ -38,6 +38,7 @@ export interface Classroom {
   year_level?: string | null;
   is_composite?: boolean;
   composite_year_levels?: string | null;
+  colour_hex: string;
   created_at?: string;
 }
 
