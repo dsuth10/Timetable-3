@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Avatar } from '@mui/material';
 import type { AideWithStatus, TimelineConfig, Assignment } from '../types';
 import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
@@ -103,26 +103,57 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
           flexShrink: 0, 
           position: 'sticky', 
           left: 0, 
-          bgcolor: aide.is_absent ? '#ffcdd2' : (aide.colour_hex || 'primary.main'),
-          color: aide.is_absent ? 'error.dark' : 'white',
+          bgcolor: 'inherit',
           p: 1,
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
           zIndex: 15,
-          boxShadow: 2,
           borderRight: 1,
-          borderColor: 'divider'
+          borderColor: 'divider',
+          // Ensure the sticky column background stays opaque during scroll if needed, 
+          // but here it inherits from the row which handles the absence color
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-          {aide.name}
-        </Typography>
-        {aide.is_absent && (
-          <Typography variant="caption" sx={{ fontStyle: 'italic', fontWeight: 'bold' }}>
-            ABSENT
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            p: 1,
+            width: '100%',
+            height: 50,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            borderLeft: `4px solid ${aide.colour_hex || '#1976d2'}`,
+            boxShadow: 1,
+            overflow: 'hidden'
+          }}
+        >
+          <Avatar 
+            sx={{ 
+              bgcolor: aide.colour_hex || '#1976d2', 
+              width: 28, 
+              height: 28, 
+              fontSize: '0.75rem',
+              fontWeight: 'bold'
+            }}
+          >
+            {aide.name.charAt(0)}
+          </Avatar>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              fontWeight: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: 'text.primary'
+            }}
+          >
+            {aide.name}
           </Typography>
-        )}
+        </Box>
       </Box>
 
       {/* Timeline Row Content */}

@@ -30,6 +30,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { isWeekend, format } from 'date-fns';
 import { useUiStore } from '../../store/stores/uiStore';
 
 type AppBarProps = {
@@ -229,7 +230,10 @@ export default function AppBar({
               }}
             />
             <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-              {dateRange}
+              {isDailyView 
+                ? format(new Date(weekLabel + 'T00:00:00'), 'EEEE, MMM d, yyyy')
+                : dateRange
+              }
             </Typography>
           </Stack>
         </Box>
@@ -253,6 +257,7 @@ export default function AppBar({
               value={new Date(weekLabel + 'T00:00:00')}
               onChange={handleDateChange}
               showDaysOutsideCurrentMonth
+              shouldDisableDate={(date: Date) => isWeekend(date)}
             />
           </LocalizationProvider>
         </Popover>

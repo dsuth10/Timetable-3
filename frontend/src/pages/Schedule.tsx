@@ -406,7 +406,7 @@ export default function Schedule() {
     duration: number;
   } | null>(null);
 
-  const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
+  const { onDragEnd, ConflictUI, DurationModal, setConflicts } = useDragDrop({
     onSuccess: refreshData,
     aides: aides,
     onClassroomDrop: (data) => {
@@ -779,27 +779,46 @@ export default function Schedule() {
         }}
         onConfirm={async (taskId) => {
           if (!taskSelectionDraft) return;
+          const endTime = addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration);
+          const payload = {
+            aide_id: taskSelectionDraft.aideId,
+            task_id: taskId,
+            date: taskSelectionDraft.date,
+            start_time: taskSelectionDraft.time,
+            end_time: endTime,
+            auto_shorten: true
+          };
           try {
             setLoading(true);
-            await assignmentsApi.create({
-              aide_id: taskSelectionDraft.aideId,
-              task_id: taskId,
-              date: taskSelectionDraft.date,
-              start_time: taskSelectionDraft.time,
-              end_time: addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration),
-              auto_shorten: true
-            });
+            await assignmentsApi.create(payload);
             await refreshData();
             setShowTaskSelection(false);
             setTaskSelectionDraft(null);
           } catch (e: any) {
-            setError(e.message || 'Failed to create assignment');
+            if (e.status === 409) {
+              setConflicts({
+                conflicts: e.data?.conflicts || [],
+                errorMessage: e.data?.error || null,
+                taskId: taskId,
+                destAideId: taskSelectionDraft.aideId,
+                createPayload: {
+                  ...payload,
+                  status: 'ASSIGNED',
+                  version: 1
+                }
+              });
+              setShowTaskSelection(false);
+              setTaskSelectionDraft(null);
+            } else {
+              setError(e.message || 'Failed to create assignment');
+            }
           } finally {
             setLoading(false);
           }
         }}
         onCreate={async (taskData) => {
           if (!taskSelectionDraft) return;
+          const endTime = addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration);
           try {
             setLoading(true);
             const newTask = await taskService.createTask({
@@ -808,14 +827,39 @@ export default function Schedule() {
               classroom_id: taskSelectionDraft.classroomId
             });
             
-            await assignmentsApi.create({
+            const payload = {
               aide_id: taskSelectionDraft.aideId,
               task_id: newTask.id,
               date: taskSelectionDraft.date,
               start_time: taskSelectionDraft.time,
-              end_time: addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration),
+              end_time: endTime,
               auto_shorten: true
-            });
+            };
+
+            try {
+              await assignmentsApi.create(payload);
+            } catch (e: any) {
+              if (e.status === 409) {
+                setConflicts({
+                  conflicts: e.data?.conflicts || [],
+                  errorMessage: e.data?.error || null,
+                  taskId: newTask.id,
+                  destAideId: taskSelectionDraft.aideId,
+                  createPayload: {
+                    ...payload,
+                    status: 'ASSIGNED',
+                    version: 1
+                  }
+                });
+                // Exit outer try/catch normally as we've handled the conflict
+                setShowTaskSelection(false);
+                setTaskSelectionDraft(null);
+                await refreshData();
+                fetchTasks();
+                return;
+              }
+              throw e;
+            }
             
             await refreshData();
             // Also refresh tasks list

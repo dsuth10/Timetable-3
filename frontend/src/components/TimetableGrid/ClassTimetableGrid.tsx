@@ -29,7 +29,7 @@ export function ClassTimetableGrid({
   };
 
   return (
-    <Box sx={{ display: 'flex', overflow: 'auto', height: '100%' }}>
+    <Box sx={{ display: 'flex', height: '100%' }}>
       <Box 
         sx={{ 
           display: 'grid', 

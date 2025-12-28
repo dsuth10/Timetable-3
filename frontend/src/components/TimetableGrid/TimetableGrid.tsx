@@ -34,7 +34,7 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
   };
 
   return (
-    <Box sx={{ display: 'flex', overflow: 'auto', height: '100%' }}>
+    <Box sx={{ display: 'flex', height: '100%' }}>
       {/* Day Columns */}
       <Box 
         sx={{ 

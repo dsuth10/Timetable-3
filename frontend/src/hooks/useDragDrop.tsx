@@ -807,5 +807,11 @@ export function useDragDrop(options?: UseDragDropOptions) {
     />
   ) : null;
 
-  return { onDragEnd, ConflictUI, DurationModal };
+  return { 
+    onDragEnd, 
+    ConflictUI, 
+    DurationModal,
+    setConflicts,
+    setPendingAssignment
+  };
 }

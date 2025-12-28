@@ -64,9 +64,9 @@ export default function Home() {
   }, [classrooms, searchTerm]);
 
   const filteredAides = useMemo(() => {
-    return aides.filter(a =>
-      a.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return aides
+      .filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [aides, searchTerm]);
 
   const handleClassClick = (id: number) => {
@@ -244,57 +244,60 @@ export default function Home() {
               </Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Grid container spacing={2}>
               {filteredAides.map((aide) => (
-                <Card
-                  key={aide.id}
-                  elevation={0}
-                  sx={{
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 3,
-                    transition: 'all 0.2s',
-                    '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.50' }
-                  }}
-                >
-                  <CardActionArea
-                    onClick={() => handleAideClick(aide.id)}
-                    sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
+                <Grid item xs={12} sm={6} key={aide.id}>
+                  <Card
+                    elevation={0}
+                    sx={{
+                      height: '100%',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 3,
+                      transition: 'all 0.2s',
+                      '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.50' }
+                    }}
                   >
-                    <Box sx={{ position: 'relative', mr: 2 }}>
-                      <Avatar
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: aide.colour_hex || 'primary.main',
-                          color: 'white', // Ensure contrast
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        {getInitials(aide.name)}
-                      </Avatar>
-                      {/* Availability indicator could go here */}
-                    </Box>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" noWrap>
-                        {aide.name}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <ScheduleIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                        <Typography variant="caption" color="text.secondary">
-                          {aide.details || "No details provided"}
-                        </Typography>
+                    <CardActionArea
+                      onClick={() => handleAideClick(aide.id)}
+                      sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
+                    >
+                      <Box sx={{ position: 'relative', mr: 2 }}>
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: aide.colour_hex || 'primary.main',
+                            color: 'white', // Ensure contrast
+                            fontWeight: 'bold',
+                            fontSize: '1rem'
+                          }}
+                        >
+                          {getInitials(aide.name)}
+                        </Avatar>
+                        {/* Availability indicator could go here */}
                       </Box>
-                    </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', ml: 1 }}>
-                      <ArrowForwardIcon color="action" />
-                    </Box>
-                  </CardActionArea>
-                </Card>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle2" fontWeight="bold" noWrap>
+                          {aide.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ScheduleIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                            {aide.details || "No details provided"}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', ml: 1 }}>
+                        <ArrowForwardIcon sx={{ fontSize: 18 }} color="action" />
+                      </Box>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
               ))}
-            </Box>
+            </Grid>
           </Grid>
         </Grid>
       </Container>

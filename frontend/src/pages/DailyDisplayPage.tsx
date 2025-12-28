@@ -7,7 +7,7 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import { addDays, subDays, format } from 'date-fns';
+import { addDays, subDays, format, isWeekend, nextMonday } from 'date-fns';
 import AppBar from '../components/Layout/AppBar';
 import { useDailyDisplayStore } from '../store/stores/dailyDisplay';
 import { useTasksStore } from '../store/stores/tasks';
@@ -55,6 +55,15 @@ export default function DailyDisplayPage() {
   useEffect(() => {
     fetchDailyData(dateParam);
   }, [dateParam, fetchDailyData]);
+
+  // Weekend redirect logic
+  useEffect(() => {
+    const date = new Date(dateParam + 'T00:00:00');
+    if (isWeekend(date)) {
+      const nextMon = nextMonday(date);
+      handleDateChange(format(nextMon, 'yyyy-MM-dd'));
+    }
+  }, [dateParam]);
 
   // Handler for relief pool drops (still uses the confirmation dialog)
   const handleReliefPoolDrop = async (result: any) => {
@@ -129,19 +138,29 @@ export default function DailyDisplayPage() {
   };
 
   const handlePrevDay = () => {
-    const current = new Date(dateParam + 'T00:00:00');
-    const prev = subDays(current, 1);
+    let current = new Date(dateParam + 'T00:00:00');
+    let prev = subDays(current, 1);
+    while (isWeekend(prev)) {
+      prev = subDays(prev, 1);
+    }
     handleDateChange(format(prev, 'yyyy-MM-dd'));
   };
 
   const handleNextDay = () => {
-    const current = new Date(dateParam + 'T00:00:00');
-    const next = addDays(current, 1);
+    let current = new Date(dateParam + 'T00:00:00');
+    let next = addDays(current, 1);
+    while (isWeekend(next)) {
+      next = addDays(next, 1);
+    }
     handleDateChange(format(next, 'yyyy-MM-dd'));
   };
 
   const handleToday = () => {
-    handleDateChange(format(new Date(), 'yyyy-MM-dd'));
+    let today = new Date();
+    if (isWeekend(today)) {
+      today = nextMonday(today);
+    }
+    handleDateChange(format(today, 'yyyy-MM-dd'));
   };
 
   const handleTaskDoubleClick = (assignment: Assignment) => {

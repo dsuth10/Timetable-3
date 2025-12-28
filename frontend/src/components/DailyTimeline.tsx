@@ -14,14 +14,14 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
     <Paper 
       elevation={1} 
       sx={{ 
-        overflowY: 'auto', 
+        overflow: 'auto', // Handle both X and Y in one container
         height: '100%', 
         display: 'flex', 
         flexDirection: 'column',
         bgcolor: 'background.paper'
       }}
     >
-      <Box sx={{ overflowX: 'auto', width: '100%' }}>
+      <Box sx={{ width: '100%' }}>
         <Box sx={{ minWidth: 'fit-content', display: 'flex', flexDirection: 'column' }}>
           {/* Timeline Header (Sticky) */}
           <Box sx={{ 
