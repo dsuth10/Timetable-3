@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Box } from '@mui/material';
 import type { Assignment, Task, Absence, Availability, TeacherAide } from '../../types';
-import { generateTimeSlots, timeToPixels, durationToPixels, TOTAL_HEIGHT_PX, getSegmentForTime, snapToSlot } from './timeUtils';
+import { generateTimeSlots, timeToPixels, durationToPixels, TOTAL_HEIGHT_PX, getSegmentForTime, snapToSlot, timeIntervalsOverlap, addMinutesToTime } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';
 import { TaskCard } from './TaskCard';
 import { TimetableSlot } from './TimetableSlot';
 import AvailabilityOverlay from './AvailabilityOverlay';
+import { calculateGaps } from '../../utils/gapUtils';
+import GapHighlight from './GapHighlight';
 
 type TimeSlottedColumnProps = {
   aideId?: number; // Optional for Class View
@@ -44,6 +46,25 @@ export function TimeSlottedColumn({
 
   const totalHeight = TOTAL_HEIGHT_PX;
   const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  // Calculate gaps for snapping
+  const gridLines = useMemo(() => {
+    const lines = timeSlots.map(s => s.substring(0, 5));
+    // Add the end time of the last slot
+    const lastSlotStart = timeSlots[timeSlots.length - 1];
+    const segment = getSegmentForTime(lastSlotStart);
+    if (segment) {
+      lines.push(segment.end);
+    }
+    return lines;
+  }, [timeSlots]);
+
+  const gaps = useMemo(() => {
+    if (!aideId) return [];
+    // Ensure absences is filtered for the current aide and date
+    const relevantAbsences = absences.filter(a => a.aide_id === aideId && a.date === date);
+    return calculateGaps(assignments, relevantAbsences, gridLines, aideId, date);
+  }, [assignments, absences, aideId, date, gridLines]);
 
   // Group assignments by task instance for Class View
   const processedAssignments = useMemo(() => {
@@ -145,6 +166,11 @@ export function TimeSlottedColumn({
         const top = timeToPixels(segment.start);
         const height = durationToPixels(segment.start, segment.end);
         const slotTasks = tasksBySlot.get(timeSlot) || [];
+        
+        // Find gaps that fall into this specific slot
+        const slotGaps = gaps.filter(g => {
+          return timeIntervalsOverlap(timeSlot.substring(0, 5), segment.end, g.start_time, g.end_time);
+        });
 
         return (
           <TimetableSlot
@@ -156,6 +182,8 @@ export function TimeSlottedColumn({
             height={height}
             onClick={onSlotClick}
             onQuickCreate={onQuickCreate}
+            gaps={slotGaps}
+            aideColor={aideColor}
           >
             {/* Render task cards that start in this slot */}
             {slotTasks.map((position, taskIndex) => {

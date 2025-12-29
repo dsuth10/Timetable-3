@@ -2,21 +2,24 @@ import { Droppable } from '@hello-pangea/dnd';
 import { Box, Typography, IconButton } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { memo } from 'react';
-// import { SLOT_HEIGHT_PX } from './timeUtils'; // No longer using fixed height
+import { Gap } from '../../utils/gapUtils';
+import GapHighlight from './GapHighlight';
+import { timeToPixels, durationToPixels } from './timeUtils';
 
 type TimetableSlotProps = {
   aideId: number;
   date: string;
   timeSlot: string; // HH:MM format
   children?: React.ReactNode;
-  // index: number; // No longer needed for positioning
   top: number;
   height: number;
   onClick?: (date: string, time: string) => void;
   onQuickCreate?: (date: string, time: string) => void;
+  gaps?: Gap[];
+  aideColor?: string;
 };
 
-function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick, onQuickCreate }: TimetableSlotProps) {
+function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick, onQuickCreate, gaps = [], aideColor }: TimetableSlotProps) {
   const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
 
   const handleQuickCreateClick = (e: React.MouseEvent) => {
@@ -105,26 +108,46 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
           
           {/* Border highlight during drag over */}
           {snapshot.isDraggingOver && (
-            <Box
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                border: '2px solid',
-                borderColor: 'primary.main',
-                borderRadius: 0.5,
-                pointerEvents: 'none',
-                zIndex: 5,
-                animation: 'pulse 1.5s ease-in-out infinite',
-                '@keyframes pulse': {
-                  '0%, 100%': {
-                    opacity: 0.6,
+            <>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  border: '2px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 0.5,
+                  pointerEvents: 'none',
+                  zIndex: 5,
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': {
+                      opacity: 0.6,
+                    },
+                    '50%': {
+                      opacity: 1,
+                    },
                   },
-                  '50%': {
-                    opacity: 1,
-                  },
-                },
-              }}
-            />
+                }}
+              />
+              {/* Render specific gap highlights */}
+              {gaps.map((gap, idx) => (
+                <Box
+                  key={`gap-${idx}`}
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: `${timeToPixels(gap.start_time) - top}px`,
+                    height: `${durationToPixels(gap.start_time, gap.end_time)}px`,
+                    zIndex: 5,
+                  }}
+                >
+                  <GapHighlight 
+                    colour_hex={aideColor || '#1976d2'} 
+                  />
+                </Box>
+              ))}
+            </>
           )}
           
           {children}
@@ -144,6 +167,8 @@ export const TimetableSlot = memo(TimetableSlotBase, (prev, next) => {
     prev.height === next.height &&
     prev.children === next.children &&
     prev.onClick === next.onClick &&
-    prev.onQuickCreate === next.onQuickCreate
+    prev.onQuickCreate === next.onQuickCreate &&
+    prev.gaps === next.gaps &&
+    prev.aideColor === next.aideColor
   );
 });

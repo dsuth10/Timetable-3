@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { tasksApi } from '../services/tasksApi'; // Import tasksApi
@@ -10,8 +10,9 @@ import { useTasksStore } from '../store/stores/tasks';
 import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
 import { useReliefPoolStore } from '../store/stores/reliefPool';
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
-import type { TeacherAide, Task, ReliefPoolTask } from '../types';
-import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES, getSegmentForTime } from '../components/TimetableGrid/timeUtils';
+import type { TeacherAide, Task, ReliefPoolTask, Absence, AideWithStatus, Weekday } from '../types';
+import { calculateDuration, addMinutesToTime, timeToMinutes, END_TIME_MINUTES, getSegmentForTime, generateTimeSlots } from '../components/TimetableGrid/timeUtils';
+import { calculateGaps, findSmallGap } from '../utils/gapUtils';
 
 type UseDragDropOptions = {
   onSuccess?: () => void;
@@ -71,6 +72,53 @@ export function useDragDrop(options?: UseDragDropOptions) {
   const { tasks } = useTasksStore(); 
   const { selectedClassId } = useUiStore(); // Get selectedClassId
   const aides = options?.aides || [];
+
+  const gridLines = useMemo(() => {
+    const slots = generateTimeSlots();
+    const lines = slots.map(s => s.substring(0, 5));
+    // Add the end time of the last slot
+    const lastSlot = slots[slots.length - 1];
+    const segment = getSegmentForTime(lastSlot);
+    if (segment) {
+      lines.push(segment.end);
+    }
+    return lines;
+  }, []);
+
+  const getSnappedTimes = useCallback((aideId: number, date: string, time: string, fallbackDuration: number) => {
+    const aide = aides.find(a => a.id === aideId) as AideWithStatus;
+    if (!aide) return { startTime: time + ':00', endTime: addMinutesToTime(time, fallbackDuration) + ':00' };
+
+    const segment = getSegmentForTime(time);
+    if (!segment) return { startTime: time + ':00', endTime: addMinutesToTime(time, fallbackDuration) + ':00' };
+
+    const slotStartMins = timeToMinutes(time);
+    const slotEndMins = timeToMinutes(segment.end);
+
+    const mockAbsences: Absence[] = aide.is_absent ? [{ id: 0, aide_id: aide.id, date: date }] : [];
+    const gaps = calculateGaps(aide.assignments, mockAbsences, gridLines, aide.id, date);
+
+    // Find first gap that overlaps with the slot [slotStartMins, slotEndMins)
+    // The key is that even if the gap doesn't start at slotStartMins (e.g. 1:25 instead of 1:20),
+    // we want to pick it up if it's within the slot boundaries.
+    const targetGap = gaps.find(g => {
+      const gapStartMins = timeToMinutes(g.start_time);
+      const gapEndMins = timeToMinutes(g.end_time);
+      return gapStartMins < slotEndMins && gapEndMins > slotStartMins;
+    });
+
+    if (targetGap) {
+      return {
+        startTime: targetGap.start_time + ':00',
+        endTime: targetGap.end_time + ':00'
+      };
+    }
+
+    return { 
+      startTime: time + ':00', 
+      endTime: addMinutesToTime(time, fallbackDuration) + ':00' 
+    };
+  }, [aides, gridLines]);
 
   // Debounce map for drag-triggered updates (per-assignment key)
   const pendingTimersRef = useRef<Record<string, any>>({});
@@ -154,6 +202,24 @@ export function useDragDrop(options?: UseDragDropOptions) {
     
     // Validate destination aide ID if not unassigned
     if (destAideId !== null && !Number.isFinite(destAideId)) return;
+
+    // Helper to check for small gaps and show error
+    const checkForSmallGap = (aideId: number, checkDate: string | null, time: string): boolean => {
+      if (!checkDate) return false;
+      const aide = aides.find(a => a.id === aideId) as AideWithStatus;
+      if (!aide || !aide.assignments) return false;
+      
+      // Filter assignments for the specific date
+      const dateAssignments = aide.assignments.filter(asg => asg.date === checkDate);
+      const isSmallGap = findSmallGap(dateAssignments, gridLines, time);
+      if (isSmallGap) {
+        window.dispatchEvent(new CustomEvent('app:error', { 
+          detail: { message: 'All tasks need to be at least 10 minutes wide.' } 
+        }));
+        return true;
+      }
+      return false;
+    };
     
     // Skip if dropped in same location (only for assignments)
     if (isAssignment && sourceDroppableId === destDroppableId) return;
@@ -254,8 +320,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
         // Create One-Off Task (Legacy Fallback)
         try {
             const defaultDuration = getDefaultDuration(destTime);
-            const startTime = destTime + ':00';
-            const endTime = addMinutesToTime(destTime, defaultDuration) + ':00';
+            const { startTime, endTime } = getSnappedTimes(sourceAideId, destDate, destTime, defaultDuration);
             
             console.log('Creating one-off task...', { startTime, endTime, selectedClassId });
 
@@ -327,11 +392,15 @@ export function useDragDrop(options?: UseDragDropOptions) {
       let startTime = reliefTask.start_time;
       let endTime = reliefTask.end_time;
       
-      if (destTime) {
-        // If dropped on specific time slot, use that time but preserve original duration
-        const duration = calculateDuration(reliefTask.start_time, reliefTask.end_time);
-        startTime = destTime + ':00';
-        endTime = addMinutesToTime(destTime, duration) + ':00';
+      if (destTime && destDate && destAideId !== null) {
+        // Check for small gap first
+        if (checkForSmallGap(destAideId, destDate, destTime)) return;
+
+        // --- GAP SNAPPING ---
+        const originalDuration = calculateDuration(reliefTask.start_time, reliefTask.end_time);
+        const snapped = getSnappedTimes(destAideId, destDate, destTime, originalDuration);
+        startTime = snapped.startTime;
+        endTime = snapped.endTime;
       }
 
       // Show modal for user to confirm/edit times (preserving original duration)
@@ -369,11 +438,15 @@ export function useDragDrop(options?: UseDragDropOptions) {
         let startTime: string;
         let endTime: string;
 
-        if (destTime) {
-            // Dropped on specific time slot
+        if (destTime && destDate && destAideId !== null) {
+            // Check for small gap first
+            if (checkForSmallGap(destAideId, destDate, destTime)) return;
+
+            // --- GAP SNAPPING ---
             const defaultDuration = getDefaultDuration(destTime);
-            startTime = destTime + ':00';
-            endTime = addMinutesToTime(destTime, defaultDuration) + ':00';
+            const snapped = getSnappedTimes(destAideId, destDate, destTime, defaultDuration);
+            startTime = snapped.startTime;
+            endTime = snapped.endTime;
         } else {
             // No specific time, use current task times or defaults
             startTime = '09:00:00';
@@ -465,23 +538,34 @@ export function useDragDrop(options?: UseDragDropOptions) {
       return;
     }
 
+    // Use destDate if available, otherwise keep current date
+    const targetDate = destDate || currentAssignment.date;
+
     // Calculate default times for modal
     let startTime: string;
     let endTime: string;
 
     if (destTime) {
-      // Dropped on specific time slot - default to 30 minutes
-      startTime = destTime + ':00';
-      endTime = addMinutesToTime(destTime, 30) + ':00';
+      // --- GAP SNAPPING ---
+      const aideId = destAideId === 0 ? currentAssignment.aide_id : (destAideId ?? 0);
+      
+      if (aideId !== null) {
+        // Check for small gap first
+        if (checkForSmallGap(aideId, targetDate, destTime)) return;
+
+        const snapped = getSnappedTimes(aideId, targetDate, destTime, 30);
+        startTime = snapped.startTime;
+        endTime = snapped.endTime;
+      } else {
+        startTime = destTime + ':00';
+        endTime = addMinutesToTime(destTime, 30) + ':00';
+      }
     } else {
       // No specific time slot, preserve current duration
-      const currentDuration = calculateDuration(currentAssignment.start_time, currentAssignment.end_time);
+      // const currentDuration = calculateDuration(currentAssignment.start_time, currentAssignment.end_time);
       startTime = currentAssignment.start_time;
       endTime = currentAssignment.end_time;
     }
-
-    // Use destDate if available, otherwise keep current date
-    const targetDate = destDate || currentAssignment.date;
 
     // Show modal for user to confirm/edit times
     // In Class View, destAideId is 0 (no aide context), so preserve the original aide

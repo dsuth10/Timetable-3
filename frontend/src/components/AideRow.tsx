@@ -1,11 +1,13 @@
 import { Box, Typography, Avatar, alpha, Tooltip } from '@mui/material';
 import { EventBusy } from '@mui/icons-material';
-import type { AideWithStatus, TimelineConfig, Assignment } from '../types';
+import type { AideWithStatus, TimelineConfig, Assignment, Absence } from '../types';
 import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
 import { useMemo } from 'react';
 import { getAvailabilityInfo } from '../utils/availabilityUtils';
-import { snapToSlot } from './TimetableGrid/timeUtils';
+import { snapToSlot, addMinutesToTime, timeIntervalsOverlap } from './TimetableGrid/timeUtils';
+import { calculateGaps } from '../utils/gapUtils';
+import GapHighlight from './TimetableGrid/GapHighlight';
 
 interface AideRowProps {
   aide: AideWithStatus;
@@ -23,6 +25,24 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
   const timelineStart = startTimeToMinutes(timelineConfig.slots[0].start_time);
   const timelineEnd = timelineStart + timelineConfig.slots.reduce((acc, slot) => acc + slot.duration_minutes, 0);
   const totalMinutes = timelineEnd - timelineStart;
+
+  // Calculate gaps for snapping
+  const gridLines = useMemo(() => {
+    const lines = timelineConfig.slots.map(s => s.start_time.substring(0, 5));
+    // Add the end time of the last slot
+    const lastSlot = timelineConfig.slots[timelineConfig.slots.length - 1];
+    const [h, m] = lastSlot.start_time.split(':').map(Number);
+    const lastEndMins = h * 60 + m + lastSlot.duration_minutes;
+    lines.push(`${Math.floor(lastEndMins / 60).toString().padStart(2, '0')}:${(lastEndMins % 60).toString().padStart(2, '0')}`);
+    return lines;
+  }, [timelineConfig]);
+
+  const gaps = useMemo(() => {
+    // Note: We need actual Absence objects for calculateGaps if we want to support time-based absences.
+    // For now, if aide.is_absent is true, we pass a mock absence for the day.
+    const mockAbsences: Absence[] = aide.is_absent ? [{ id: 0, aide_id: aide.id, date: date }] : [];
+    return calculateGaps(aide.assignments, mockAbsences, gridLines, aide.id, date);
+  }, [aide.assignments, aide.is_absent, aide.id, date, gridLines]);
 
   // Calculate availability shading
   const availabilityInfo = useMemo(() => {
@@ -70,7 +90,7 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
       startTimeToMinutes(a.start_time) - startTimeToMinutes(b.start_time)
     );
 
-    const layouts = [];
+    const layouts: { assignment: Assignment; style: React.CSSProperties }[] = [];
     const processed = new Set<number>();
 
     for (let i = 0; i < sorted.length; i++) {
@@ -249,6 +269,13 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
             return snappedTime + ':00' === slotStartTime;
           });
           
+          // Find gaps that fall into this slot
+          const slotGaps = gaps.filter(g => {
+            const gapStart = g.start_time;
+            const gapEnd = g.end_time;
+            return timeIntervalsOverlap(slotStartTime.substring(0, 5), addMinutesToTime(slotStartTime.substring(0, 5), slot.duration_minutes), gapStart, gapEnd);
+          });
+          
           return (
             <Droppable 
               key={slotStartTime} 
@@ -271,6 +298,24 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                     position: 'relative' // To position tasks relative to their starting slot
                   }}
                 >
+                  {/* Render gap highlights when dragging over */}
+                  {snapshot.isDraggingOver && slotGaps.map((gap, idx) => (
+                    <Box
+                      key={`gap-${idx}`}
+                      sx={{
+                        position: 'absolute',
+                        zIndex: 5,
+                        top: 0,
+                        bottom: 0,
+                        // Position relative to slot
+                        left: `${(startTimeToMinutes(gap.start_time) - startTimeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
+                        width: `${(startTimeToMinutes(gap.end_time) - startTimeToMinutes(gap.start_time)) / slot.duration_minutes * 100}%`,
+                      }}
+                    >
+                      <GapHighlight colour_hex={aide.colour_hex} />
+                    </Box>
+                  ))}
+
                   {/* Render task cards that start in this slot */}
                   {slotTasks.map((layout, index) => (
                     <Box

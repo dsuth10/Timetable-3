@@ -19,6 +19,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - TypeScript 5.x, React 18, Python 3.12+ + Material UI v5, Zustand, @hello-pangea/dnd, SQLAlchemy (007-when-assigning-tasks)
 - SQLite (backend/instance/timetable.db) (007-when-assigning-tasks)
 - Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd (008-each-task-card)
+- Python 3.12+, TypeScript (Strict Mode), React 18+ + Flask, SQLAlchemy, Vite, Material-UI v5, Zustand, @hello-pangea/dnd (009-feature-description-create)
+- SQLite (`backend/instance/timetable.db`) (009-feature-description-create)
 
 ## Project Structure
 ```
@@ -34,9 +36,9 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 009-feature-description-create: Added Python 3.12+, TypeScript (Strict Mode), React 18+ + Flask, SQLAlchemy, Vite, Material-UI v5, Zustand, @hello-pangea/dnd
 - 008-each-task-card: Added Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
 - 007-when-assigning-tasks: Added TypeScript 5.x, React 18, Python 3.12+ + Material UI v5, Zustand, @hello-pangea/dnd, SQLAlchemy
-- 006-we-are-implementing: Added Python 3.12+ (Backend), TypeScript / React 18+ (Frontend) + Flask, SQLAlchemy, Zustand, @hello-pangea/dnd (or similar for complex timeline DND)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
