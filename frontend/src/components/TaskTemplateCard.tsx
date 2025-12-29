@@ -58,9 +58,27 @@ function TaskTemplateCardBase({ task, index, assignments, aides, onDoubleClick }
             mb: 1,
             borderLeft: `4px solid ${categoryColor}`,
             cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
-            opacity: dragSnapshot.isDragging ? 0.8 : 1,
-            transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',
+            opacity: dragSnapshot.isDragging ? 0.9 : 1,
+            transform: dragSnapshot.isDragging ? 'rotate(2deg) scale(0.95)' : 'none',
             transition: 'all 0.2s ease',
+            ...(dragSnapshot.isDragging ? {
+              maxWidth: '180px',
+              minWidth: '150px',
+              maxHeight: '60px',
+              boxShadow: 10,
+              zIndex: 9999,
+              pointerEvents: 'none',
+              border: `1px solid ${categoryColor}`,
+              '& .MuiCardContent-root': {
+                p: 1,
+              },
+              '& .MuiChip-root': {
+                display: 'none', // Hide category chip during drag
+              },
+              '& .MuiTypography-caption': {
+                display: 'none', // Hide subtitle during drag
+              }
+            } : {}),
             '&:hover': {
               boxShadow: 3,
               transform: 'translateY(-2px)',

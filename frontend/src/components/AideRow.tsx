@@ -41,8 +41,8 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
     // Note: We need actual Absence objects for calculateGaps if we want to support time-based absences.
     // For now, if aide.is_absent is true, we pass a mock absence for the day.
     const mockAbsences: Absence[] = aide.is_absent ? [{ id: 0, aide_id: aide.id, date: date }] : [];
-    return calculateGaps(aide.assignments, mockAbsences, gridLines, aide.id, date);
-  }, [aide.assignments, aide.is_absent, aide.id, date, gridLines]);
+    return calculateGaps(aide.assignments, mockAbsences, gridLines, aide.id, date, aide.availability);
+  }, [aide.assignments, aide.is_absent, aide.id, date, gridLines, aide.availability]);
 
   // Calculate availability shading
   const availabilityInfo = useMemo(() => {

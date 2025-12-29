@@ -1,10 +1,11 @@
-import { Assignment, Absence } from '../types';
+import { Assignment, Absence, Availability } from '../types';
 import { 
   timeToMinutes, 
   minutesToTime, 
   calculateDuration, 
   timeIntervalsOverlap 
 } from '../components/TimetableGrid/timeUtils';
+import { getWeekdayFromDate } from './availabilityUtils';
 
 export interface Gap {
   start_time: string; // HH:MM
@@ -21,20 +22,50 @@ export interface Gap {
  * 2. Do not overlap with existing assignments or absences.
  * 3. Do not cross grid line boundaries.
  * 4. Are within working hours (implicitly defined by grid lines).
+ * 5. Are within the aide's availability window.
  */
 export function calculateGaps(
   assignments: Assignment[],
   absences: Absence[],
   gridLines: string[],
   aide_id: number,
-  date: string
+  date: string,
+  availability?: Availability[]
 ): Gap[] {
   const gaps: Gap[] = [];
 
+  // Find availability for this day
+  const weekday = getWeekdayFromDate(date);
+  const dayAvail = availability?.find(a => a.weekday === weekday);
+
   // 1. Iterate through each grid interval
   for (let i = 0; i < gridLines.length - 1; i++) {
-    const intervalStart = gridLines[i];
-    const intervalEnd = gridLines[i + 1];
+    let intervalStart = gridLines[i];
+    let intervalEnd = gridLines[i + 1];
+
+    // Tighten interval to availability boundaries if they exist
+    if (dayAvail) {
+      const availStart = dayAvail.start_time.substring(0, 5);
+      const availEnd = dayAvail.end_time.substring(0, 5);
+
+      // If availability doesn't overlap with this grid interval at all, skip it
+      if (!timeIntervalsOverlap(intervalStart, intervalEnd, availStart, availEnd)) {
+        continue;
+      }
+
+      // Shrink the interval to fit within availability
+      if (timeToMinutes(availStart) > timeToMinutes(intervalStart)) {
+        intervalStart = availStart;
+      }
+      if (timeToMinutes(availEnd) < timeToMinutes(intervalEnd)) {
+        intervalEnd = availEnd;
+      }
+
+      // If the resulting tightened interval is too small, skip
+      if (timeToMinutes(intervalEnd) - timeToMinutes(intervalStart) < 10) {
+        continue;
+      }
+    }
     
     // Sort assignments in this interval by start time
     const relevantAssignments = assignments

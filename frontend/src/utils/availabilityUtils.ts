@@ -11,7 +11,7 @@ function timeToMinutes(timeStr: string): number {
 /**
  * Gets weekday abbreviation from date string (YYYY-MM-DD)
  */
-function getWeekdayFromDate(dateStr: string): string {
+export function getWeekdayFromDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
   const dayOfWeek = date.getDay();
   const weekdayMap: Record<number, string> = {

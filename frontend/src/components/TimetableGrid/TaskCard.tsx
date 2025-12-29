@@ -54,12 +54,27 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
             borderRadius: compact ? 0 : 1,
             cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
             bgcolor: displayColor ? alpha(displayColor, 0.08) : (dragSnapshot.isDragging ? 'action.hover' : 'background.paper'),
-            opacity: dragSnapshot.isDragging ? 0.8 : 1,
-            transform: dragSnapshot.isDragging ? 'rotate(2deg)' : 'none',
+            opacity: dragSnapshot.isDragging ? 0.9 : 1,
+            transform: dragSnapshot.isDragging ? 'rotate(2deg) scale(0.95)' : 'none',
             transition: 'all 0.2s ease',
-            height: isPositioned ? '100%' : 'auto',
+            height: isPositioned && !dragSnapshot.isDragging ? '100%' : 'auto',
             display: 'flex',
             flexDirection: 'column',
+            ...(dragSnapshot.isDragging ? {
+              maxWidth: '180px',
+              minWidth: '150px',
+              maxHeight: '80px',
+              boxShadow: 10,
+              zIndex: 9999,
+              pointerEvents: 'none', // Important for smooth dragging
+              border: `1px solid ${displayColor}`,
+              '& .MuiCardContent-root': {
+                p: 1,
+              },
+              '& .MuiChip-root': {
+                display: 'none', // Hide chips during drag to save space
+              },
+            } : {}),
             '&:hover': {
               boxShadow: 3,
               transform: 'translateY(-2px)',

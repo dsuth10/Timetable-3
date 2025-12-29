@@ -63,8 +63,10 @@ export function TimeSlottedColumn({
     if (!aideId) return [];
     // Ensure absences is filtered for the current aide and date
     const relevantAbsences = absences.filter(a => a.aide_id === aideId && a.date === date);
-    return calculateGaps(assignments, relevantAbsences, gridLines, aideId, date);
-  }, [assignments, absences, aideId, date, gridLines]);
+    // Find the aide to get their availability
+    const aide = aides?.find(a => a.id === aideId);
+    return calculateGaps(assignments, relevantAbsences, gridLines, aideId, date, aide?.availability);
+  }, [assignments, absences, aideId, date, gridLines, aides]);
 
   // Group assignments by task instance for Class View
   const processedAssignments = useMemo(() => {
