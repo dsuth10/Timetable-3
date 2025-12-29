@@ -211,7 +211,11 @@ export default function DailyDisplayPage() {
                 <CircularProgress />
               </Box>
             ) : data ? (
-              <DailyTimeline data={data} onTaskDoubleClick={handleTaskDoubleClick} />
+              <DailyTimeline 
+                data={data} 
+                date={dateParam}
+                onTaskDoubleClick={handleTaskDoubleClick} 
+              />
             ) : null}
           </Box>
 

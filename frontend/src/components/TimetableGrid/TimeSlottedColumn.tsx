@@ -170,7 +170,7 @@ export function TimeSlottedColumn({
                     left: `${position.left}%`,
                     width: `${position.width}%`,
                     height: `${position.height}px`,
-                    zIndex: 2,
+                    zIndex: 5,
                   }}
                 >
                   <TaskCard

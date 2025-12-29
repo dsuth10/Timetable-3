@@ -1,23 +1,65 @@
-import { Box, Typography, Avatar, alpha } from '@mui/material';
+import { Box, Typography, Avatar, alpha, Tooltip } from '@mui/material';
+import { EventBusy } from '@mui/icons-material';
 import type { AideWithStatus, TimelineConfig, Assignment } from '../types';
 import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
 import { useMemo } from 'react';
+import { getAvailabilityInfo } from '../utils/availabilityUtils';
+import { snapToSlot } from './TimetableGrid/timeUtils';
 
 interface AideRowProps {
   aide: AideWithStatus;
+  date: string; // YYYY-MM-DD
   timelineConfig: TimelineConfig;
   onTaskDoubleClick?: (assignment: Assignment) => void;
 }
 
-export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: AideRowProps) {
+export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick }: AideRowProps) {
   const startTimeToMinutes = (timeStr: string) => {
     const [h, m] = timeStr.split(':').map(Number);
     return h * 60 + m;
   };
 
   const timelineStart = startTimeToMinutes(timelineConfig.slots[0].start_time);
-  const totalMinutes = timelineConfig.slots.reduce((acc, slot) => acc + slot.duration_minutes, 0);
+  const timelineEnd = timelineStart + timelineConfig.slots.reduce((acc, slot) => acc + slot.duration_minutes, 0);
+  const totalMinutes = timelineEnd - timelineStart;
+
+  // Calculate availability shading
+  const availabilityInfo = useMemo(() => {
+    return getAvailabilityInfo(aide.availability || [], date);
+  }, [aide.availability, date]);
+
+  const unavailabilityBlocks = useMemo(() => {
+    if (!availabilityInfo.hasAvailability || !availabilityInfo.timeWindow) {
+      return [];
+    }
+
+    const blocks = [];
+    const availStart = startTimeToMinutes(availabilityInfo.timeWindow.start);
+    const availEnd = startTimeToMinutes(availabilityInfo.timeWindow.end);
+
+    // Block before availability
+    if (availStart > timelineStart) {
+      const start = timelineStart;
+      const end = Math.min(availStart, timelineEnd);
+      blocks.push({
+        left: 0,
+        width: ((end - start) / totalMinutes) * 100
+      });
+    }
+
+    // Block after availability
+    if (availEnd < timelineEnd) {
+      const start = Math.max(availEnd, timelineStart);
+      const end = timelineEnd;
+      blocks.push({
+        left: ((start - timelineStart) / totalMinutes) * 100,
+        width: ((end - start) / totalMinutes) * 100
+      });
+    }
+
+    return blocks;
+  }, [availabilityInfo, timelineStart, timelineEnd, totalMinutes]);
   
   // Calculate horizontal positions and vertical split for overlaps
   const taskLayouts = useMemo(() => {
@@ -92,7 +134,7 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
         borderColor: 'divider',
         minHeight: 66, // Slightly taller to accommodate overlaps
         '&:hover': { bgcolor: 'action.hover' },
-        bgcolor: aide.is_absent ? 'error.light' : 'inherit',
+        bgcolor: 'inherit',
         position: 'relative'
       }}
     >
@@ -158,10 +200,54 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
 
       {/* Timeline Row Content */}
       <Box sx={{ flex: 1, position: 'relative', minWidth: 2000, display: 'flex' }}>
+        {/* Absence Overlay */}
+        {aide.is_absent && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(244, 67, 54, 0.2)',
+              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(244, 67, 54, 0.1) 10px, rgba(244, 67, 54, 0.1) 20px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 10,
+            }}
+          >
+            <EventBusy sx={{ fontSize: 40, color: 'error.light', opacity: 0.5 }} />
+          </Box>
+        )}
+
+        {/* Unavailability Overlays */}
+        {!aide.is_absent && unavailabilityBlocks.map((block, i) => (
+          <Tooltip key={i} title="Outside working hours">
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: `${block.left}%`,
+                width: `${block.width}%`,
+                backgroundColor: 'rgba(158, 158, 158, 0.4)',
+                pointerEvents: 'none',
+                zIndex: 5,
+              }}
+            />
+          </Tooltip>
+        ))}
+
         {timelineConfig.slots.map((slot) => {
           const slotStartTime = slot.start_time;
-          // Find tasks that start in this exact slot
-          const slotTasks = taskLayouts.filter(l => l.assignment.start_time === slotStartTime);
+          // Find tasks that snap to this slot (T054: Support non-aligned start times)
+          const slotTasks = taskLayouts.filter(l => {
+            const assignmentTime = l.assignment.start_time.substring(0, 5);
+            const snappedTime = snapToSlot(assignmentTime);
+            return snappedTime + ':00' === slotStartTime;
+          });
           
           return (
             <Droppable 
@@ -191,10 +277,10 @@ export default function AideRow({ aide, timelineConfig, onTaskDoubleClick }: Aid
                       key={layout.assignment.id}
                       sx={{
                         position: 'absolute',
-                        zIndex: 2,
+                        zIndex: 15,
                         ...layout.style,
-                        // Adjust style to be relative to this slot
-                        left: 0, // Since we are starting at this slot
+                        // Adjust style to be relative to this slot (T054: Support non-aligned start times)
+                        left: `${(startTimeToMinutes(layout.assignment.start_time) - startTimeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
                         width: `${(startTimeToMinutes(layout.assignment.end_time) - startTimeToMinutes(layout.assignment.start_time)) / slot.duration_minutes * 100}%`,
                       }}
                     >

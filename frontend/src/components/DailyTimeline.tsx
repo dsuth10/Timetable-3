@@ -4,10 +4,11 @@ import AideRow from './AideRow';
 
 interface DailyTimelineProps {
   data: DailyViewData;
+  date: string; // YYYY-MM-DD
   onTaskDoubleClick?: (assignment: Assignment) => void;
 }
 
-export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimelineProps) {
+export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTimelineProps) {
   const { aides, timeline_config } = data;
 
   return (
@@ -80,6 +81,7 @@ export default function DailyTimeline({ data, onTaskDoubleClick }: DailyTimeline
               <AideRow 
                 key={aide.id} 
                 aide={aide} 
+                date={date}
                 timelineConfig={timeline_config}
                 onTaskDoubleClick={onTaskDoubleClick}
               />

@@ -55,16 +55,16 @@ export default function AvailabilityOverlay({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(244, 67, 54, 0.1)',
-            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(244, 67, 54, 0.05) 10px, rgba(244, 67, 54, 0.05) 20px)',
+            backgroundColor: 'rgba(244, 67, 54, 0.2)',
+            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(244, 67, 54, 0.1) 10px, rgba(244, 67, 54, 0.1) 20px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             pointerEvents: 'none',
-            zIndex: 1,
+            zIndex: 2,
           }}
         >
-          <EventBusy sx={{ fontSize: 48, color: 'error.light', opacity: 0.3 }} />
+          <EventBusy sx={{ fontSize: 48, color: 'error.light', opacity: 0.5 }} />
         </Box>
       </Tooltip>
     );
@@ -81,9 +81,9 @@ export default function AvailabilityOverlay({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(158, 158, 158, 0.2)',
+            backgroundColor: 'rgba(158, 158, 158, 0.4)',
             pointerEvents: 'none',
-            zIndex: 1,
+            zIndex: 2,
           }}
         />
       </Tooltip>
@@ -103,9 +103,9 @@ export default function AvailabilityOverlay({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(158, 158, 158, 0.2)',
+          backgroundColor: 'rgba(158, 158, 158, 0.4)',
           pointerEvents: 'none',
-          zIndex: 1,
+          zIndex: 2,
         }}
       />
     );
@@ -150,7 +150,7 @@ export default function AvailabilityOverlay({
             height: b.height,
             backgroundColor: 'rgba(158, 158, 158, 0.4)',
             pointerEvents: 'none',
-            zIndex: 1,
+            zIndex: 2,
           }}
         />
       ))}

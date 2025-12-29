@@ -186,9 +186,8 @@ export default function AvailabilityEditor({
     if (!day.enabled) return;
 
     // Validate time
-    const snappedValue = snapToSlot(value);
-    const startTime = field === 'startTime' ? snappedValue : day.startTime;
-    const endTime = field === 'endTime' ? snappedValue : day.endTime;
+    const startTime = field === 'startTime' ? value : day.startTime;
+    const endTime = field === 'endTime' ? value : day.endTime;
 
     // Validate end time is after start time
     if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
