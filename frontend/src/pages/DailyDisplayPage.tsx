@@ -5,9 +5,11 @@ import {
   Paper, 
   Typography, 
   CircularProgress,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 import { addDays, subDays, format, isWeekend, nextMonday } from 'date-fns';
+import { Add as AddIcon } from '@mui/icons-material';
 import AppBar from '../components/Layout/AppBar';
 import { useDailyDisplayStore } from '../store/stores/dailyDisplay';
 import { useTasksStore } from '../store/stores/tasks';
@@ -16,6 +18,7 @@ import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import AppDragDropContext from '../components/DragDropContext';
 import DailyDatePicker from '../components/DailyDatePicker';
 import AssignmentConfirmationDialog from '../components/AssignmentConfirmationDialog';
+import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import ManagementPanel from '../components/Layout/ManagementPanel';
 import AidesManagement from '../components/Management/AidesManagement';
@@ -37,6 +40,7 @@ export default function DailyDisplayPage() {
   const [pendingAssignment, setPendingAssignment] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [showEditTask, setShowEditTask] = useState(false);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [selectedAssignmentForEdit, setSelectedAssignmentForEdit] = useState<Assignment | null>(null);
@@ -196,9 +200,19 @@ export default function DailyDisplayPage() {
       />
       
       <AppDragDropContext onDragEnd={handleDragEnd}>
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h5">Daily Display</Typography>
-          <DailyDatePicker value={dateParam} onChange={handleDateChange} />
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h5">Daily Display</Typography>
+            <DailyDatePicker value={dateParam} onChange={handleDateChange} />
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            size="small"
+            onClick={() => setShowCreateTaskModal(true)}
+          >
+            Create Task
+          </Button>
         </Box>
 
         {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}
@@ -269,6 +283,15 @@ export default function DailyDisplayPage() {
       {/* Render modals from useDragDrop hook */}
       {ConflictUI}
       {DurationModal}
+
+      <TaskCreationModal
+        open={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+        onCreated={() => {
+          setShowCreateTaskModal(false);
+          handleRefresh();
+        }}
+      />
 
       <TaskEditModal
         open={showEditTask}
