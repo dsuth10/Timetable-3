@@ -406,9 +406,16 @@ export default function Schedule() {
     duration: number;
   } | null>(null);
 
+  const aidesWithWeeklyAssignments = useMemo(() => {
+    return aides.map(aide => ({
+      ...aide,
+      assignments: assignmentsByAide[aide.id] || []
+    }));
+  }, [aides, assignmentsByAide]);
+
   const { onDragEnd, ConflictUI, DurationModal, setConflicts } = useDragDrop({
     onSuccess: refreshData,
-    aides: aides,
+    aides: aidesWithWeeklyAssignments,
     onClassroomDrop: (data) => {
       setTaskSelectionDraft(data);
       setShowTaskSelection(true);

@@ -75,6 +75,8 @@ export function calculateGaps(
     const relevantAssignments = safeAssignments
       .filter(asg => {
         if (!asg || !asg.start_time || !asg.end_time) return false;
+        // T054: Filter assignments to current date
+        if (asg.date !== date) return false;
         const asgStart = asg.start_time.substring(0, 5);
         const asgEnd = asg.end_time.substring(0, 5);
         return timeIntervalsOverlap(intervalStart, intervalEnd, asgStart, asgEnd);

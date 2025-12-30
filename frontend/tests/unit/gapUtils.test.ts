@@ -32,8 +32,8 @@ describe('gapUtils.calculateGaps', () => {
 
   it('should identify a gap between two tasks within the same grid interval', () => {
     const assignments: Partial<Assignment>[] = [
-      { id: 1, start_time: '09:10:00', end_time: '09:20:00', status: 'ASSIGNED' },
-      { id: 2, start_time: '09:30:00', end_time: '09:40:00', status: 'ASSIGNED' }
+      { id: 1, date: '2025-12-29', start_time: '09:10:00', end_time: '09:20:00', status: 'ASSIGNED' },
+      { id: 2, date: '2025-12-29', start_time: '09:30:00', end_time: '09:40:00', status: 'ASSIGNED' }
     ];
     
     const gaps = calculateGaps(assignments as Assignment[], [], gridLines, 1, '2025-12-29');
@@ -46,8 +46,8 @@ describe('gapUtils.calculateGaps', () => {
 
   it('should NOT return gaps smaller than 10 minutes', () => {
     const assignments: Partial<Assignment>[] = [
-      { id: 1, start_time: '09:10:00', end_time: '09:15:00', status: 'ASSIGNED' },
-      { id: 2, start_time: '09:20:00', end_time: '09:40:00', status: 'ASSIGNED' }
+      { id: 1, date: '2025-12-29', start_time: '09:10:00', end_time: '09:15:00', status: 'ASSIGNED' },
+      { id: 2, date: '2025-12-29', start_time: '09:20:00', end_time: '09:40:00', status: 'ASSIGNED' }
     ];
     
     const gaps = calculateGaps(assignments as Assignment[], [], gridLines, 1, '2025-12-29');
@@ -67,7 +67,7 @@ describe('gapUtils.calculateGaps', () => {
     // Interval 08:50 - 09:10 is 20m. 
     // If we add an assignment 08:55 - 09:05
     const assignments: Partial<Assignment>[] = [
-      { id: 1, start_time: '08:55:00', end_time: '09:05:00', status: 'ASSIGNED' }
+      { id: 1, date: '2025-12-29', start_time: '08:55:00', end_time: '09:05:00', status: 'ASSIGNED' }
     ];
     
     const filteredGaps = calculateGaps(assignments as Assignment[], [], gridLines, 1, '2025-12-29');
@@ -75,6 +75,19 @@ describe('gapUtils.calculateGaps', () => {
     // Gap 1: 08:50 - 08:55 (5m) -> Excluded
     // Gap 2: 09:05 - 09:10 (5m) -> Excluded
     expect(filteredGaps.find(g => g.end_time === '09:10' && g.start_time === '09:05')).toBeUndefined();
+  });
+
+  it('should ignore assignments from other dates', () => {
+    const assignments: Partial<Assignment>[] = [
+      { id: 1, date: '2025-12-30', start_time: '09:10:00', end_time: '09:40:00', status: 'ASSIGNED' }
+    ];
+    
+    const gaps = calculateGaps(assignments as Assignment[], [], gridLines, 1, '2025-12-29');
+    
+    // On 12-29, the interval 09:10-09:40 should still be a full gap because the assignment is on 12-30
+    const gap = gaps.find(g => g.start_time === '09:10' && g.end_time === '09:40');
+    expect(gap).toBeDefined();
+    expect(gap?.duration).toBe(30);
   });
 });
 
