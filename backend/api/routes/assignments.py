@@ -13,6 +13,7 @@ from api.models.task import Task
 from api.models.teacher_aide import TeacherAide
 from api.services.collision_service import CollisionService
 from api.services.conflict_resolver import ConflictResolver
+from api.services.assignment_service import AssignmentSeriesService
 from api.middleware.validation import require_json, validate_time_30min
 
 bp = Blueprint('assignments', __name__, url_prefix='/api')
@@ -276,6 +277,53 @@ def update_assignment(assignment_id: int):
     db.session.add(assignment)
     db.session.commit()
     return assignment.to_dict(), 200
+
+
+@bp.route('/assignments/<int:assignment_id>/recurring-series-for-aide', methods=['DELETE'])
+def delete_assignment_series_for_aide(assignment_id: int):
+    """
+    DELETE /api/assignments/{id}/recurring-series-for-aide
+    
+    Delete this and future recurring assignments for the same aide.
+    Supports preview mode via ?preview=true query parameter.
+    """
+    data = request.get_json(silent=True) or {}
+    version = data.get('version')
+    preview = request.args.get('preview', 'false').lower() == 'true'
+    
+    if version is None:
+        return {'error': 'version is required'}, 400
+        
+    try:
+        if preview:
+            # Preview mode: return what would be deleted
+            deletable_ids, skipped_count = AssignmentSeriesService.get_deletable_assignments(assignment_id)
+            return {
+                "preview": True,
+                "would_delete_count": len(deletable_ids),
+                "would_delete_ids": deletable_ids,
+                "would_skip_count": skipped_count,
+                "would_skip_reason": f"{skipped_count} modified assignment(s) would be preserved" if skipped_count > 0 else None
+            }, 200
+        else:
+            # Execution mode: delete assignments
+            result = AssignmentSeriesService.delete_recurring_series_for_aide(assignment_id, version)
+            return result, 200
+            
+    except ValueError as e:
+        error_msg = str(e)
+        if 'not found' in error_msg.lower():
+            return {'error': error_msg}, 404
+        if 'version mismatch' in error_msg.lower():
+            # Return detail for conflict resolution if needed
+            return {
+                'error': 'Assignment was modified by another user',
+                'current_version': None, # We could fetch it if we want
+                'your_version': version
+            }, 409
+        return {'error': error_msg}, 400
+    except Exception as e:
+        return {'error': f"Internal server error: {str(e)}"}, 500
 
 
 @bp.get('/assignments/unassigned')

@@ -4,7 +4,7 @@
 This quickstart validates the complete backup flow from user perspective, ensuring all functional requirements are met.
 
 ## Prerequisites
-- Application running (backend on port 5000, frontend on port 5173)
+- Application running (backend on port 5000, frontend on port 3000)
 - Database populated with sample data (at least one record in each table)
 - Browser with developer tools open (to monitor network requests)
 

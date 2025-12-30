@@ -5,7 +5,7 @@ This guide provides steps to verify the Snap-to-Gap drag-and-drop feature.
 
 ## Prerequisites
 - Backend running at `http://localhost:5000`
-- Frontend running at `http://localhost:5173`
+- Frontend running at `http://localhost:3000`
 - At least one Teacher Aide with some assignments and "Unavailable" periods.
 
 ## Manual Test Scenarios

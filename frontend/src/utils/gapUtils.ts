@@ -25,14 +25,18 @@ export interface Gap {
  * 5. Are within the aide's availability window.
  */
 export function calculateGaps(
-  assignments: Assignment[],
-  absences: Absence[],
+  assignments: Assignment[] = [],
+  absences: Absence[] = [],
   gridLines: string[],
   aide_id: number,
   date: string,
   availability?: Availability[]
 ): Gap[] {
   const gaps: Gap[] = [];
+  
+  // Ensure we have arrays even if null/undefined was passed (though default params handle undefined)
+  const safeAssignments = assignments || [];
+  const safeAbsences = absences || [];
 
   // Find availability for this day
   const weekday = getWeekdayFromDate(date);
@@ -68,8 +72,9 @@ export function calculateGaps(
     }
     
     // Sort assignments in this interval by start time
-    const relevantAssignments = assignments
+    const relevantAssignments = safeAssignments
       .filter(asg => {
+        if (!asg || !asg.start_time || !asg.end_time) return false;
         const asgStart = asg.start_time.substring(0, 5);
         const asgEnd = asg.end_time.substring(0, 5);
         return timeIntervalsOverlap(intervalStart, intervalEnd, asgStart, asgEnd);
@@ -79,7 +84,7 @@ export function calculateGaps(
     // For now, we assume an absence covers the WHOLE day if it exists for this date.
     // (AideWithStatus.is_absent is already true if an absence exists).
     // If the aide is absent, this interval has NO gaps.
-    const isAbsent = absences.some(abs => abs.date === date);
+    const isAbsent = safeAbsences.some(abs => abs && abs.date === date);
     if (isAbsent) continue;
 
     // 2. Find empty segments within this interval
@@ -130,10 +135,11 @@ export function calculateGaps(
  * Checks if there's a gap smaller than 10 minutes at the given drop time.
  */
 export function findSmallGap(
-  assignments: Assignment[],
+  assignments: Assignment[] = [],
   gridLines: string[],
   dropTime: string
 ): boolean {
+  const safeAssignments = assignments || [];
   // Find which grid interval the dropTime falls into
   const dropMins = timeToMinutes(dropTime);
   let intervalStart = '';
@@ -151,8 +157,9 @@ export function findSmallGap(
 
   if (!intervalStart) return false;
 
-  const relevantAssignments = assignments
+  const relevantAssignments = safeAssignments
     .filter(asg => {
+      if (!asg || !asg.start_time || !asg.end_time) return false;
       const asgStart = asg.start_time.substring(0, 5);
       const asgEnd = asg.end_time.substring(0, 5);
       return timeIntervalsOverlap(intervalStart, intervalEnd, asgStart, asgEnd);

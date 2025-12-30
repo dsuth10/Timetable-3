@@ -39,6 +39,11 @@ export const assignmentsApi = {
   delete(id: ID): Promise<void> {
     return api.delete(`/assignments/${id}`).then(() => undefined);
   },
+  deleteRecurringSeriesForAide(id: ID, version: number, preview: boolean = false): Promise<any> {
+    const q = preview ? '?preview=true' : '';
+    return api.delete(`/assignments/${id}/recurring-series-for-aide${q}`, { data: { version } })
+      .then((r) => r.data);
+  },
 };
 
 

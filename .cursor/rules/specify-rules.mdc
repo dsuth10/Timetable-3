@@ -21,6 +21,7 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd (008-each-task-card)
 - Python 3.12+, TypeScript (Strict Mode), React 18+ + Flask, SQLAlchemy, Vite, Material-UI v5, Zustand, @hello-pangea/dnd (009-feature-description-create)
 - SQLite (`backend/instance/timetable.db`) (009-feature-description-create)
+- Python 3.12+ (Backend), TypeScript (Strict Mode) (Frontend) + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd (010-we-need-to)
 
 ## Project Structure
 ```
@@ -36,9 +37,9 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 010-we-need-to: Added Python 3.12+ (Backend), TypeScript (Strict Mode) (Frontend) + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
+- 010-we-need-to: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 - 009-feature-description-create: Added Python 3.12+, TypeScript (Strict Mode), React 18+ + Flask, SQLAlchemy, Vite, Material-UI v5, Zustand, @hello-pangea/dnd
-- 008-each-task-card: Added Python 3.12, TypeScript, React 18+ + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
-- 007-when-assigning-tasks: Added TypeScript 5.x, React 18, Python 3.12+ + Material UI v5, Zustand, @hello-pangea/dnd, SQLAlchemy
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

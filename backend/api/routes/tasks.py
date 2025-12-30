@@ -345,6 +345,19 @@ def update_task(task_id: int):
             db.session.add(recurring_series)
             db.session.flush()  # Get the series ID
             
+            # Find the existing assignment for this task and date to link it to the new series
+            existing_asg_query = Assignment.query.filter(
+                Assignment.task_id == task.id,
+                Assignment.date == base_date
+            )
+            # If an aide was specified, narrow it down to that aide's assignment
+            if aide_id:
+                existing_asg_query = existing_asg_query.filter(Assignment.aide_id == aide_id)
+            
+            ea = existing_asg_query.first()
+            if ea:
+                ea.recurring_series_id = recurring_series.id
+            
             # Generate recurring assignments linked to this series
             assignments_data = RecurrenceService.generate_assignments_for_task(
                 task_id=task.id,

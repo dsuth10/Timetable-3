@@ -96,12 +96,15 @@ export function useDragDrop(options?: UseDragDropOptions) {
     const slotEndMins = timeToMinutes(segment.end);
 
     const mockAbsences: Absence[] = aide.is_absent ? [{ id: 0, aide_id: aide.id, date: date }] : [];
-    const gaps = calculateGaps(aide.assignments, mockAbsences, gridLines, aide.id, date, aide.availability);
+    
+    // Defensive check for aide.assignments
+    const gaps = calculateGaps(aide.assignments || [], mockAbsences, gridLines, aide.id, date, aide.availability);
 
     // Find first gap that overlaps with the slot [slotStartMins, slotEndMins)
     // The key is that even if the gap doesn't start at slotStartMins (e.g. 1:25 instead of 1:20),
     // we want to pick it up if it's within the slot boundaries.
     const targetGap = gaps.find(g => {
+      if (!g || !g.start_time || !g.end_time) return false;
       const gapStartMins = timeToMinutes(g.start_time);
       const gapEndMins = timeToMinutes(g.end_time);
       return gapStartMins < slotEndMins && gapEndMins > slotStartMins;

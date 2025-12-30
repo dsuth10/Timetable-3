@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Radio,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { Warning, Delete } from '@mui/icons-material';
 import { assignmentsApi } from '../../services/assignmentsApi';
@@ -30,13 +31,36 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
   const { deleteTask } = useTasksStore();
   // When deleting from TaskBank (no assignment), default to permanent deletion
   // When deleting from assignment context, default to instance deletion
-  const [deleteOption, setDeleteOption] = useState<'instance' | 'reset' | 'delete'>(
+  const [deleteOption, setDeleteOption] = useState<'instance' | 'recurring' | 'reset' | 'delete'>(
     assignment ? 'instance' : 'delete'
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  
+  // Preview count for recurring series
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
 
   const isRecurring = task?.recurrence_rule != null;
+  const isSeriesInstance = assignment?.recurring_series_id != null;
+
+  // Fetch preview count when modal opens for a series instance
+  useEffect(() => {
+    if (open && assignment && isSeriesInstance) {
+      setPreviewLoading(true);
+      setPreviewCount(null);
+      assignmentsApi.deleteRecurringSeriesForAide(assignment.id, assignment.version, true)
+        .then(data => {
+          setPreviewCount(data.would_delete_count);
+        })
+        .catch(err => {
+          console.error('Failed to fetch delete preview:', err);
+        })
+        .finally(() => {
+          setPreviewLoading(false);
+        });
+    }
+  }, [open, assignment, isSeriesInstance]);
 
   const handleClose = () => {
     if (!busy) {
@@ -67,6 +91,25 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
         try {
           window.dispatchEvent(new CustomEvent('app:success', { 
             detail: { message: 'Assignment deleted successfully' } 
+          }));
+        } catch {}
+      } else if (deleteOption === 'recurring') {
+        if (!assignment) {
+          setError('Cannot delete recurring series without an assignment');
+          setBusy(false);
+          return;
+        }
+        
+        const result = await assignmentsApi.deleteRecurringSeriesForAide(assignment.id, assignment.version);
+        
+        // Dispatch success event for toast notification
+        try {
+          let message = result.message || 'Recurring assignments deleted';
+          if (result.skipped_count > 0) {
+            message += ` (${result.skipped_count} modified preserved)`;
+          }
+          window.dispatchEvent(new CustomEvent('app:success', { 
+            detail: { message } 
           }));
         } catch {}
       } else if (deleteOption === 'reset') {
@@ -143,7 +186,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
               
               <RadioGroup
                 value={deleteOption}
-                onChange={(e) => setDeleteOption(e.target.value as 'instance' | 'reset' | 'delete')}
+                onChange={(e) => setDeleteOption(e.target.value as any)}
               >
                 <FormControlLabel
                   value="instance"
@@ -164,6 +207,31 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
                     </Box>
                   }
                 />
+
+                {isSeriesInstance && (
+                  <FormControlLabel
+                    value="recurring"
+                    control={<Radio />}
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          Remove this and future recurring instances for this aide
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" component="div">
+                          {previewLoading ? (
+                            <Skeleton width={300} />
+                          ) : (
+                            <>
+                              Delete this and {previewCount !== null ? (previewCount - 1) : '...'} more recurring assignments.
+                              Modified assignments will be preserved. Past assignments will not be affected.
+                            </>
+                          )}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                )}
+
                 <FormControlLabel
                   value="reset"
                   control={<Radio />}
@@ -204,7 +272,7 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
               
               <RadioGroup
                 value={deleteOption}
-                onChange={(e) => setDeleteOption(e.target.value as 'reset' | 'delete')}
+                onChange={(e) => setDeleteOption(e.target.value as any)}
               >
                 <FormControlLabel
                   value="reset"
@@ -256,4 +324,5 @@ export default function TaskDeleteDialog({ open, onClose, task, assignment, onDe
     </Dialog>
   );
 }
+
 

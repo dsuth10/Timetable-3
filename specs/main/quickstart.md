@@ -5,7 +5,7 @@ This quickstart validates the Quick-Click Task Creation feature by walking throu
 ## Prerequisites
 
 1. Backend server running on `http://localhost:5000`
-2. Frontend application running on `http://localhost:5173`
+2. Frontend application running on `http://localhost:3000`
 3. Database seeded with at least:
    - One teacher aide (e.g., "Alex Smith", id=1)
    - One classroom (e.g., "Class 3A", id=3)
