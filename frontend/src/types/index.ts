@@ -173,3 +173,22 @@ export interface AssignTaskPayload {
   start_time: string;
   end_time: string;
 }
+
+export interface TooltipData {
+  task_title: string;
+  category: string;
+  classroom: {
+    name: string;
+    room_number: string;
+    teacher: string;
+  } | null;
+  start_time: string;
+  end_time: string;
+  assigned_aides: string[];
+  recurrence: {
+    is_recurring: boolean;
+    dates: string[];
+    has_more: boolean;
+  };
+  notes: string;
+}

@@ -27,6 +27,18 @@ def get_assignment(assignment_id: int):
     return assignment.to_dict(), 200
 
 
+@bp.get('/assignments/<int:assignment_id>/tooltip')
+def get_assignment_tooltip(assignment_id: int):
+    """
+    GET /api/assignments/{id}/tooltip
+    Returns aggregated data for task tooltip.
+    """
+    data = AssignmentSeriesService.get_tooltip_data(assignment_id)
+    if not data:
+        return {'error': 'Assignment not found'}, 404
+    return data, 200
+
+
 @bp.post('/assignments')
 @require_json(["task_id", "date", "start_time", "end_time"])
 @validate_time_30min(["start_time", "end_time"])

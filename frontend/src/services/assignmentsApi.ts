@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Assignment, ID } from '../types';
+import type { Assignment, ID, TooltipData } from '../types';
 
 export const assignmentsApi = {
   create(payload: Omit<Assignment, 'id' | 'version' | 'created_at' | 'updated_at'>): Promise<Assignment> {
@@ -7,6 +7,9 @@ export const assignmentsApi = {
   },
   get(id: ID): Promise<Assignment> {
     return api.get(`/assignments/${id}`).then((r) => r.data as Assignment);
+  },
+  getTooltip(id: ID): Promise<TooltipData> {
+    return api.get(`/assignments/${id}/tooltip`).then((r) => r.data as TooltipData);
   },
   update(id: ID, payload: Partial<Pick<Assignment, 'aide_id' | 'date' | 'start_time' | 'end_time' | 'status' | 'version'>>): Promise<Assignment> {
     return api.put(`/assignments/${id}`, payload).then((r) => r.data as Assignment);

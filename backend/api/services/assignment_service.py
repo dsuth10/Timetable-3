@@ -127,3 +127,76 @@ class AssignmentSeriesService:
             "message": f"Removed {len(deletable_ids)} recurring instance(s) for this aide"
         }
 
+    @classmethod
+    def get_tooltip_data(cls, assignment_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Fetch aggregated data for a task tooltip.
+        
+        Includes:
+        - Task details (title, category, notes)
+        - Classroom details
+        - All aides assigned to this task instance (same time/date)
+        - Recurrence dates (up to 10)
+        """
+        assignment = db.session.get(Assignment, assignment_id)
+        if not assignment:
+            return None
+            
+        task = assignment.task
+        classroom = task.classroom if task else None
+        
+        # 1. Find all aides assigned to this same task instance (same task, date, time)
+        # This handles tasks that might be split across multiple aides
+        other_assignments = Assignment.query.filter(
+            Assignment.task_id == task.id,
+            Assignment.date == assignment.date,
+            Assignment.start_time == assignment.start_time,
+            Assignment.end_time == assignment.end_time
+        ).all()
+        
+        # Collect unique aide names
+        aide_names = set()
+        for asg in other_assignments:
+            if asg.aide:
+                aide_names.add(asg.aide.name)
+        
+        assigned_aides = sorted(list(aide_names))
+        if not assigned_aides:
+            assigned_aides = ["None"]
+            
+        # 2. Handle recurrence details
+        recurrence_info = {
+            "is_recurring": False,
+            "dates": [],
+            "has_more": False
+        }
+        
+        if assignment.recurring_series_id:
+            recurrence_info["is_recurring"] = True
+            # Fetch up to 11 upcoming assignments in the series to detect overflow
+            # We filter by aide_id to show the dates for this specific aide's stream in the series
+            future_assignments = Assignment.query.filter(
+                Assignment.recurring_series_id == assignment.recurring_series_id,
+                Assignment.date >= assignment.date,
+                Assignment.aide_id == assignment.aide_id
+            ).order_by(Assignment.date).limit(11).all()
+            
+            dates = [a.date.isoformat() for a in future_assignments[:10]]
+            recurrence_info["dates"] = dates
+            recurrence_info["has_more"] = len(future_assignments) > 10
+
+        return {
+            "task_title": task.title if task else "Missing Task",
+            "category": task.category if task else "UNKNOWN",
+            "classroom": {
+                "name": classroom.name,
+                "room_number": classroom.room_number,
+                "teacher": classroom.teacher
+            } if classroom else None,
+            "start_time": assignment.start_time.strftime('%H:%M'),
+            "end_time": assignment.end_time.strftime('%H:%M'),
+            "assigned_aides": assigned_aides,
+            "recurrence": recurrence_info,
+            "notes": task.notes if task and task.notes else "No notes provided"
+        }
+

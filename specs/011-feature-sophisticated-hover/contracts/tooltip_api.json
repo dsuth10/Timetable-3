@@ -1,0 +1,77 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Tooltip API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/assignments/{assignment_id}/tooltip": {
+      "get": {
+        "summary": "Get detailed data for a task tooltip",
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tooltip data successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TooltipData"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TooltipData": {
+        "type": "object",
+        "properties": {
+          "task_title": { "type": "string" },
+          "category": { "type": "string" },
+          "classroom": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "room_number": { "type": "string" },
+              "teacher": { "type": "string" }
+            }
+          },
+          "start_time": { "type": "string", "example": "09:00" },
+          "end_time": { "type": "string", "example": "09:30" },
+          "assigned_aides": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "recurrence": {
+            "type": "object",
+            "properties": {
+              "is_recurring": { "type": "boolean" },
+              "dates": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "has_more": { "type": "boolean" }
+            }
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+
