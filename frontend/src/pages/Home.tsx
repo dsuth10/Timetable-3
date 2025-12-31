@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import joshuaIcon from '../assets/images/joshua-icon.png';
 import {
   Box,
   Container,
@@ -43,6 +44,31 @@ const getInitials = (name: string) => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+};
+
+// Component for the styled application title
+const StyledTitle = () => {
+  const title = "Job Organisation System for Hourly Utilisation of Aides";
+  return (
+    <>
+      {title.split('').map((char, index) => {
+        if (char === ' ') return ' ';
+        const isUpper = char === char.toUpperCase() && char !== char.toLowerCase();
+        return (
+          <Box
+            component="span"
+            key={index}
+            sx={{
+              color: isUpper ? '#0d47a1' : '#90caf9',
+              transition: 'color 0.2s'
+            }}
+          >
+            {char}
+          </Box>
+        );
+      })}
+    </>
+  );
 };
 
 export default function Home() {
@@ -108,16 +134,24 @@ export default function Home() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 32,
-                height: 32,
-                bgcolor: 'rgba(44, 9, 127, 0.1)', // primary/10
-                color: 'primary.main',
-                borderRadius: 1
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                overflow: 'hidden'
               }}>
-                <ScheduleIcon />
+                <Box
+                  component="img"
+                  src={joshuaIcon}
+                  alt="JOSHUA Icon"
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
               </Box>
               <Typography variant="h6" fontWeight="bold" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                TA Manager
+                JOSHUA
               </Typography>
             </Box>
 
@@ -156,8 +190,8 @@ export default function Home() {
       <Container maxWidth={false} sx={{ maxWidth: 1440, py: 4, flex: 1, pb: 10 }}>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { md: 'flex-end' }, justifyContent: 'space-between', gap: 3, mb: 5 }}>
           <Box>
-            <Typography variant="h3" fontWeight={900} gutterBottom sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }}>
-              Welcome back, Admin
+            <Typography variant="h3" fontWeight={900} gutterBottom sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' } }}>
+              <StyledTitle />
             </Typography>
             <Typography color="text.secondary" variant="body1">
               Manage class allocations and teacher aide rosters from your dashboard.
