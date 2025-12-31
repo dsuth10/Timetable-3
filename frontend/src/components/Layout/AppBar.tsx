@@ -32,6 +32,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { isWeekend, format } from 'date-fns';
 import { useUiStore } from '../../store/stores/uiStore';
+import joshuaIcon from '../../assets/images/joshua-icon.png';
 
 type AppBarProps = {
   onMenuClick: () => void;
@@ -123,16 +124,40 @@ export default function AppBar({
         >
           <MenuIcon />
         </IconButton>
+        
+        {/* Home Button */}
         <IconButton
           color="inherit"
           aria-label="home"
           onClick={() => navigate('/')}
-          sx={{ mr: 2 }}
+          sx={{ mr: 1 }}
         >
           <HomeIcon />
         </IconButton>
-        <Typography variant="h6" component="div" sx={{ mr: 2 }}>
-          Aide Scheduler
+
+        {/* Joshua Icon (Static) */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mr: 1,
+            ml: 0.5
+          }}
+        >
+          <Box
+            component="img"
+            src={joshuaIcon}
+            alt="JOSHUA Icon"
+            sx={{
+              width: 32,
+              height: 32,
+              objectFit: 'contain'
+            }}
+          />
+        </Box>
+
+        <Typography variant="h6" component="div" sx={{ mr: 4, fontWeight: 'bold' }}>
+          JOSHUA
         </Typography>
 
         <ToggleButtonGroup
