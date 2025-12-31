@@ -185,6 +185,9 @@ class AssignmentSeriesService:
             recurrence_info["dates"] = dates
             recurrence_info["has_more"] = len(future_assignments) > 10
 
+        duration_minutes = (assignment.end_time.hour * 60 + assignment.end_time.minute) - \
+                           (assignment.start_time.hour * 60 + assignment.start_time.minute)
+
         return {
             "task_title": task.title if task else "Missing Task",
             "category": task.category if task else "UNKNOWN",
@@ -195,6 +198,7 @@ class AssignmentSeriesService:
             } if classroom else None,
             "start_time": assignment.start_time.strftime('%H:%M'),
             "end_time": assignment.end_time.strftime('%H:%M'),
+            "duration_minutes": duration_minutes,
             "assigned_aides": assigned_aides,
             "recurrence": recurrence_info,
             "notes": task.notes if task and task.notes else "No notes provided"

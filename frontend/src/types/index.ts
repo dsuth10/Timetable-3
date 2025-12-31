@@ -184,6 +184,7 @@ export interface TooltipData {
   } | null;
   start_time: string;
   end_time: string;
+  duration_minutes: number;
   assigned_aides: string[];
   recurrence: {
     is_recurring: boolean;

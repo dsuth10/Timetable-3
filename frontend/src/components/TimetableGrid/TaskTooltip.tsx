@@ -30,7 +30,7 @@ const TooltipContent: React.FC<{ data: TooltipData }> = ({ data }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
       <AccessTime fontSize="small" sx={{ color: 'action.active', fontSize: '1.1rem' }} />
       <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-        {data.start_time} – {data.end_time}
+        {data.start_time} – {data.end_time} ({data.duration_minutes}m)
       </Typography>
     </Box>
 
