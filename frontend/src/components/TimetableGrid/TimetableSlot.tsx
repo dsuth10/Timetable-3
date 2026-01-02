@@ -78,6 +78,7 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
           {/* Quick-create "+" button in top-right corner */}
           {onQuickCreate && (
             <IconButton
+              className="hide-for-export"
               onClick={handleQuickCreateClick}
               size="small"
               sx={{

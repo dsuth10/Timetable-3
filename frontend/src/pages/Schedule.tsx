@@ -48,6 +48,8 @@ import UndoRedoControls from '../components/UndoRedoControls';
 import LoadingState from '../components/common/LoadingState';
 import AbsenceModal from '../components/AbsenceModal';
 import AideFormModal from '../components/AideFormModal';
+import { TimetableExportView } from '../components/TimetableExportView';
+import { useTimetableExport } from '../hooks/useTimetableExport';
 
 export default function Schedule() {
   const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
@@ -82,6 +84,8 @@ export default function Schedule() {
   
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
+
+  const { isExporting, exportRef, handleExport } = useTimetableExport();
 
   // State for default task creation values
   const [taskCreationDefaults, setTaskCreationDefaults] = useState<{
@@ -374,14 +378,6 @@ export default function Schedule() {
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
       
-      // Mode-aware export: use aide_id or classroom_id based on viewMode
-      const blob = await calendarApi.exportPdf({
-        start_date: startDate,
-        end_date: endDate,
-        aide_id: viewMode === 'AIDE' ? (selectedAideId || undefined) : undefined,
-        classroom_id: viewMode === 'CLASS' ? (selectedClassId || undefined) : undefined
-      });
-      
       let filename = `schedule-${startDate}.pdf`;
       if (viewMode === 'AIDE' && selectedAide) {
         filename = `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
@@ -389,7 +385,7 @@ export default function Schedule() {
         filename = `schedule-${selectedClass.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
       }
         
-      downloadBlob(blob, filename);
+      await handleExport(filename);
     } catch (e: any) {
       setError(e.message || 'Failed to export PDF');
     } finally {
@@ -667,6 +663,41 @@ export default function Schedule() {
           ) : (
             <TeacherAideListPanel assignmentsByAide={assignmentsByAide} />
           )}
+        </Box>
+
+        {/* Hidden Export View (must be inside DragDropContext) */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          zIndex: -1000, 
+          pointerEvents: 'none',
+          opacity: 0,
+        }}>
+          <TimetableExportView
+            ref={exportRef}
+            staffName={viewMode === 'AIDE' ? selectedAide?.name || 'Staff' : selectedClass?.name || 'Class'}
+            dateRange={`${weekDates[0]} to ${weekDates[weekDates.length - 1]}`}
+          >
+            {viewMode === 'AIDE' && selectedAide && (
+              <TimetableGrid 
+                selectedAide={selectedAide}
+                assignmentsByDay={assignmentsByDay}
+                weekDates={weekDates}
+                tasks={tasks}
+                absences={absencesByAide[selectedAide.id] as Absence[] || []}
+              />
+            )}
+            {viewMode === 'CLASS' && selectedClass && (
+              <ClassTimetableGrid
+                selectedClass={selectedClass}
+                assignmentsByDay={classAssignmentsByDay}
+                weekDates={weekDates}
+                tasks={tasks}
+                aides={aides}
+              />
+            )}
+          </TimetableExportView>
         </Box>
       </AppDragDropContext>
 

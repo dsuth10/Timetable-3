@@ -107,6 +107,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, height: '100%' }}>
                 {!compact && (
                   <IconButton
+                    className="hide-for-export"
                     size="small"
                     {...dragProvided.dragHandleProps}
                     sx={{ p: 0.25, mt: -0.25 }}

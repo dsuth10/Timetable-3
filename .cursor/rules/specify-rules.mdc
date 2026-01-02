@@ -23,6 +23,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - SQLite (`backend/instance/timetable.db`) (009-feature-description-create)
 - Python 3.12+ (Backend), TypeScript (Strict Mode) (Frontend) + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd (010-we-need-to)
 - Python 3.12+, TypeScript 5.x + Flask, SQLAlchemy (Backend); React 18, MUI v5, @hello-pangea/dnd (Frontend) (011-feature-sophisticated-hover)
+- Python 3.12 (Backend), TypeScript 5.0+, React 18+ + `jsPDF`, `html2canvas` (for high-fidelity frontend reproduction) (012-redesign-of-the)
+- N/A (Client-side generation preferred for high fidelity) (012-redesign-of-the)
 
 ## Project Structure
 ```
@@ -38,9 +40,9 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 012-redesign-of-the: Added Python 3.12 (Backend), TypeScript 5.0+, React 18+ + `jsPDF`, `html2canvas` (for high-fidelity frontend reproduction)
 - 011-feature-sophisticated-hover: Added Python 3.12+, TypeScript 5.x + Flask, SQLAlchemy (Backend); React 18, MUI v5, @hello-pangea/dnd (Frontend)
 - 010-we-need-to: Added Python 3.12+ (Backend), TypeScript (Strict Mode) (Frontend) + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
-- 010-we-need-to: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

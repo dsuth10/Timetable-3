@@ -39,7 +39,7 @@ export function ClassTimetableGrid({
           pb: 2,
         }}
       >
-        <Box sx={{ gridColumn: '1 / -1', mb: 1 }}>
+        <Box className="hide-for-export" sx={{ gridColumn: '1 / -1', mb: 1 }}>
           <Typography variant="h6" sx={{ color: 'text.secondary' }}>
             Schedule for {selectedClass.name}
           </Typography>

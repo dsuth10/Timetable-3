@@ -46,7 +46,7 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
         }}
       >
         {/* Legend toggle and panel spanning full width */}
-        <Box sx={{ gridColumn: '1 / -1', mb: 1 }}>
+        <Box className="hide-for-export" sx={{ gridColumn: '1 / -1', mb: 1 }}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <IconButton aria-label="Toggle legend" onClick={() => setLegendOpen((o) => !o)} size="small">
               <InfoOutlinedIcon fontSize="small" />
@@ -115,7 +115,7 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                 </Box>
                 {/* Absence action buttons */}
                 {onAddAbsence && onRemoveAbsence && (
-                  <Box sx={{ ml: 1 }}>
+                  <Box className="hide-for-export" sx={{ ml: 1 }}>
                     {hasAbsence && absenceForDate ? (
                       <Tooltip title="Remove absence">
                         <IconButton
