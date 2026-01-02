@@ -82,6 +82,18 @@ npm install
 
 4. **Run Application**
 
+### Option A: Production Mode (Recommended)
+This uses the production WSGI server (Waitress) and serves the built frontend.
+
+1. **Build Frontend**: `cd frontend && npm run build`
+2. **Start Server**: 
+   - Windows: Run `run_production.bat`
+   - macOS/Linux: Run `./run_production.sh`
+3. **Access**: **http://localhost:5000**
+
+### Option B: Development Mode
+Best for active development with hot-reloading.
+
 **Terminal 1** (Backend):
 ```bash
 cd backend
@@ -96,9 +108,7 @@ npm run dev
 # Frontend runs on http://localhost:3000
 ```
 
-5. **Access Application**
-
-Open your browser to: **http://localhost:3000**
+**Access**: **http://localhost:3000**
 
 ---
 
@@ -996,29 +1006,31 @@ curl http://localhost:5000/api/backup/{backup_id}/download \
 
 ## 🚢 Deployment
 
-See [docs/deployment.md](docs/deployment.md) for full deployment guide.
+For robust coding practices, CHARLOTTE uses a **Consolidated Flask Serving** approach where the backend serves the built frontend.
 
-### Quick Production Build
+### 1. Production Build & Setup
 
-**Backend**:
-```bash
-cd backend
-pip install -r requirements.txt
-export FLASK_ENV=production
-python app.py
-```
-
-**Frontend**:
+**Step 1: Build the Frontend**
 ```bash
 cd frontend
 npm run build
-# Output: frontend/dist/
 ```
 
-**Deployment Options**:
-1. **Standalone Desktop App** (Electron) - Recommended for MVP
-2. **Web Server** (nginx + Flask) - For network deployment
-3. **Docker** (docker-compose) - Containerized deployment
+**Step 2: Configure Environment**
+Copy `backend/production_env_example.txt` to `backend/.env` and update the `SECRET_KEY`.
+
+**Step 3: Start the Production Server**
+- **Windows**: Run `run_production.bat`
+- **macOS/Linux**: Run `./run_production.sh`
+
+The application will be available at **http://localhost:5000**.
+
+### 2. Deployment Options
+1. **Standalone Desktop App** (Consolidated) - Recommended for school administrators. Uses Waitress WSGI server for stability on Windows.
+2. **Local Network Server** - Set up as a centralized tool for multiple administrators.
+3. **Docker** - Containerized deployment using `docker-compose`.
+
+See [docs/deployment.md](docs/deployment.md) for the full detailed deployment guide.
 
 ---
 
@@ -1349,6 +1361,15 @@ Contributions are welcome! Please follow these steps:
 ---
 
 ## 🔄 Recent Updates
+
+### Version 1.1.1 (2026-01-02)
+
+**Production Readiness**:
+- ✅ **Waitress Integration** - Replaced development server with Waitress WSGI server for production stability on Windows
+- ✅ **Integrated Frontend Serving** - Flask now serves the built React frontend directly, eliminating the need for separate dev servers in production
+- ✅ **SPA Routing Support** - Added catch-all routing to support React Router in production environments
+- ✅ **Production Launch Scripts** - Created `run_production.bat` and `run_production.sh` for one-click deployment
+- ✅ **Production Env Template** - Added `production_env_example.txt` for secure environment configuration
 
 ### Version 1.1.0 (2026-01-02)
 
