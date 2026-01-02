@@ -16,11 +16,18 @@ def create_app(config=None):
     Returns:
         Configured Flask app instance
     """
-    app = Flask(__name__)
-
     # Resolve instance folder (project_root/instance) and ensure it exists
-    instance_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'instance')
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    instance_path = os.path.join(base_dir, 'instance')
     os.makedirs(instance_path, exist_ok=True)
+
+    # Resolve frontend dist folder for production serving
+    frontend_dist = os.path.join(os.path.dirname(base_dir), 'frontend', 'dist')
+
+    # Initialize Flask with static folder pointing to frontend build
+    app = Flask(__name__,
+                static_folder=frontend_dist if os.path.exists(frontend_dist) else None,
+                static_url_path='/')
 
     # Build absolute sqlite path under instance
     default_sqlite_path = os.path.join(instance_path, 'timetable.db')
@@ -88,6 +95,17 @@ def create_app(config=None):
     @app.route('/api/health')
     def health():
         return {"status": "healthy", "version": "1.0.0"}
-    
+
+    # Catch-all route for SPA support (MUST be after API routes)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if app.static_folder and path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return app.send_static_file(path)
+        elif app.static_folder:
+            return app.send_static_file('index.html')
+        else:
+            return {"error": "Frontend not built. Run 'npm run build' in frontend directory."}, 404
+
     return app
 

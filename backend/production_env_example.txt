@@ -1,0 +1,18 @@
+# CHARLOTTE - Production Configuration Example
+# Copy this file to .env and update the values
+
+# Flask settings
+FLASK_ENV=production
+FLASK_DEBUG=0
+SECRET_KEY=replace-with-a-very-secret-random-string-for-production
+
+# Database settings
+# DATABASE_URL=sqlite:///instance/timetable.db
+
+# CORS settings (only needed if frontend and backend are on different domains)
+# CORS_ORIGINS=http://localhost:5000
+
+# Application settings
+SCHEDULER_HORIZON_WEEKS=4
+LOG_LEVEL=INFO
+

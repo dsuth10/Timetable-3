@@ -1,4 +1,4 @@
-# Data Model: Drag-and-Drop Timetable Scheduler
+# Data Model: CHARLOTTE Timetable Scheduler
 
 **Feature**: 001-create-a-drag  
 **Database**: SQLite (local file)  
@@ -12,6 +12,8 @@ TeacherAide (1) ──── (∞) Availability
      │ (1)
      │
      ├── (∞) Assignment (∞) ──── (1) Task (∞) ──── (1) Classroom
+     │          │
+     │          └── (∞) RecurringSeries
      │
      │ (1)
      │
@@ -32,20 +34,20 @@ Represents a staff member who provides classroom and playground support.
 |--------|------|-------------|-------------|
 | id | INTEGER | PRIMARY KEY | Auto-increment ID |
 | name | VARCHAR(100) | NOT NULL | Full name |
-| qualifications | TEXT | | Comma-separated or JSON list of qualifications |
+| details | TEXT | | Staff details or notes |
 | colour_hex | VARCHAR(7) | NOT NULL | Visual identifier (e.g., "#FF5733") |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
-| updated_at | TIMESTAMP | DEFAULT NOW, ON UPDATE NOW | Last modification time |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
+| updated_at | TIMESTAMP | DEFAULT UTC_NOW, ON UPDATE UTC_NOW | Last modification time |
 
 **Relationships**:
 - One-to-Many with `Availability` (weekly schedule)
 - One-to-Many with `Assignment` (assigned tasks)
 - One-to-Many with `Absence` (absence records)
+- One-to-Many with `RecurringSeries` (recurring assignment patterns)
 
 **Validation**:
 - `name`: Required, 1-100 characters
 - `colour_hex`: Valid hex color format (#RRGGBB)
-- `qualifications`: Optional, text field
 
 **Indexes**:
 - Primary key: `id`
@@ -64,15 +66,15 @@ Represents regular weekly availability pattern for a teacher aide.
 | id | INTEGER | PRIMARY KEY | Auto-increment ID |
 | aide_id | INTEGER | NOT NULL, FK → teacher_aides(id) ON DELETE CASCADE | Teacher aide reference |
 | weekday | VARCHAR(2) | NOT NULL | Day of week (MO, TU, WE, TH, FR) |
-| start_time | TIME | NOT NULL | Start time (HH:MM format) |
-| end_time | TIME | NOT NULL | End time (HH:MM format) |
+| start_time | TIME | NOT NULL | Start time (HH:MM:SS format) |
+| end_time | TIME | NOT NULL | End time (HH:MM:SS format) |
 
 **Relationships**:
 - Many-to-One with `TeacherAide`
 
 **Validation**:
 - `weekday`: Must be one of [MO, TU, WE, TH, FR]
-- `start_time` / `end_time`: Must be in 30-minute increments (08:00, 08:30, ..., 15:30, 16:00)
+- `start_time` / `end_time`: Must be in **5-minute increments** (e.g., 08:50, 09:05)
 - `end_time` > `start_time`
 
 **Constraints**:
@@ -86,7 +88,7 @@ Represents regular weekly availability pattern for a teacher aide.
 
 ### 3. Task
 
-Represents a support duty or assignment (one-off or recurring).
+Represents a support duty template (tasks can have multiple recurring series).
 
 **Table**: `tasks`
 
@@ -95,15 +97,13 @@ Represents a support duty or assignment (one-off or recurring).
 | id | INTEGER | PRIMARY KEY | Auto-increment ID |
 | title | VARCHAR(200) | NOT NULL | Task title |
 | category | VARCHAR(20) | NOT NULL | Task category enum |
-| start_time | TIME | NOT NULL | Start time (HH:MM format) |
-| end_time | TIME | NOT NULL | End time (HH:MM format) |
-| recurrence_rule | TEXT | | iCal RRULE string (NULL for one-off tasks) |
-| expires_on | DATE | | Expiration date for recurring tasks |
+| start_time | TIME | NOT NULL | Start time (HH:MM:SS format) |
+| end_time | TIME | NOT NULL | End time (HH:MM:SS format) |
 | classroom_id | INTEGER | FK → classrooms(id) ON DELETE SET NULL | Optional classroom reference |
 | notes | TEXT | | Additional notes |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'UNASSIGNED' | Task status enum |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
-| updated_at | TIMESTAMP | DEFAULT NOW, ON UPDATE NOW | Last modification time |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
+| updated_at | TIMESTAMP | DEFAULT UTC_NOW, ON UPDATE UTC_NOW | Last modification time |
 
 **Category Enum**: `PLAYGROUND`, `CLASS_SUPPORT`, `GROUP_SUPPORT`, `INDIVIDUAL_SUPPORT`
 
@@ -112,14 +112,13 @@ Represents a support duty or assignment (one-off or recurring).
 **Relationships**:
 - Many-to-One with `Classroom` (optional)
 - One-to-Many with `Assignment` (task occurrences)
+- One-to-Many with `RecurringSeries`
 
 **Validation**:
 - `title`: Required, 1-200 characters
 - `category`: Must be one of defined categories
-- `start_time` / `end_time`: Must be in 30-minute increments
+- `start_time` / `end_time`: Must be in **5-minute increments**
 - `end_time` > `start_time`
-- `recurrence_rule`: Valid iCal RRULE format if provided (validated via python-dateutil)
-- `expires_on`: Required if recurrence_rule is set
 
 **Indexes**:
 - Primary key: `id`
@@ -139,25 +138,29 @@ Represents a specific occurrence of a task assigned to an aide (or unassigned).
 | id | INTEGER | PRIMARY KEY | Auto-increment ID |
 | task_id | INTEGER | NOT NULL, FK → tasks(id) ON DELETE CASCADE | Task reference |
 | aide_id | INTEGER | FK → teacher_aides(id) ON DELETE SET NULL | Aide reference (NULL = unassigned) |
+| original_aide_id | INTEGER | FK → teacher_aides(id) ON DELETE SET NULL | Preserved aide ID for Relief Pool restoration |
+| recurring_series_id | INTEGER | FK → recurring_series(id) ON DELETE CASCADE | Reference to recurring series |
 | date | DATE | NOT NULL | Assignment date |
-| start_time | TIME | NOT NULL | Start time (HH:MM format) |
-| end_time | TIME | NOT NULL | End time (HH:MM format) |
+| start_time | TIME | NOT NULL | Start time (HH:MM:SS format) |
+| end_time | TIME | NOT NULL | End time (HH:MM:SS format) |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'UNASSIGNED' | Assignment status enum |
-| version | TIMESTAMP | NOT NULL, DEFAULT NOW | Optimistic locking version |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
-| updated_at | TIMESTAMP | DEFAULT NOW, ON UPDATE NOW | Last modification time |
+| version | INTEGER | NOT NULL, DEFAULT 1 | Optimistic locking version |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
+| updated_at | TIMESTAMP | DEFAULT UTC_NOW, ON UPDATE UTC_NOW | Last modification time |
 
-**Status Enum**: `UNASSIGNED`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETE`
+**Status Enum**: `UNASSIGNED`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETE`, `RELIEF_POOL`
 
 **Relationships**:
 - Many-to-One with `Task`
 - Many-to-One with `TeacherAide` (nullable)
+- Many-to-One with `TeacherAide` (original_aide, nullable)
+- Many-to-One with `RecurringSeries` (nullable)
 
 **Validation**:
 - `date`: Required, valid date
-- `start_time` / `end_time`: Must be in 30-minute increments
+- `start_time` / `end_time`: Must be in **5-minute increments**
 - `end_time` > `start_time`
-- `status`: UNASSIGNED if aide_id is NULL, else ASSIGNED/IN_PROGRESS/COMPLETE
+- `status`: UNASSIGNED if aide_id is NULL (unless RELIEF_POOL), else ASSIGNED/IN_PROGRESS/COMPLETE
 
 **Collision Detection**:
 - Query for overlapping assignments:
@@ -176,10 +179,38 @@ Represents a specific occurrence of a task assigned to an aide (or unassigned).
 - Composite index: `(aide_id, date, start_time)` for collision detection
 - Index on `task_id` for task queries
 - Index on `date` for weekly filtering
+- Index on `original_aide_id` for relief restoration
+- Index on `status, date, start_time` for unassigned/relief queries
 
 ---
 
-### 5. Absence
+### 5. RecurringSeries
+
+Represents an independent recurring assignment series for a specific task/aide combination.
+
+**Table**: `recurring_series`
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | INTEGER | PRIMARY KEY | Auto-increment ID |
+| task_id | INTEGER | NOT NULL, FK → tasks(id) ON DELETE CASCADE | Task template reference |
+| aide_id | INTEGER | FK → teacher_aides(id) ON DELETE SET NULL | Aide reference |
+| recurrence_rule | TEXT | NOT NULL | iCal RRULE string |
+| expires_on | DATE | NOT NULL | Expiration date |
+| start_time | TIME | NOT NULL | Start time |
+| end_time | TIME | NOT NULL | End time |
+| base_date | DATE | NOT NULL | Original date made recurring |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
+| updated_at | TIMESTAMP | DEFAULT UTC_NOW, ON UPDATE UTC_NOW | Last modification time |
+
+**Relationships**:
+- Many-to-One with `Task`
+- Many-to-One with `TeacherAide`
+- One-to-Many with `Assignment`
+
+---
+
+### 6. Absence
 
 Represents a teacher aide being unavailable on a specific date.
 
@@ -191,7 +222,7 @@ Represents a teacher aide being unavailable on a specific date.
 | aide_id | INTEGER | NOT NULL, FK → teacher_aides(id) ON DELETE CASCADE | Teacher aide reference |
 | date | DATE | NOT NULL | Absence date |
 | reason | TEXT | | Optional reason for absence |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
 
 **Relationships**:
 - Many-to-One with `TeacherAide`
@@ -199,20 +230,21 @@ Represents a teacher aide being unavailable on a specific date.
 **Validation**:
 - `aide_id`: Required, valid aide reference
 - `date`: Required, valid date
-- `reason`: Optional, text field
 
 **Constraints**:
 - **UNIQUE (aide_id, date)** - prevent duplicate absences for same aide/date
 
 **Cascade Behavior**:
 On absence creation:
-1. Find all assignments for aide on date
-2. Set aide_id = NULL, status = UNASSIGNED
-3. Return affected assignment IDs in response
+1. Find all `ASSIGNED` and `IN_PROGRESS` assignments for aide on date
+2. Set `original_aide_id = aide_id`
+3. Set `aide_id = NULL`
+4. Set `status = 'RELIEF_POOL'`
 
 On absence deletion:
-1. Attempt to restore assignments if slots still available
-2. Update status back to ASSIGNED if successful
+1. Find all `RELIEF_POOL` assignments where `original_aide_id` matches aide
+2. Attempt to restore assignments (set `aide_id = original_aide_id`, `status = 'ASSIGNED'`) if slots still available
+3. If collision exists, assignment remains in `RELIEF_POOL`
 
 **Indexes**:
 - Primary key: `id`
@@ -221,26 +253,33 @@ On absence deletion:
 
 ---
 
-### 6. Classroom
+### 7. Classroom
 
-Represents a physical or virtual learning space.
+Represents a physical learning space with assigned teacher and room details.
 
 **Table**: `classrooms`
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | INTEGER | PRIMARY KEY | Auto-increment ID |
-| name | VARCHAR(100) | NOT NULL, UNIQUE | Classroom name |
-| capacity | INTEGER | | Student capacity |
+| name | VARCHAR(100) | NOT NULL, UNIQUE | Classroom name (e.g., "3A") |
+| room_number | VARCHAR(20) | NOT NULL | Physical room number |
+| teacher | VARCHAR(100) | NOT NULL | Primary teacher name |
+| year_level | VARCHAR(50) | | e.g., "Prep", "1", "2" |
+| is_composite | BOOLEAN | DEFAULT FALSE | If classroom has multiple year levels |
+| composite_year_levels | VARCHAR(50) | | Comma-separated list of year levels |
+| colour_hex | VARCHAR(7) | NOT NULL | Visual identifier |
+| capacity | INTEGER | | Student capacity (optional) |
 | notes | TEXT | | Additional notes |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
 
 **Relationships**:
 - One-to-Many with `Task`
+- One-to-Many with `Request`
 
 **Validation**:
-- `name`: Required, unique, 1-100 characters
-- `capacity`: Optional, positive integer if provided
+- `name`, `room_number`, `teacher`: Required
+- `colour_hex`: Valid hex format
 
 **Indexes**:
 - Primary key: `id`
@@ -248,7 +287,7 @@ Represents a physical or virtual learning space.
 
 ---
 
-### 7. Request
+### 8. Request
 
 Represents a teacher's request for aide support.
 
@@ -265,7 +304,7 @@ Represents a teacher's request for aide support.
 | classroom_id | INTEGER | FK → classrooms(id) ON DELETE SET NULL | Optional classroom reference |
 | notes | TEXT | | Additional notes |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | Request status enum |
-| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
+| created_at | TIMESTAMP | DEFAULT UTC_NOW | Record creation time |
 
 **Status Enum**: `PENDING`, `APPROVED`, `REJECTED`
 
@@ -273,22 +312,8 @@ Represents a teacher's request for aide support.
 - Many-to-One with `Classroom` (optional)
 
 **Validation**:
-- `requesting_teacher`: Required, 1-100 characters
-- `task_title`: Required, 1-200 characters
-- `task_category`: Must match Task category enum
-- `preferred_date`: Required, valid date
-- `preferred_time`: Required, valid time in 30-minute increments
-
-**Workflow**:
-1. Teacher submits request (status = PENDING)
-2. Admin reviews request
-3. On APPROVED: Create Task → Create Assignment (UNASSIGNED)
-4. On REJECTED: Update status only
-
-**Indexes**:
-- Primary key: `id`
-- Index on `status` for filtering pending requests
-- Index on `created_at` for chronological ordering
+- `requesting_teacher`, `task_title`, `task_category`: Required
+- `preferred_time`: Required, valid time in **5-minute increments**
 
 ---
 
@@ -317,35 +342,9 @@ Represents a teacher's request for aide support.
 └─────────────┘
 ```
 
-**Reverse Transitions**:
-- Absence created → ASSIGNED/IN_PROGRESS → UNASSIGNED (aide_id = NULL)
-- Admin unassigns → Any status → UNASSIGNED
-- Undo action → Revert to previous status (if no conflict)
-
-### Request Status Flow
-
-```
-┌─────────┐
-│ PENDING │ (Teacher submits)
-└────┬────┘
-     │
-     ├─→ APPROVED → Create Task + Assignment
-     │
-     └─→ REJECTED → No task created
-```
-
----
-
-## Cascade Behaviors
-
-### ON DELETE CASCADE
-- `teacher_aides.id` deleted → Delete all `assignments`, `absences`, `availability`
-- `tasks.id` deleted → Delete all `assignments` (future occurrences only)
-- `classrooms.id` deleted → Set `tasks.classroom_id` = NULL, `requests.classroom_id` = NULL
-
-### ON DELETE SET NULL
-- `teacher_aides.id` deleted → Set `assignments.aide_id` = NULL (preserve historical assignments)
-- `classrooms.id` deleted → Set `tasks.classroom_id` = NULL, `requests.classroom_id` = NULL
+**Relief Pool Transition**:
+- Absence created → `ASSIGNED`/`IN_PROGRESS` → `RELIEF_POOL` (`aide_id = NULL`, `original_aide_id` preserved)
+- Relief assignment → `RELIEF_POOL` → `ASSIGNED` (new `aide_id` set, `original_aide_id` cleared)
 
 ---
 
@@ -359,134 +358,31 @@ Represents a teacher's request for aide support.
 | CHECK | tasks | end_time > start_time | Valid time range |
 | CHECK | assignments | end_time > start_time | Valid time range |
 | CHECK | availability | end_time > start_time | Valid time range |
-| FK CASCADE | assignments | aide_id → teacher_aides(id) | Delete assignments with aide |
-| FK CASCADE | absences | aide_id → teacher_aides(id) | Delete absences with aide |
 | FK CASCADE | assignments | task_id → tasks(id) | Delete assignments with task |
-
----
-
-## Indexing Strategy
-
-### High-Traffic Queries
-
-1. **Weekly Matrix Query** (most frequent):
-   ```sql
-   SELECT * FROM assignments
-   WHERE date BETWEEN :start_date AND :end_date
-   ORDER BY aide_id, date, start_time
-   ```
-   **Index**: `(aide_id, date, start_time)`
-
-2. **Collision Detection** (on every drag-drop):
-   ```sql
-   SELECT * FROM assignments
-   WHERE aide_id = :aide_id AND date = :date
-     AND start_time < :end_time AND end_time > :start_time
-   ```
-   **Index**: `(aide_id, date, start_time)`
-
-3. **Absence Impact** (on absence creation):
-   ```sql
-   SELECT * FROM assignments
-   WHERE aide_id = :aide_id AND date = :date
-   ```
-   **Index**: `(aide_id, date)`
-
-4. **Unassigned Tasks** (filter panel):
-   ```sql
-   SELECT * FROM assignments
-   WHERE status = 'UNASSIGNED' AND date >= :today
-   ORDER BY date, start_time
-   ```
-   **Index**: `(status, date, start_time)`
-
-### Composite Indexes
-- `assignments(aide_id, date, start_time)` - Covers collision + weekly queries
-- `absences(aide_id, date)` - UNIQUE constraint also serves as index
-- `availability(aide_id, weekday)` - Weekly availability checks
-
----
-
-## Migration Strategy
-
-### Initial Schema (Alembic Migration 001)
-1. Create all tables with columns and constraints
-2. Add indexes
-3. Add foreign key relationships
-4. Seed with initial data (optional)
-
-### Future Migrations
-- Add `version` column to `assignments` for optimistic locking
-- Add `updated_at` triggers for automatic timestamp updates
-- Add indexes based on production query patterns
+| FK CASCADE | assignments | recurring_series_id → recurring_series(id) | Delete instances with series |
 
 ---
 
 ## Data Integrity Rules
 
 ### Application-Level Validation
-1. **Time Slot Validation**: All times must be 30-minute increments (00, 30)
-2. **Date Range**: Tasks/assignments within current school year
-3. **RRULE Validation**: Parse RRULE before saving, reject invalid patterns
-4. **Collision Prevention**: Check overlaps before commit
-5. **Version Checking**: Compare client version with DB version on update
+1. **Time Slot Validation**: All times must be in **5-minute increments** (e.g., 08:55, 09:00).
+2. **Relief Pool Restriction**: Relief Pool tasks can only be reassigned to the original absence date.
+3. **RRULE Validation**: Parse RRULE before saving to `RecurringSeries`.
+4. **Collision Prevention**: Check overlaps for `ASSIGNED`/`IN_PROGRESS` status before commit.
+5. **Optimistic Locking**: Compare `version` Integer on update to prevent concurrent overwrites.
 
 ### Database-Level Enforcement
-1. **Unique Constraints**: Prevent duplicate absences, availability
-2. **Foreign Keys**: Maintain referential integrity with CASCADE/SET NULL
-3. **Check Constraints**: Enforce time logic (end > start)
-4. **NOT NULL**: Required fields enforced at DB level
-
----
-
-## Sample Data for Testing
-
-```python
-# Teacher Aides
-aide1 = TeacherAide(name="John Smith", qualifications="Special Education", colour_hex="#FF5733")
-aide2 = TeacherAide(name="Mary Johnson", qualifications="Reading Specialist", colour_hex="#33C1FF")
-
-# Classrooms
-classroom1 = Classroom(name="Room 101", capacity=25)
-classroom2 = Classroom(name="Library", capacity=50)
-
-# Tasks
-task1 = Task(
-    title="Morning Playground Duty",
-    category="PLAYGROUND",
-    start_time="10:30",
-    end_time="11:00",
-    recurrence_rule="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
-    expires_on="2025-12-31"
-)
-
-task2 = Task(
-    title="Grade 3A Reading Support",
-    category="CLASS_SUPPORT",
-    start_time="09:00",
-    end_time="10:00",
-    classroom_id=classroom1.id
-)
-
-# Assignments (generated from tasks)
-assignment1 = Assignment(
-    task_id=task1.id,
-    aide_id=aide1.id,
-    date="2025-10-06",  # Monday
-    start_time="10:30",
-    end_time="11:00",
-    status="ASSIGNED"
-)
-```
+1. **Unique Constraints**: Prevent duplicate absences, availability.
+2. **Foreign Keys**: Maintain referential integrity with CASCADE/SET NULL.
+3. **Check Constraints**: Enforce time logic (end > start).
+4. **NOT NULL**: Required fields enforced at DB level.
 
 ---
 
 This data model supports all feature requirements:
-- ✅ FR-001 to FR-005: Task management with recurrence
-- ✅ FR-013 to FR-019: Drag-drop assignment via aide_id updates
-- ✅ FR-020 to FR-025: Collision detection via time overlap queries
-- ✅ FR-026 to FR-031: Absence management with cascade unassignment
-- ✅ FR-047 to FR-048d: Optimistic locking with version timestamps
-
-
-
+- ✅ **5-Minute Increments**: Full support for school bell times across all entities.
+- ✅ **Relief Pool**: Robust tracking of orphaned tasks during aide absences.
+- ✅ **Recurring Series**: Flexible management of recurring assignment patterns.
+- ✅ **Optimistic Locking**: Integer-based versioning for reliable concurrent edits.
+- ✅ **Classroom Management**: Enhanced details for rooms and teachers.
