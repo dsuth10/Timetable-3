@@ -1,6 +1,6 @@
-# Teacher Aide Scheduler 🎓
+# CHARLOTTE 🎓
 
-**A drag-and-drop timetable scheduling system for Queensland primary schools**
+**C**lass **H**andling & **A**ssignment **R**ostering, **L**ogistics **O**rganisation **T**imetable **T**ool for **E**ducation
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Node 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
@@ -10,7 +10,7 @@
 
 ## 📋 Overview
 
-The Teacher Aide Scheduler is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system features a modern Material Design UI with multiple view modes: a weekly view that allows administrators to see individual aide schedules across Monday-Friday, a daily view for focused single-day scheduling with all aides visible simultaneously, and supports cross-day task dragging. The application operates completely offline using a local SQLite database with real-time conflict detection.
+The CHARLOTTE application is a desktop-optimized web application that enables school administrators to visually assign teacher aides to classroom tasks and playground duties using an intuitive drag-and-drop interface. The system features a modern Material Design UI with multiple view modes: a weekly view that allows administrators to see individual aide schedules across Monday-Friday, a daily view for focused single-day scheduling with all aides visible simultaneously, and supports cross-day task dragging. The application operates completely offline using a local SQLite database with real-time conflict detection.
 
 ### Key Features
 
@@ -38,6 +38,8 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 ✅ **Absence Management** - Mark aides absent with automatic task reassignment  
 ✅ **Relief Pool** - Orphaned tasks from absent aides are preserved in a Relief Pool with date-restricted reassignment  
 ✅ **Multi-Day Assignment** - Apply recurring tasks to multiple selected days at once  
+✅ **PDF Export** - Generate printable PDF weekly schedules for aides or classrooms  
+✅ **iCal Export** - Export assignments to calendar applications (.ics format)  
 ✅ **Database Backup System** - Create complete backups in multiple formats (SQL, JSON, CSV, compressed SQLite) with progress tracking and integrity validation  
 ✅ **Undo/Redo** - 10-level undo buffer for all timetable modifications  
 ✅ **Material Design UI** - Modern, intuitive interface with consistent theming  
@@ -60,8 +62,8 @@ The Teacher Aide Scheduler is a desktop-optimized web application that enables s
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-org/timetable-scheduler.git
-cd timetable-scheduler
+git clone https://github.com/your-org/charlotte-timetable.git
+cd charlotte-timetable
 ```
 
 2. **Setup Backend**
@@ -119,11 +121,10 @@ Open your browser to: **http://localhost:3000**
 ┌─────────────────────────────────────────────────────────┐
 │              Flask 3.x REST API (Backend)                │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │  • API Routes (Aides, Tasks, Assignments, Relief Pool)│ │
-│  │  • Business Logic Services                         │ │
+│  │  • API Routes (Aides, Tasks, Assignments, Relief Pool, Calendar)│ │
+│  │  • Business Logic Services (Collision, Recurrence, Relief Pool)│ │
+│  │  • PDF & iCal Export Services (ReportLab & icalendar)       │ │
 │  │  • RRULE Recurrence Engine                         │ │
-│  │  • Collision Detection Service                     │ │
-│  │  • Relief Pool Service (Task Reassignment)         │ │
 │  │  • Background Scheduler (Horizon Extension & Cleanup)│ │
 │  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
@@ -146,6 +147,8 @@ Open your browser to: **http://localhost:3000**
 - **Database**: SQLite (local file)
 - **Migrations**: Alembic
 - **Recurrence**: python-dateutil (iCal RRULE)
+- **PDF Export**: ReportLab
+- **iCal Export**: icalendar
 - **Backup**: SQLite dump, JSON export, CSV collection (ZIP), gzip compression
 - **Testing**: pytest, pytest-flask
 
@@ -165,12 +168,12 @@ Open your browser to: **http://localhost:3000**
 ## 📁 Project Structure
 
 ```
-timetable-scheduler/
+charlotte-timetable/
 ├── backend/                      # Python Flask backend
 │   ├── api/
-│   │   ├── models/               # SQLAlchemy models (7 entities)
-│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, quick-create-task, backup, etc.)
-│   │   ├── services/             # Business logic (collision, recurrence, conflicts, relief_pool, backup)
+│   │   ├── models/               # SQLAlchemy models (8 entities)
+│   │   ├── routes/               # API endpoints (aides, tasks, assignments, relief_pool, calendar, backup, etc.)
+│   │   ├── services/             # Business logic (collision, recurrence, pdf, calendar, relief_pool, backup)
 │   │   ├── middleware/           # Validation middleware
 │   │   ├── scheduler.py          # Background scheduler (horizon extension & Relief Pool cleanup)
 │   │   └── __init__.py
@@ -609,6 +612,24 @@ Auto-Cleanup:
 - Cleanup runs via background scheduler
 ```
 
+### 10. Exporting Schedules
+
+```
+Exporting to PDF:
+1. Navigate to the Schedule or Daily Display page
+2. Click the "Export" button in the toolbar
+3. Select "Export to PDF" from the dropdown menu
+4. The system generates a printable A4 landscape PDF of the current view
+5. PDF includes all assignment details, classrooms, and time slots
+
+Exporting to Calendar (.ics):
+1. Navigate to the Schedule page
+2. Click the "Export" button in the toolbar
+3. Select "Export to Calendar (.ics)"
+4. The generated file can be imported into Outlook, Google Calendar, or Apple Calendar
+5. Includes all scheduled tasks with correct times and recurrence rules
+```
+
 ---
 
 ## 👥 Aide Availability Management
@@ -865,7 +886,7 @@ Create `frontend/.env.production`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
-VITE_APP_TITLE=Teacher Aide Scheduler
+VITE_APP_TITLE=CHARLOTTE
 VITE_DEFAULT_WEEK_VIEW=current
 ```
 
@@ -1251,7 +1272,7 @@ Contributions are welcome! Please follow these steps:
 - [Feature Specification](specs/001-create-a-drag/spec.md)
 - [Quickstart Test](specs/001-create-a-drag/quickstart.md)
 
-**Issues**: [GitHub Issues](https://github.com/your-org/timetable-scheduler/issues)
+**Issues**: [GitHub Issues](https://github.com/your-org/charlotte-timetable/issues)
 
 **Email**: support@yourschool.edu
 
@@ -1310,14 +1331,16 @@ Contributions are welcome! Please follow these steps:
 - [x] Flexible time slot durations (20, 30, 40 minutes)
 - [x] Error handling with retry logic
 
-### Version 1.1 (Planned)
-- [ ] User authentication & authorization
-- [ ] Email notifications
-- [ ] PDF/Excel report generation
-- [ ] Mobile-responsive UI
-- [ ] Calendar import/export (iCal)
+### Version 1.1 (Dec 2025 - Jan 2026) ✅
+- [x] PDF Export - Printable weekly schedules for aides and classes
+- [x] iCal Export - Export schedules to external calendar apps
+- [x] Advanced Collision Detection & Conflict Resolution
+- [x] Enhanced Data Export & Backup System
 
 ### Version 2.0 (Future)
+- [ ] User authentication & authorization
+- [ ] Email notifications
+- [ ] Mobile-responsive UI
 - [ ] Multi-school support
 - [ ] Analytics dashboard
 - [ ] Automated scheduling (AI suggestions)
@@ -1326,6 +1349,21 @@ Contributions are welcome! Please follow these steps:
 ---
 
 ## 🔄 Recent Updates
+
+### Version 1.1.0 (2026-01-02)
+
+**New Features**:
+- ✅ **PDF Export** - Generate high-quality printable PDF schedules for both Teacher Aides and Classrooms
+- ✅ **iCal Export** - Support for exporting individual or classroom schedules as .ics files for use in Outlook, Google Calendar, etc.
+- ✅ **Enhanced Schedule Export Menu** - Integrated export options directly into the weekly and daily views
+- ✅ **Project Rebranding** - Full transition to the **CHARLOTTE** identity
+
+**Technical Improvements**:
+- Implemented `PdfService` using ReportLab for dynamic PDF generation
+- Created `CalendarService` using icalendar for standard ICS file creation
+- Added dedicated `/api/calendar/export-pdf` and `/api/calendar/export-ics` endpoints
+- Updated frontend with split-button export menus in `Schedule` and `Aides` pages
+- Comprehensive rebranding across codebase and documentation
 
 ### Version 1.0.10 (2025-12-25)
 
@@ -1372,7 +1410,7 @@ Contributions are welcome! Please follow these steps:
 - ✅ **Integrity Validation** - Automatic validation ensures backup completeness before download
 - ✅ **Error Handling** - Graceful error handling with retry logic for database locks
 - ✅ **One-Click Backup** - Simple interface designed for basic users
-- ✅ **Timestamped Files** - All backups include date and time in filename for easy organization
+- ✅ **Timestamped Files** - All backups include date and time in filename for easy organisation
 
 **Technical Improvements**:
 - Created `BackupService` with format generation methods for all 4 backup types
@@ -1565,5 +1603,5 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-**Version**: 1.0.10  
-**Last Updated**: 2025-12-25
+**Version**: 1.1.0  
+**Last Updated**: 2026-01-02

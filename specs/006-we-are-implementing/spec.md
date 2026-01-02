@@ -29,7 +29,7 @@
 ### Session 2025-12-23
 - Q: Beyond the "thin bar on the left," are there any other specific sections or features from the mock-up that should be explicitly excluded? → A: Exclude all header icons/search except date navigation and the Task Bank panel.
 - Q: When a task from the Task Bank is dropped onto a timeline slot, what should its duration be? → A: Default to the duration of the specific slot (usually 30m, first slot is 20m, some are longer).
-- Q: How should the Task Bank and Relief Pool on the right panel be organized? → A: Grouped by Task Category (e.g., Playground, Class Support) with collapsible headers and a search bar for filtering.
+- Q: How should the Task Bank and Relief Pool on the right panel be organised? → A: Grouped by Task Category (e.g., Playground, Class Support) with collapsible headers and a search bar for filtering.
 - Q: When dragging an assignment from the Relief Pool onto the timeline, how should its duration be handled? → A: Keep original duration, but show a confirmation dialog on drop to allow duration modification.
 - Q: Should the Teacher Aide names remain sticky/pinned on the left side while the timeline scrolls? → A: Yes, pin names to the left so they stay visible while scrolling hours.
 

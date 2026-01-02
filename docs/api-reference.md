@@ -1,4 +1,4 @@
-# API Reference: Teacher Aide Scheduler
+# API Reference: CHARLOTTE
 
 **Version**: 1.0.0  
 **Base URL**: `http://localhost:5000/api`  

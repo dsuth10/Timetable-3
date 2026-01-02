@@ -1,4 +1,4 @@
-# Deployment Guide: Teacher Aide Scheduler
+# Deployment Guide: CHARLOTTE
 
 **Version**: 1.0.0  
 **Target Environment**: Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+)  
@@ -444,7 +444,7 @@ Create `frontend/.env.production`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
-VITE_APP_TITLE=Teacher Aide Scheduler
+VITE_APP_TITLE=CHARLOTTE
 VITE_DEFAULT_WEEK_VIEW=current
 ```
 

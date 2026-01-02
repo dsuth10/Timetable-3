@@ -1,6 +1,6 @@
 ## 1. Overview
 
-The **Teacher Aide Scheduler** is a desktop‑optimised web application that enables Queensland primary‑school administrators to allocate teacher aides to classrooms and support tasks quickly via a visual, drag‑and‑drop timetable. Powered by a Flask REST API, React front‑end, and a local SQLite database, the MVP runs completely offline from a single HTML bundle and database file.
+The **CHARLOTTE** is a desktop‑optimised web application that enables Queensland primary‑school administrators to allocate teacher aides to classrooms and support tasks quickly via a visual, drag‑and‑drop timetable. Powered by a Flask REST API, React front‑end, and a local SQLite database, the MVP runs completely offline from a single HTML bundle and database file.
 
 
 ## 2. Problem Statement

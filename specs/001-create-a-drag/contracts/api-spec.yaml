@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Teacher Aide Scheduler API
+  title: CHARLOTTE API
   version: 1.0.0
   description: REST API for drag-and-drop timetable scheduling system
   

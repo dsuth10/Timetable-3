@@ -135,7 +135,7 @@ export default function AppBar({
           <HomeIcon />
         </IconButton>
 
-        {/* Joshua Icon (Static) */}
+        {/* CHARLOTTE Icon (Static) */}
         <Box
           sx={{
             display: 'flex',
@@ -147,7 +147,7 @@ export default function AppBar({
           <Box
             component="img"
             src={joshuaIcon}
-            alt="JOSHUA Icon"
+            alt="CHARLOTTE Icon"
             sx={{
               width: 32,
               height: 32,
@@ -157,7 +157,7 @@ export default function AppBar({
         </Box>
 
         <Typography variant="h6" component="div" sx={{ mr: 4, fontWeight: 'bold' }}>
-          JOSHUA
+          CHARLOTTE
         </Typography>
 
         <ToggleButtonGroup

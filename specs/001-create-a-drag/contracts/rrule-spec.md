@@ -296,7 +296,7 @@ def generate_assignments(task):
 **Task**:
 ```json
 {
-  "title": "Library Organization",
+  "title": "Library Organisation",
   "category": "CLASS_SUPPORT",
   "start_time": "14:00",
   "end_time": "15:30",

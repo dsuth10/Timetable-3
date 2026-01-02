@@ -132,7 +132,7 @@
 
 **Rationale**:
 - `instance/` directory already exists and is gitignored
-- Separate `backups/` subdirectory keeps backups organized
+- Separate `backups/` subdirectory keeps backups organised
 - Timestamped filenames prevent collisions
 - Can implement cleanup policy later (e.g., delete backups older than 7 days)
 

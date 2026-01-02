@@ -1,6 +1,6 @@
 # Backend Tests
 
-Comprehensive test suite for Teacher Aide Scheduler backend API.
+Comprehensive test suite for CHARLOTTE backend API.
 
 ## Test Structure
 

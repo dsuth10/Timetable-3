@@ -1,5 +1,5 @@
 """
-Test suite for Teacher Aide Scheduler backend
+Test suite for CHARLOTTE backend
 """
 
 

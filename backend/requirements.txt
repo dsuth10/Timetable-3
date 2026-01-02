@@ -1,4 +1,4 @@
-# Teacher Aide Scheduler - Backend Dependencies
+# CHARLOTTE - Backend Dependencies
 # Python 3.12+
 
 # Web Framework

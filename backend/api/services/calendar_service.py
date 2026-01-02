@@ -13,7 +13,7 @@ class CalendarService:
     """
     
     @staticmethod
-    def generate_ics(assignments: List[Assignment], calendar_name: str = "Timetable Export") -> bytes:
+    def generate_ics(assignments: List[Assignment], calendar_name: str = "CHARLOTTE Export") -> bytes:
         """
         Generate an iCal file content from a list of assignments.
         
@@ -25,7 +25,7 @@ class CalendarService:
             bytes: The generated .ics file content
         """
         cal = Calendar()
-        cal.add('prodid', '-//Teacher Aide Timetable//mrsutherland.net//EN')
+        cal.add('prodid', '-//CHARLOTTE//mrsutherland.net//EN')
         cal.add('version', '2.0')
         cal.add('x-wr-calname', calendar_name)
         

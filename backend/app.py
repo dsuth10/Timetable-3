@@ -1,5 +1,5 @@
 """
-Teacher Aide Scheduler - Flask Application Entry Point
+CHARLOTTE - Flask Application Entry Point
 """
 from flask import Flask
 from flask_cors import CORS

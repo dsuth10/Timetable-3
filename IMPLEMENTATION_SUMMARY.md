@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully transformed the Teacher Aide Scheduler from a basic multi-page application into a modern, intuitive Material Design interface with comprehensive drag-and-drop functionality and unified single-view navigation.
+Successfully transformed CHARLOTTE from a basic multi-page application into a modern, intuitive Material Design interface with comprehensive drag-and-drop functionality and unified single-view navigation.
 
 ## Completed Features
 
@@ -299,7 +299,7 @@ frontend/src/
 2. **Better Feedback**: Loading states, animations, hover effects
 3. **Clearer Information**: Status chips, category badges, time displays
 4. **Easier Navigation**: Week controls in top bar, sticky headers
-5. **Better Organization**: Grouped unassigned tasks, collapsible sections
+5. **Better Organisation**: Grouped unassigned tasks, collapsible sections
 6. **Visual Hierarchy**: Color coding, elevation, spacing
 7. **Error Handling**: Clear error messages throughout
 8. **Undo Support**: Maintained throughout new features
@@ -380,7 +380,7 @@ The redesign can coexist with the old UI:
 
 ## Conclusion
 
-The Modern UI Redesign successfully transforms the Teacher Aide Scheduler into a professional, intuitive application that follows Material Design principles while maintaining all existing functionality. The unified single-view architecture, enhanced drag-and-drop, and polished visual design create a significantly improved user experience.
+The Modern UI Redesign successfully transforms CHARLOTTE into a professional, intuitive application that follows Material Design principles while maintaining all existing functionality. The unified single-view architecture, enhanced drag-and-drop, and polished visual design create a significantly improved user experience.
 
 All implementation goals from the original plan have been achieved, with comprehensive documentation provided for testing and future development.
 

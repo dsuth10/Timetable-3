@@ -1,5 +1,5 @@
 """
-Business logic services for Teacher Aide Scheduler
+Business logic services for CHARLOTTE
 """
 from .recurrence_service import RecurrenceService
 from .collision_service import CollisionService

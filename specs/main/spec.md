@@ -164,7 +164,7 @@ Sarah can now see at a glance that Alex is assigned this task on Monday morning,
 
 
 
-James is reorganizing the weekly schedule for his team of four classroom aides. He has a standard set of recurring tasks (morning check-in, transition support, lunch supervision rotation, one-on-one academic support, break-time monitoring) that he needs to assign across different slots and aides.
+James is reorganising the weekly schedule for his team of four classroom aides. He has a standard set of recurring tasks (morning check-in, transition support, lunch supervision rotation, one-on-one academic support, break-time monitoring) that he needs to assign across different slots and aides.
 
 
 

@@ -48,7 +48,7 @@ const getInitials = (name: string) => {
 
 // Component for the styled application title
 const StyledTitle = () => {
-  const title = "Job Organisation System for Hourly Utilisation of Aides";
+  const title = "Class Handling & Assignment Rostering, Logistics Organisation Timetable Tool for Education";
   return (
     <>
       {title.split('').map((char, index) => {
@@ -142,7 +142,7 @@ export default function Home() {
                 <Box
                   component="img"
                   src={joshuaIcon}
-                  alt="JOSHUA Icon"
+                  alt="CHARLOTTE Icon"
                   sx={{
                     width: '100%',
                     height: '100%',
@@ -151,7 +151,7 @@ export default function Home() {
                 />
               </Box>
               <Typography variant="h6" fontWeight="bold" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                JOSHUA
+                CHARLOTTE
               </Typography>
             </Box>
 

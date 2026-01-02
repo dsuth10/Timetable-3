@@ -84,7 +84,7 @@ As a school administrator, I need to visually assign teacher aides to their dail
 ### Functional Requirements
 
 #### Task Management
-- **FR-001**: System MUST display all unassigned tasks in a dedicated panel, organized by category (classroom support, playground duty, etc.)
+- **FR-001**: System MUST display all unassigned tasks in a dedicated panel, organised by category (classroom support, playground duty, etc.)
 - **FR-002**: System MUST allow creation of one-off tasks with: title, category, start time, end time, date, classroom/location, and optional notes
 - **FR-003**: System MUST support recurring tasks with configurable recurrence patterns (daily, weekly, specific days)
 - **FR-003a**: System MUST prompt administrators with multi-day selection dialog when assigning recurring tasks via drag-and-drop

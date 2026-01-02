@@ -17,7 +17,7 @@
 - Proven stack in constitution, already approved
 
 **Best Practices**:
-- Use Flask Blueprints for route organization (aides, tasks, assignments, absences)
+- Use Flask Blueprints for route organisation (aides, tasks, assignments, absences)
 - Implement request validation with marshmallow or pydantic
 - Use SQLAlchemy sessions with proper transaction handling
 - Enable Flask error handlers for consistent JSON error responses

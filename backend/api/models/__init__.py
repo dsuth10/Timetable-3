@@ -1,5 +1,5 @@
 """
-SQLAlchemy models for Teacher Aide Scheduler
+SQLAlchemy models for CHARLOTTE
 """
 from flask_sqlalchemy import SQLAlchemy
 

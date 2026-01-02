@@ -1,5 +1,5 @@
 """
-Seed script for Teacher Aide Scheduler
+Seed script for CHARLOTTE
 Populates database with test data for development
 """
 import os
