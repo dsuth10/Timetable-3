@@ -17,9 +17,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { EventBusy, Save } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers';
 import { absencesApi } from '../services/absencesApi';
 import type { TeacherAide } from '../types';
 
@@ -123,21 +121,19 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
             </Select>
           </FormControl>
 
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="Date"
-              value={dateValue}
-              onChange={(newValue) => setDateValue(newValue)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  required: true,
-                  InputLabelProps: { shrink: true },
-                },
-              }}
-              data-testid="absence-date"
-            />
-          </LocalizationProvider>
+          <DatePicker
+            label="Date"
+            value={dateValue}
+            onChange={(newValue) => setDateValue(newValue)}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                required: true,
+                InputLabelProps: { shrink: true },
+              },
+            }}
+            data-testid="absence-date"
+          />
 
           <TextField
             label="Reason (Optional)"

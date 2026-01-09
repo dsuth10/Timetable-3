@@ -19,9 +19,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { CalendarMonth, Schedule, Person } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers';
 import { assignmentsApi } from '../../services/assignmentsApi';
 import { useAidesStore } from '../../store/stores/aides';
 import type { Task } from '../../types';
@@ -196,19 +194,17 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
           </Box>
 
           {/* Date Selection */}
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="Select Date"
-              value={null}
-              onChange={handleDateChange}
-              slotProps={{
-                textField: { 
-                  fullWidth: true,
-                  helperText: 'Click to add dates to schedule'
-                }
-              }}
-            />
-          </LocalizationProvider>
+          <DatePicker
+            label="Select Date"
+            value={null}
+            onChange={handleDateChange}
+            slotProps={{
+              textField: { 
+                fullWidth: true,
+                helperText: 'Click to add dates to schedule'
+              }
+            }}
+          />
 
           {/* Selected Dates */}
           {selectedDates.length > 0 && (

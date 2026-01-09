@@ -21,10 +21,7 @@ import {
   TextField,
 } from '@mui/material';
 import { Schedule, Person, CalendarMonth, AccessTime, Repeat } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import type { Task, TeacherAide, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
 import { 
@@ -293,56 +290,54 @@ export default function AssignmentDurationModal({
           </Box>
 
           {/* Date Selection */}
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="Date"
-              value={date}
-              onChange={(newDate) => setDate(newDate)}
+          <DatePicker
+            label="Date"
+            value={date}
+            onChange={(newDate) => setDate(newDate)}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                required: true,
+                InputProps: {
+                  startAdornment: <CalendarMonth sx={{ mr: 1, color: 'action.active' }} />,
+                },
+              },
+            }}
+          />
+
+          {/* Time Selection */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TimePicker
+              label="Start Time"
+              value={startTime}
+              onChange={handleStartTimeChange}
+              minutesStep={5} // Updated step to 5 for finer control
               slotProps={{
                 textField: {
                   fullWidth: true,
                   required: true,
                   InputProps: {
-                    startAdornment: <CalendarMonth sx={{ mr: 1, color: 'action.active' }} />,
+                    startAdornment: <AccessTime sx={{ mr: 1, color: 'action.active' }} />,
                   },
                 },
               }}
             />
-
-            {/* Time Selection */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TimePicker
-                label="Start Time"
-                value={startTime}
-                onChange={handleStartTimeChange}
-                minutesStep={5} // Updated step to 5 for finer control
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    required: true,
-                    InputProps: {
-                      startAdornment: <AccessTime sx={{ mr: 1, color: 'action.active' }} />,
-                    },
+            <TimePicker
+              label="End Time"
+              value={endTime}
+              onChange={(newTime) => setEndTime(newTime)}
+              minutesStep={5} // Updated step to 5 for finer control
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  required: true,
+                  InputProps: {
+                    startAdornment: <AccessTime sx={{ mr: 1, color: 'action.active' }} />,
                   },
-                }}
-              />
-              <TimePicker
-                label="End Time"
-                value={endTime}
-                onChange={(newTime) => setEndTime(newTime)}
-                minutesStep={5} // Updated step to 5 for finer control
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    required: true,
-                    InputProps: {
-                      startAdornment: <AccessTime sx={{ mr: 1, color: 'action.active' }} />,
-                    },
-                  },
-                }}
-              />
-            </Box>
-          </LocalizationProvider>
+                },
+              }}
+            />
+          </Box>
 
           {/* Duration Selection */}
           <FormControl fullWidth>

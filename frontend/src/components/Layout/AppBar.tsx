@@ -27,9 +27,7 @@ import {
   ViewDay,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateCalendar } from '@mui/x-date-pickers';
 import { isWeekend, format } from 'date-fns';
 import { useUiStore } from '../../store/stores/uiStore';
 import joshuaIcon from '../../assets/images/joshua-icon.png';
@@ -277,14 +275,12 @@ export default function AppBar({
             horizontal: 'left',
           }}
         >
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateCalendar
-              value={new Date(weekLabel + 'T00:00:00')}
-              onChange={handleDateChange}
-              showDaysOutsideCurrentMonth
-              shouldDisableDate={(date: Date) => isWeekend(date)}
-            />
-          </LocalizationProvider>
+          <DateCalendar
+            value={new Date(weekLabel + 'T00:00:00')}
+            onChange={handleDateChange}
+            showDaysOutsideCurrentMonth
+            shouldDisableDate={(date: Date) => isWeekend(date)}
+          />
         </Popover>
 
         {/* Right: Actions */}
