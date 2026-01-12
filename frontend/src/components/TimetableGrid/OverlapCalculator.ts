@@ -1,5 +1,5 @@
 import type { Assignment } from '../../types';
-import { timeIntervalsOverlap, timeToMinutes, timeToPixels, durationToPixels } from './timeUtils';
+import { timeIntervalsOverlap, timeToMinutes, timeToPixels, durationToPixels, START_TIME_MINUTES, END_TIME_MINUTES } from './timeUtils';
 
 export interface TaskPosition {
   assignment: Assignment;
@@ -16,9 +16,11 @@ export interface TaskPosition {
  */
 export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[] {
   if (assignments.length === 0) return [];
+  const positions: TaskPosition[] = [];
+
 
   // Sort assignments by start time
-  const sortedAssignments = [...assignments].sort((a, b) => 
+  const sortedAssignments = [...assignments].sort((a, b) =>
     timeToMinutes(a.start_time) - timeToMinutes(b.start_time)
   );
 
@@ -40,7 +42,7 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
         if (processed.has(sortedAssignments[j].id)) continue;
 
         // Check if this assignment overlaps with any in current group
-        const hasOverlap = currentGroup.some(groupAssignment => 
+        const hasOverlap = currentGroup.some(groupAssignment =>
           timeIntervalsOverlap(
             groupAssignment.start_time, groupAssignment.end_time,
             sortedAssignments[j].start_time, sortedAssignments[j].end_time
@@ -59,17 +61,42 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
   }
 
   // Calculate positions for each group
-  const positions: TaskPosition[] = [];
-
   for (const group of overlapGroups) {
-    const maxColumns = group.length;
-    
-    for (let i = 0; i < group.length; i++) {
-      const assignment = group[i];
+    // Greedy column assignment
+    const columns: Assignment[][] = [];
+    const taskToColumn = new Map<number, number>();
+
+    // Ensure group is sorted by start time
+    const sortedGroup = [...group].sort((a, b) =>
+      timeToMinutes(a.start_time) - timeToMinutes(b.start_time)
+    );
+
+    for (const assignment of sortedGroup) {
+      let assigned = false;
+      for (let c = 0; c < columns.length; c++) {
+        const lastInColumn = columns[c][columns[c].length - 1];
+        if (timeToMinutes(assignment.start_time) >= timeToMinutes(lastInColumn.end_time)) {
+          columns[c].push(assignment);
+          taskToColumn.set(assignment.id, c);
+          assigned = true;
+          break;
+        }
+      }
+      if (!assigned) {
+        columns.push([assignment]);
+        taskToColumn.set(assignment.id, columns.length - 1);
+      }
+    }
+
+    const maxColumns = columns.length;
+
+    for (const assignment of group) {
       const top = timeToPixels(assignment.start_time);
       const height = durationToPixels(assignment.start_time, assignment.end_time);
-      const left = (i / maxColumns) * 100;
+      const column = taskToColumn.get(assignment.id) || 0;
+
       const width = (1 / maxColumns) * 100;
+      const left = (column / maxColumns) * 100;
 
       positions.push({
         assignment,
@@ -77,7 +104,7 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
         height,
         left,
         width,
-        column: i,
+        column,
         maxColumns
       });
     }
@@ -104,7 +131,7 @@ export function getMaxOverlaps(assignments: Assignment[]): number {
 
   // Create time points for all start and end times
   const timePoints: Array<{ time: number; type: 'start' | 'end' }> = [];
-  
+
   assignments.forEach(assignment => {
     timePoints.push(
       { time: timeToMinutes(assignment.start_time), type: 'start' },

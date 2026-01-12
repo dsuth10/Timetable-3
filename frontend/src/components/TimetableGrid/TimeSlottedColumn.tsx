@@ -24,11 +24,11 @@ type TimeSlottedColumnProps = {
   onQuickCreate?: (date: string, time: string) => void;
 };
 
-export function TimeSlottedColumn({ 
-  aideId, 
-  date, 
-  assignments, 
-  tasks, 
+export function TimeSlottedColumn({
+  aideId,
+  date,
+  assignments,
+  tasks,
   aideColor,
   onTaskDoubleClick,
   availability = [],
@@ -73,17 +73,17 @@ export function TimeSlottedColumn({
     if (!showAideName) return assignments;
 
     const grouped = new Map<string, { assignment: Assignment; aideNames: string[] }>();
-    
+
     assignments.forEach(asg => {
       const key = `${asg.task_id}-${asg.start_time}-${asg.end_time}`;
       const aide = aides.find(a => a.id === asg.aide_id);
-      
+
       if (grouped.has(key)) {
         if (aide) grouped.get(key)!.aideNames.push(aide.name);
       } else {
-        grouped.set(key, { 
-          assignment: asg, 
-          aideNames: aide ? [aide.name] : [] 
+        grouped.set(key, {
+          assignment: asg,
+          aideNames: aide ? [aide.name] : []
         });
       }
     });
@@ -104,7 +104,7 @@ export function TimeSlottedColumn({
       const startTime = position.assignment.start_time;
       // Snap to the nearest slot to group tasks
       const slotTime = snapToSlot(startTime);
-      
+
       if (slotTime) {
         const existing = map.get(slotTime) || [];
         map.set(slotTime, [...existing, position]);
@@ -139,10 +139,10 @@ export function TimeSlottedColumn({
       {['11:10', '13:20'].map((time) => {
         const segment = getSegmentForTime(time);
         if (!segment) return null;
-        
+
         const top = timeToPixels(segment.start);
         const height = durationToPixels(segment.start, segment.end);
-        
+
         return (
           <Box
             key={`break-${time}`}
@@ -168,7 +168,7 @@ export function TimeSlottedColumn({
         const top = timeToPixels(segment.start);
         const height = durationToPixels(segment.start, segment.end);
         const slotTasks = tasksBySlot.get(timeSlot) || [];
-        
+
         // Find gaps that fall into this specific slot
         const slotGaps = gaps.filter(g => {
           return timeIntervalsOverlap(timeSlot.substring(0, 5), segment.end, g.start_time, g.end_time);

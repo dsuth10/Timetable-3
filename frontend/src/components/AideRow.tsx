@@ -80,13 +80,13 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
 
     return blocks;
   }, [availabilityInfo, timelineStart, timelineEnd, totalMinutes]);
-  
+
   // Calculate horizontal positions and vertical split for overlaps
   const taskLayouts = useMemo(() => {
     if (aide.assignments.length === 0) return [];
 
     // Sort by start time
-    const sorted = [...aide.assignments].sort((a, b) => 
+    const sorted = [...aide.assignments].sort((a, b) =>
       startTimeToMinutes(a.start_time) - startTimeToMinutes(b.start_time)
     );
 
@@ -104,7 +104,7 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
         found = false;
         for (let j = i + 1; j < sorted.length; j++) {
           if (processed.has(sorted[j].id)) continue;
-          
+
           const overlaps = group.some(g => {
             const startA = startTimeToMinutes(g.start_time);
             const endA = startTimeToMinutes(g.end_time);
@@ -121,15 +121,41 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
         }
       }
 
-      // Calculate vertical height and top for each in group
-      const maxRows = group.length;
-      group.forEach((assignment, index) => {
+      // Greedy row assignment
+      const rows: Assignment[][] = [];
+      const taskToRow = new Map<number, number>();
+
+      const sortedGroup = [...group].sort((a, b) =>
+        startTimeToMinutes(a.start_time) - startTimeToMinutes(b.start_time)
+      );
+
+      for (const assignment of sortedGroup) {
+        let assigned = false;
+        for (let r = 0; r < rows.length; r++) {
+          const lastInRow = rows[r][rows[r].length - 1];
+          if (startTimeToMinutes(assignment.start_time) >= startTimeToMinutes(lastInRow.end_time)) {
+            rows[r].push(assignment);
+            taskToRow.set(assignment.id, r);
+            assigned = true;
+            break;
+          }
+        }
+        if (!assigned) {
+          rows.push([assignment]);
+          taskToRow.set(assignment.id, rows.length - 1);
+        }
+      }
+
+      const maxRows = rows.length;
+      group.forEach((assignment) => {
         const startMins = startTimeToMinutes(assignment.start_time);
         const endMins = startTimeToMinutes(assignment.end_time);
+        const rowIndex = taskToRow.get(assignment.id) || 0;
+
         const left = ((startMins - timelineStart) / totalMinutes) * 100;
         const width = ((endMins - startMins) / totalMinutes) * 100;
         const height = (1 / maxRows) * 100;
-        const top = (index / maxRows) * 100;
+        const top = (rowIndex / maxRows) * 100;
 
         layouts.push({
           assignment,
@@ -147,10 +173,10 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
   }, [aide.assignments, timelineStart, totalMinutes]);
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        borderBottom: 1, 
+    <Box
+      sx={{
+        display: 'flex',
+        borderBottom: 1,
         borderColor: 'divider',
         minHeight: 66, // Slightly taller to accommodate overlaps
         '&:hover': { bgcolor: 'action.hover' },
@@ -159,12 +185,12 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
       }}
     >
       {/* Sticky Aide Name Column */}
-      <Box 
-        sx={{ 
-          width: 150, 
-          flexShrink: 0, 
-          position: 'sticky', 
-          left: 0, 
+      <Box
+        sx={{
+          width: 150,
+          flexShrink: 0,
+          position: 'sticky',
+          left: 0,
           bgcolor: 'inherit',
           p: 1,
           display: 'flex',
@@ -192,20 +218,20 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
             overflow: 'hidden'
           }}
         >
-          <Avatar 
-            sx={{ 
-              bgcolor: aide.colour_hex || '#1976d2', 
-              width: 28, 
-              height: 28, 
+          <Avatar
+            sx={{
+              bgcolor: aide.colour_hex || '#1976d2',
+              width: 28,
+              height: 28,
               fontSize: '0.75rem',
               fontWeight: 'bold'
             }}
           >
             {aide.name.charAt(0)}
           </Avatar>
-          <Typography 
-            variant="body2" 
-            sx={{ 
+          <Typography
+            variant="body2"
+            sx={{
               fontWeight: 600,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -268,17 +294,17 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
             const snappedTime = snapToSlot(assignmentTime);
             return snappedTime + ':00' === slotStartTime;
           });
-          
+
           // Find gaps that fall into this slot
           const slotGaps = gaps.filter(g => {
             const gapStart = g.start_time;
             const gapEnd = g.end_time;
             return timeIntervalsOverlap(slotStartTime.substring(0, 5), addMinutesToTime(slotStartTime.substring(0, 5), slot.duration_minutes), gapStart, gapEnd);
           });
-          
+
           return (
-            <Droppable 
-              key={slotStartTime} 
+            <Droppable
+              key={slotStartTime}
               droppableId={`aide-${aide.id}-slot-${slotStartTime}`}
               isDropDisabled={aide.is_absent}
             >
@@ -286,13 +312,13 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                 <Box
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  sx={{ 
+                  sx={{
                     flex: `0 0 ${(slot.duration_minutes / totalMinutes) * 100}%`,
                     borderRight: 1,
                     borderColor: 'divider',
                     height: '100%',
-                    bgcolor: snapshot.isDraggingOver 
-                      ? 'action.selected' 
+                    bgcolor: snapshot.isDraggingOver
+                      ? 'action.selected'
                       : (['11:10:00', '13:20:00'].includes(slotStartTime) ? '#e8f5e9' : 'transparent'),
                     transition: 'background-color 0.2s',
                     position: 'relative' // To position tasks relative to their starting slot
@@ -329,16 +355,16 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                         width: `${(startTimeToMinutes(layout.assignment.end_time) - startTimeToMinutes(layout.assignment.start_time)) / slot.duration_minutes * 100}%`,
                       }}
                     >
-              <TaskCard 
-                assignment={layout.assignment}
-                task={layout.assignment.task}
-                index={index}
-                aideColor={aide.colour_hex}
-                onDoubleClick={() => onTaskDoubleClick?.(layout.assignment)}
-                compact={true} 
-                isPositioned={true}
-                viewMode="aide"
-              />
+                      <TaskCard
+                        assignment={layout.assignment}
+                        task={layout.assignment.task}
+                        index={index}
+                        aideColor={aide.colour_hex}
+                        onDoubleClick={() => onTaskDoubleClick?.(layout.assignment)}
+                        compact={true}
+                        isPositioned={true}
+                        viewMode="aide"
+                      />
                     </Box>
                   ))}
                   {provided.placeholder}
