@@ -140,5 +140,10 @@ class DailyViewService:
             assignment.original_aide_id = None # Clear original aide reference
             
         db.session.commit()
-        return {"success": True}
+        
+        # Return the resulting assignment for frontend sync
+        if assignment_type == 'FROM_BANK':
+            return new_assignment.to_dict(include_relationships=True)
+        else:
+            return assignment.to_dict(include_relationships=True)
 

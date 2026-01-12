@@ -49,41 +49,53 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     });
   },
   async updateTask(id, payload) {
+    const tasksBefore = get().tasks;
     try {
-      set({ loading: true, error: undefined });
+      set({ error: undefined });
+
+      // Optimistically update the item
+      const updatedTasksOptimistic = tasksBefore.map(task =>
+        task.id === id ? { ...task, ...payload } as Task : task
+      );
+      set({ tasks: updatedTasksOptimistic });
+
       const updatedTask = await tasksApi.update(id, payload);
-      
-      // Update the task in the local state
-      const tasks = get().tasks;
-      const updatedTasks = tasks.map(task => 
+
+      // Sync with server response
+      const tasksFinal = get().tasks.map(task =>
         task.id === id ? updatedTask : task
       );
-      set({ tasks: updatedTasks, loading: false });
-      
+      set({ tasks: tasksFinal });
+
       return updatedTask;
     } catch (e: any) {
-      set({ error: e.message || 'Failed to update task', loading: false });
+      // Rollback on error
+      set({ tasks: tasksBefore, error: e.message || 'Failed to update task' });
       throw e;
     }
   },
   async deleteTask(id, reset) {
+    const tasksBefore = get().tasks;
     try {
-      set({ loading: true, error: undefined });
-      await tasksApi.delete(id, reset);
-      
+      set({ error: undefined });
+
       if (reset) {
-        // Reset mode: Refresh tasks to get the updated task data
-        await get().fetchTasks();
+        // Reset doesn't delete, just modifies recurrence settings in the task
+        set({ loading: true });
+        await tasksApi.delete(id, reset);
+        await get().fetchTasks(); // Still need re-fetch because reset affects multiple fields / recurrence series
+        set({ loading: false });
       } else {
-        // Full deletion: Remove the task from local state immediately
-        const tasks = get().tasks;
-        const updatedTasks = tasks.filter(task => task.id !== id);
-        set({ tasks: updatedTasks, loading: false });
-        // Also refresh from server to ensure consistency
-        await get().fetchTasks();
+        // Optimistic deletion
+        const updatedTasks = tasksBefore.filter(task => task.id !== id);
+        set({ tasks: updatedTasks });
+
+        await tasksApi.delete(id, reset);
+        // No need to re-fetch on success!
       }
     } catch (e: any) {
-      set({ error: e.message || 'Failed to delete task', loading: false });
+      // Rollback on error
+      set({ tasks: tasksBefore, error: e.message || 'Failed to delete task', loading: false });
       throw e;
     }
   },
