@@ -121,8 +121,9 @@ class Assignment(db.Model):
         
         return value
     
-    def to_dict(self, include_relationships=False):
+    def to_dict(self, include_relationships=False, include_seconds=False):
         """Convert to dictionary for JSON serialization"""
+        time_format = '%H:%M:%S' if include_seconds else '%H:%M'
         data = {
             'id': self.id,
             'task_id': self.task_id,
@@ -130,8 +131,8 @@ class Assignment(db.Model):
             'original_aide_id': self.original_aide_id,
             'recurring_series_id': self.recurring_series_id,
             'date': self.date.isoformat() if self.date else None,
-            'start_time': self.start_time.strftime('%H:%M:%S') if self.start_time else None,
-            'end_time': self.end_time.strftime('%H:%M:%S') if self.end_time else None,
+            'start_time': self.start_time.strftime(time_format) if self.start_time else None,
+            'end_time': self.end_time.strftime(time_format) if self.end_time else None,
             'status': self.status,
             'version': self.version,
             'created_at': self.created_at.isoformat() if self.created_at else None,

@@ -182,17 +182,17 @@ class ReliefPoolService:
             parts = end_time.split(':')
             new_end = time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
         
-        # Check for time conflicts with the new aide
-        conflict = CollisionService.check_collision(
+        # Validate assignment (collision + availability)
+        validation = CollisionService.validate_assignment(
             aide_id=aide_id,
-            date=assignment.date,
+            assignment_date=assignment.date,
             start_time=new_start,
             end_time=new_end,
             exclude_assignment_id=assignment_id
         )
         
-        if conflict:
-            raise RuntimeError(f"Time conflict with assignment {conflict['id']}")
+        if not validation['valid']:
+            raise RuntimeError(validation['error'])
         
         # Update assignment
         assignment.aide_id = aide_id

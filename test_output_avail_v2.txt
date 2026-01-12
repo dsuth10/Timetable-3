@@ -1,0 +1,124 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-8.0.2, pluggy-1.6.0 -- C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend
+configfile: pyproject.toml
+plugins: anyio-4.12.0, cov-4.1.0, flask-1.3.0
+collecting ... collected 2 items
+
+backend\tests\unit\test_daily_view_availability.py::test_assign_task_availability_violation FAILED [ 50%]
+backend\tests\unit\test_daily_view_availability.py::test_assign_task_availability_success PASSED [100%]
+
+================================== FAILURES ===================================
+___________________ test_assign_task_availability_violation ___________________
+
+daily_service = <api.services.daily_view_service.DailyViewService object at 0x000001A47E76FC50>
+app = <Flask 'api'>, sample_aide = <TeacherAide 1: John Smith>
+sample_task = <Task 1: Reading Support (CLASS_SUPPORT)>
+
+    def test_assign_task_availability_violation(daily_service, app, sample_aide, sample_task):
+        """Test that assign_task fails if the aide is not available at that time"""
+        with app.app_context():
+            view_date = date(2025, 12, 8) # A Monday
+    
+            # Set availability for Monday only 8:00 - 9:00
+            avail = Availability(
+                aide_id=sample_aide.id,
+                weekday='MO',
+                start_time=time(8, 0),
+                end_time=time(9, 0)
+            )
+            db.session.add(avail)
+            db.session.commit()
+    
+            # Try to assign task at 10:00 (outside availability)
+            payload = {
+                "type": "FROM_BANK",
+                "id": sample_task.id,
+                "date": view_date.isoformat(),
+                "aide_id": sample_aide.id,
+                "start_time": "10:00",
+                "end_time": "11:00"
+            }
+    
+            result = daily_service.assign_task(payload)
+    
+            assert "error" in result
+            assert "available" in result["error"].lower()
+>           assert result.get("availability_issue") is True
+E           AssertionError: assert 'Aide not available on MO from 10:00:00 to 11:00:00' is True
+E            +  where 'Aide not available on MO from 10:00:00 to 11:00:00' = <built-in method get of dict object at 0x000001A47E8263C0>('availability_issue')
+E            +    where <built-in method get of dict object at 0x000001A47E8263C0> = {'availability_issue': 'Aide not available on MO from 10:00:00 to 11:00:00', 'conflicts': [], 'error': 'Aide not available on MO from 10:00:00 to 11:00:00'}.get
+
+backend\tests\unit\test_daily_view_availability.py:43: AssertionError
+============================== warnings summary ===============================
+backend\venv\Lib\site-packages\dateutil\tz\tz.py:37
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\dateutil\tz\tz.py:37: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    EPOCH = datetime.datetime.utcfromtimestamp(0)
+
+tests/unit/test_daily_view_availability.py: 12 warnings
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\sqlalchemy\sql\schema.py:3594: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+tests/unit/test_daily_view_availability.py::test_assign_task_availability_success
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\tests\conftest.py:92: SAWarning: Identity map already had an identity for (<class 'api.models.teacher_aide.TeacherAide'>, (1,), None), replacing it with newly flushed object.   Are there load operations occurring inside of an event handler within the flush?
+    db_session.commit()
+
+tests/unit/test_daily_view_availability.py::test_assign_task_availability_success
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\tests\conftest.py:104: SAWarning: Identity map already had an identity for (<class 'api.models.classroom.Classroom'>, (1,), None), replacing it with newly flushed object.   Are there load operations occurring inside of an event handler within the flush?
+    db_session.commit()
+
+tests/unit/test_daily_view_availability.py::test_assign_task_availability_success
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\tests\conftest.py:119: SAWarning: Identity map already had an identity for (<class 'api.models.task.Task'>, (1,), None), replacing it with newly flushed object.   Are there load operations occurring inside of an event handler within the flush?
+    db_session.commit()
+
+tests/unit/test_daily_view_availability.py::test_assign_task_availability_success
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\api\services\daily_view_service.py:118: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    task = Task.query.get(item_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform win32, python 3.13.7-final-0 -----------
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+backend\api\__init__.py                          61     14    77%   76-77, 81-82, 86-87, 91-92, 97, 103-108
+backend\api\middleware\validation.py             37     22    41%   22-31, 45-61
+backend\api\models\__init__.py                   12      0   100%
+backend\api\models\absence.py                    31      9    71%   47-49, 54-56, 60, 69, 82
+backend\api\models\assignment.py                 81     16    80%   58, 65, 69, 77, 81, 86, 94, 98, 104, 108, 110, 119-120, 148, 153-154
+backend\api\models\availability.py               43      9    79%   45, 49, 57, 61, 69, 73, 78, 84, 93
+backend\api\models\classroom.py                  66     26    61%   55, 57, 63-67, 72-76, 82, 88-92, 97-103, 122
+backend\api\models\recurring_series.py           69     36    48%   59-68, 73-75, 80-87, 92-104, 109-111, 115-136, 139-140
+backend\api\models\request.py                    69     35    49%   56-60, 65-69, 74-81, 86-93, 98-100, 105-112, 116-132, 135
+backend\api\models\task.py                       72     16    78%   66, 68, 75, 79, 86-93, 99, 103, 111, 115, 120, 144
+backend\api\models\teacher_aide.py               40      5    88%   66, 68, 75, 79, 95
+backend\api\routes\__init__.py                    0      0   100%
+backend\api\routes\absences.py                   55     41    25%   30-76, 99-117, 136-141
+backend\api\routes\aides.py                     165    140    15%   20-31, 36-56, 61-64, 69-91, 96-106, 120, 139-262
+backend\api\routes\assignments.py               235    197    16%   24-27, 36-39, 46-121, 128-184, 193-203, 208-283, 294-330, 337-340, 346-357, 362-424
+backend\api\routes\availability.py               61     48    21%   16-60, 65-70, 76-90
+backend\api\routes\backup.py                     72     59    18%   16-18, 27-68, 77-110, 119-168
+backend\api\routes\calendar.py                   58     46    21%   29-97
+backend\api\routes\classrooms.py                198    176    11%   27, 32-73, 78-79, 84-138, 143-155, 179-320
+backend\api\routes\daily_view.py                 33     24    27%   14-21, 29-47
+backend\api\routes\recurring_series.py           72     58    19%   17-20, 26-97, 103-130, 136-149
+backend\api\routes\relief_pool.py                70     58    17%   26-43, 56-60, 85-125, 147-174
+backend\api\routes\requests.py                   99     83    16%   15-20, 25-68, 73-76, 81-121, 126-131
+backend\api\routes\tasks.py                     245    220    10%   20-33, 38-41, 47-93, 106-264, 270-405, 410-420, 426-452
+backend\api\scheduler.py                         41     41     0%   5-138
+backend\api\services\__init__.py                  5      0   100%
+backend\api\services\absence_service.py          40     27    32%   41-62, 84-125, 135
+backend\api\services\assignment_service.py       76     62    18%   20-30, 46-78, 92-123, 142-193
+backend\api\services\backup_service.py          308    264    14%   55-59, 63-70, 74, 78, 82, 86, 98-110, 123-256, 268-285, 289-328, 340-350, 363-382, 386-402, 406-421, 425-437, 441-461, 479-627, 639-645, 659-662
+backend\api\services\calendar_service.py         42     35    17%   27-82
+backend\api\services\collision_service.py        78     26    67%   43, 77, 102-119, 145, 158, 162, 173, 181, 230, 242-248, 292-312
+backend\api\services\conflict_resolver.py        56     38    32%   44-52, 69-72, 100-141, 158-162, 182-190, 210-220
+backend\api\services\daily_view_service.py       67     34    49%   23-75, 120, 132-144, 152
+backend\api\services\recurrence_service.py       62     47    24%   37-46, 77-107, 138-172, 205-238, 252-264
+backend\api\services\relief_pool_service.py      97     78    20%   41-87, 101-126, 157-207, 229-244, 261-288
+---------------------------------------------------------------------------
+TOTAL                                          2816   1990    29%
+
+=========================== short test summary info ===========================
+FAILED backend\tests\unit\test_daily_view_availability.py::test_assign_task_availability_violation
+================== 1 failed, 1 passed, 17 warnings in 0.33s ===================

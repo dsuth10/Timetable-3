@@ -112,15 +112,7 @@ def create_assignment():
     db.session.flush()  # ensure ID assigned before serialization
     # Build response explicitly to ensure required fields
     # Use model serializer for full fidelity
-    result = assignment.to_dict()
-    # Format times depending on context:
-    # - When auto_shorten=True (overlap flow), tests expect HH:MM:SS
-    # - Otherwise return HH:MM for brevity as used elsewhere
-    if not auto_shorten:
-        if isinstance(result.get('start_time'), str) and len(result['start_time']) >= 5:
-            result['start_time'] = result['start_time'][:5]
-        if isinstance(result.get('end_time'), str) and len(result['end_time']) >= 5:
-            result['end_time'] = result['end_time'][:5]
+    result = assignment.to_dict(include_seconds=auto_shorten)
     db.session.commit()
     try:
         print("DEBUG_CREATE_ASSIGNMENT_RES", result)

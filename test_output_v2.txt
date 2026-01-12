@@ -1,0 +1,297 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-8.0.2, pluggy-1.6.0 -- C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend
+configfile: pyproject.toml
+plugins: anyio-4.12.0, cov-4.1.0, flask-1.3.0
+collecting ... collected 4 items
+
+backend\tests\unit\test_daily_view_service.py::test_get_daily_data_empty PASSED [ 25%]
+backend\tests\unit\test_daily_view_service.py::test_get_daily_data_empty ERROR [ 25%]
+backend\tests\unit\test_daily_view_service.py::test_get_daily_data_with_content PASSED [ 50%]
+backend\tests\unit\test_daily_view_service.py::test_assign_task_from_bank PASSED [ 75%]
+backend\tests\unit\test_daily_view_service.py::test_assign_task_collision PASSED [100%]
+
+=================================== ERRORS ====================================
+_______________ ERROR at teardown of test_get_daily_data_empty ________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x0000021449B729E0>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000021449B4D590>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000021449C4EC90>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x0000021449C47B10>
+parameters = [()]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000021449B4D590>
+cursor = <sqlite3.Cursor object at 0x0000021449D3EAC0>
+statement = 'ROLLBACK TO SAVEPOINT sa_savepoint_1', parameters = ()
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000021449C4EC90>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.OperationalError: no such savepoint: sa_savepoint_1
+
+backend\venv\Lib\site-packages\sqlalchemy\engine\default.py:941: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'api'>
+
+    @pytest.fixture(autouse=True)
+    def _db_isolation(app):
+        """Use a SAVEPOINT per test; also hard-reset table contents to avoid collisions."""
+        # Fresh savepoint
+        nested = db.session.begin_nested()
+    
+        # Hard reset tables (respect FK order)
+        for table in ['assignments', 'recurring_series', 'availability', 'absences', 'requests', 'tasks', 'classrooms', 'teacher_aides']:
+            db.session.execute(sa_text(f'DELETE FROM {table}'))
+        db.session.flush()
+    
+        @event.listens_for(db.session, "after_transaction_end")
+        def _restart_savepoint(sess, trans):  # noqa: N803
+            if trans.nested and not trans._parent.nested:
+                sess.begin_nested()
+    
+        try:
+            yield
+        finally:
+            event.remove(db.session, "after_transaction_end", _restart_savepoint)
+>           db.session.rollback()
+
+backend\tests\conftest.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\venv\Lib\site-packages\sqlalchemy\orm\scoping.py:1796: in rollback
+    return self._proxied.rollback()
+backend\venv\Lib\site-packages\sqlalchemy\orm\session.py:1990: in rollback
+    self._transaction.rollback(_to_root=True)
+backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+backend\venv\Lib\site-packages\sqlalchemy\orm\session.py:1395: in rollback
+    raise rollback_err[1].with_traceback(rollback_err[2])
+backend\venv\Lib\site-packages\sqlalchemy\orm\session.py:1360: in rollback
+    t[1].rollback()
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:2610: in rollback
+    self._do_rollback()
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:2851: in _do_rollback
+    self._close_impl(True, True)
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:2836: in _close_impl
+    self.connection._rollback_to_savepoint_impl(self._savepoint)
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1163: in _rollback_to_savepoint_impl
+    self.engine.dialect.do_rollback_to_savepoint(self, name)
+backend\venv\Lib\site-packages\sqlalchemy\engine\default.py:760: in do_rollback_to_savepoint
+    connection.execute(expression.RollbackToSavepointClause(name))
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1418: in execute
+    return meth(
+backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py:515: in _execute_on_connection
+    return connection._execute_clauseelement(
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1640: in _execute_clauseelement
+    ret = self._execute_context(
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1846: in _execute_context
+    return self._exec_single_context(
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:2355: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+backend\venv\Lib\site-packages\sqlalchemy\engine\base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x0000021449B4D590>
+cursor = <sqlite3.Cursor object at 0x0000021449D3EAC0>
+statement = 'ROLLBACK TO SAVEPOINT sa_savepoint_1', parameters = ()
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x0000021449C4EC90>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such savepoint: sa_savepoint_1
+E       [SQL: ROLLBACK TO SAVEPOINT sa_savepoint_1]
+E       (Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+backend\venv\Lib\site-packages\sqlalchemy\engine\default.py:941: OperationalError
+============================== warnings summary ===============================
+backend\venv\Lib\site-packages\dateutil\tz\tz.py:37
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\dateutil\tz\tz.py:37: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    EPOCH = datetime.datetime.utcfromtimestamp(0)
+
+tests/unit/test_daily_view_service.py: 22 warnings
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\sqlalchemy\sql\schema.py:3594: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+tests/unit/test_daily_view_service.py::test_get_daily_data_with_content
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py:941: DeprecationWarning: The default date adapter is deprecated as of Python 3.12; see the sqlite3 documentation for suggested replacement recipes
+    cursor.execute(statement, parameters)
+
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\api\services\daily_view_service.py:118: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    task = Task.query.get(item_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform win32, python 3.13.7-final-0 -----------
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+backend\api\__init__.py                          61     14    77%   76-77, 81-82, 86-87, 91-92, 97, 103-108
+backend\api\middleware\validation.py             37     22    41%   22-31, 45-61
+backend\api\models\__init__.py                   12      0   100%
+backend\api\models\absence.py                    31      4    87%   48, 55, 60, 69
+backend\api\models\assignment.py                 81     16    80%   58, 65, 69, 77, 81, 86, 94, 98, 104, 108, 110, 119-120, 148, 153-154
+backend\api\models\availability.py               43     21    51%   44-51, 56-63, 68-80, 84, 93
+backend\api\models\classroom.py                  66     26    61%   55, 57, 63-67, 72-76, 82, 88-92, 97-103, 122
+backend\api\models\recurring_series.py           69     36    48%   59-68, 73-75, 80-87, 92-104, 109-111, 115-136, 139-140
+backend\api\models\request.py                    69     35    49%   56-60, 65-69, 74-81, 86-93, 98-100, 105-112, 116-132, 135
+backend\api\models\task.py                       72     17    76%   66, 68, 75, 79, 86-93, 99, 103, 111, 115, 120, 144, 149
+backend\api\models\teacher_aide.py               40      5    88%   66, 68, 75, 79, 100
+backend\api\routes\__init__.py                    0      0   100%
+backend\api\routes\absences.py                   55     41    25%   30-76, 99-117, 136-141
+backend\api\routes\aides.py                     165    140    15%   20-31, 36-56, 61-64, 69-91, 96-106, 120, 139-262
+backend\api\routes\assignments.py               235    197    16%   24-27, 36-39, 46-121, 128-184, 193-203, 208-283, 294-330, 337-340, 346-357, 362-424
+backend\api\routes\availability.py               61     48    21%   16-60, 65-70, 76-90
+backend\api\routes\backup.py                     72     59    18%   16-18, 27-68, 77-110, 119-168
+backend\api\routes\calendar.py                   58     46    21%   29-97
+backend\api\routes\classrooms.py                198    176    11%   27, 32-73, 78-79, 84-138, 143-155, 179-320
+backend\api\routes\daily_view.py                 33     24    27%   14-21, 29-47
+backend\api\routes\recurring_series.py           72     58    19%   17-20, 26-97, 103-130, 136-149
+backend\api\routes\relief_pool.py                70     58    17%   26-43, 56-60, 85-125, 147-174
+backend\api\routes\requests.py                   99     83    16%   15-20, 25-68, 73-76, 81-121, 126-131
+backend\api\routes\tasks.py                     245    220    10%   20-33, 38-41, 47-93, 106-264, 270-405, 410-420, 426-452
+backend\api\scheduler.py                         41     41     0%   5-138
+backend\api\services\__init__.py                  5      0   100%
+backend\api\services\absence_service.py          40     27    32%   41-62, 84-125, 135
+backend\api\services\assignment_service.py       75     62    17%   19-29, 45-77, 91-122, 141-192
+backend\api\services\backup_service.py          308    264    14%   55-59, 63-70, 74, 78, 82, 86, 98-110, 123-256, 268-285, 289-328, 340-350, 363-382, 386-402, 406-421, 425-437, 441-461, 479-627, 639-645, 659-662
+backend\api\services\calendar_service.py         42     35    17%   27-82
+backend\api\services\collision_service.py        78     36    54%   43, 77, 102-119, 145, 161-192, 230, 259-262, 292-312
+backend\api\services\conflict_resolver.py        56     38    32%   44-52, 69-72, 100-141, 158-162, 182-190, 210-220
+backend\api\services\daily_view_service.py       67     14    79%   39, 120, 132-144, 152
+backend\api\services\recurrence_service.py       62     47    24%   37-46, 77-107, 138-172, 205-238, 252-264
+backend\api\services\relief_pool_service.py      97     78    20%   41-87, 101-126, 157-207, 229-244, 261-288
+---------------------------------------------------------------------------
+TOTAL                                          2815   1988    29%
+
+=========================== short test summary info ===========================
+ERROR backend\tests\unit\test_daily_view_service.py::test_get_daily_data_empty
+=================== 4 passed, 25 warnings, 1 error in 0.67s ===================

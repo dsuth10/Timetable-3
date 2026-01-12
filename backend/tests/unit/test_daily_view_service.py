@@ -48,7 +48,7 @@ def test_get_daily_data_with_content(daily_service, app, sample_aide, sample_tas
         assert data["aides"][0]["name"] == sample_aide.name
         assert data["aides"][0]["is_absent"] is True
         assert len(data["aides"][0]["assignments"]) == 1
-        assert data["aides"][0]["assignments"][0]["start_time"] == "09:00:00"
+        assert data["aides"][0]["assignments"][0]["start_time"] == "09:00"
 
 def test_assign_task_from_bank(daily_service, app, sample_aide, sample_task):
     with app.app_context():
@@ -63,7 +63,8 @@ def test_assign_task_from_bank(daily_service, app, sample_aide, sample_task):
         }
         
         result = daily_service.assign_task(payload)
-        assert result["success"] is True
+        assert "error" not in result
+        assert result["id"] is not None
         
         # Verify assignment created
         asg = Assignment.query.filter_by(aide_id=sample_aide.id, date=view_date).first()
@@ -98,6 +99,7 @@ def test_assign_task_collision(daily_service, app, sample_aide, sample_task):
         
         result = daily_service.assign_task(payload)
         assert "error" in result
-        assert result["error"] == "Collision detected"
+        assert "error" in result
+        assert "Time conflict" in result["error"]
 
 

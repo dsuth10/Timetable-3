@@ -17,6 +17,7 @@ from api.models.classroom import Classroom
 from api.models.task import Task
 from api.models.assignment import Assignment
 from api.models.absence import Absence
+from api.models.recurring_series import RecurringSeries
 from api.models.request import Request
 from sqlalchemy import event, text as sa_text
 
@@ -54,7 +55,7 @@ def _db_isolation(app):
     nested = db.session.begin_nested()
 
     # Hard reset tables (respect FK order)
-    for table in ['assignments', 'availability', 'absences', 'requests', 'tasks', 'classrooms', 'teacher_aides']:
+    for table in ['assignments', 'recurring_series', 'availability', 'absences', 'requests', 'tasks', 'classrooms', 'teacher_aides']:
         db.session.execute(sa_text(f'DELETE FROM {table}'))
     db.session.flush()
 

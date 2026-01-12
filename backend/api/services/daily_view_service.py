@@ -98,16 +98,20 @@ class DailyViewService:
         start_time = parse_time(data.get('start_time'))
         end_time = parse_time(data.get('end_time'))
         
-        # Check for collision
-        conflict = self.collision_service.check_collision(
+        # Validate assignment (collision + availability)
+        validation = self.collision_service.validate_assignment(
             aide_id=aide_id,
-            date=assign_date,
+            assignment_date=assign_date,
             start_time=start_time,
             end_time=end_time
         )
         
-        if conflict:
-            return {"error": "Collision detected", "conflict": conflict}
+        if not validation['valid']:
+            return {
+                "error": validation['error'],
+                "availability_issue": validation['availability_issue'],
+                "conflicts": [c.to_dict() for c in validation['conflicts']] if validation['conflicts'] else []
+            }
             
         if assignment_type == 'FROM_BANK':
             # Create new assignment from template

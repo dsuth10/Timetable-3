@@ -8,8 +8,8 @@ from datetime import date
 from typing import List, Dict, Any
 
 from api.models import db
-from api.models.task import Task
 from api.models.assignment import Assignment
+from api.models.recurring_series import RecurringSeries
 from api.services.recurrence_service import RecurrenceService
 from api.services.relief_pool_service import ReliefPoolService
 
@@ -28,14 +28,14 @@ class HorizonScheduler:
 
         Returns number of new assignments created.
         """
-        tasks: list[Task] = Task.query.filter(Task.recurrence_rule.isnot(None)).all()
+        series_list: list[RecurringSeries] = RecurringSeries.query.all()
         created_total = 0
 
-        for task in tasks:
-            # Find current latest assignment date for the task
+        for series in series_list:
+            # Find current latest assignment date for this specific series
             latest: Assignment | None = (
                 Assignment.query
-                .filter(Assignment.task_id == task.id)
+                .filter(Assignment.recurring_series_id == series.id)
                 .order_by(Assignment.date.desc())
                 .first()
             )
@@ -43,13 +43,15 @@ class HorizonScheduler:
             current_latest = latest.date if latest else date.today()
 
             new_assignments = RecurrenceService.extend_horizon_for_task(
-                task_id=task.id,
-                rrule_string=task.recurrence_rule,
-                task_start_time=task.start_time,
-                task_end_time=task.end_time,
-                expires_on=task.expires_on,
+                task_id=series.task_id,
+                rrule_string=series.recurrence_rule,
+                task_start_time=series.start_time,
+                task_end_time=series.end_time,
+                expires_on=series.expires_on,
                 current_latest_date=current_latest,
                 horizon_weeks=horizon_weeks,
+                aide_id=series.aide_id,
+                recurring_series_id=series.id
             )
 
             # Persist
@@ -58,6 +60,7 @@ class HorizonScheduler:
                     Assignment(
                         task_id=a['task_id'],
                         aide_id=a['aide_id'],
+                        recurring_series_id=a['recurring_series_id'],
                         date=a['date'],
                         start_time=a['start_time'],
                         end_time=a['end_time'],

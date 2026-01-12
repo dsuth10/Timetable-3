@@ -1,6 +1,7 @@
 """
 Service for managing assignment series and bulk operations.
 """
+from datetime import datetime
 from typing import List, Tuple, Optional, Dict, Any
 from api.models import db
 from api.models.assignment import Assignment
@@ -185,8 +186,9 @@ class AssignmentSeriesService:
             recurrence_info["dates"] = dates
             recurrence_info["has_more"] = len(future_assignments) > 10
 
-        duration_minutes = (assignment.end_time.hour * 60 + assignment.end_time.minute) - \
-                           (assignment.start_time.hour * 60 + assignment.start_time.minute)
+        start_dt = datetime.combine(assignment.date, assignment.start_time)
+        end_dt = datetime.combine(assignment.date, assignment.end_time)
+        duration_minutes = int((end_dt - start_dt).total_seconds() / 60)
 
         return {
             "task_title": task.title if task else "Missing Task",

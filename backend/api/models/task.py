@@ -121,14 +121,15 @@ class Task(db.Model):
         
         return value
     
-    def to_dict(self, include_assignments=False):
+    def to_dict(self, include_assignments=False, include_seconds=False):
         """Convert to dictionary for JSON serialization"""
+        time_format = '%H:%M:%S' if include_seconds else '%H:%M'
         data = {
             'id': self.id,
             'title': self.title,
             'category': self.category,
-            'start_time': self.start_time.strftime('%H:%M:%S') if self.start_time else None,
-            'end_time': self.end_time.strftime('%H:%M:%S') if self.end_time else None,
+            'start_time': self.start_time.strftime(time_format) if self.start_time else None,
+            'end_time': self.end_time.strftime(time_format) if self.end_time else None,
             'classroom_id': self.classroom_id,
             'notes': self.notes,
             'status': self.status,
