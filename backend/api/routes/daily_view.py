@@ -16,7 +16,7 @@ def get_daily_view(date_str):
         data = daily_view_service.get_daily_data(view_date)
         return jsonify(data), 200
     except ValueError:
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        return jsonify({"error": "Bad request", "message": "Invalid date format. Use YYYY-MM-DD"}), 400
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
@@ -28,21 +28,21 @@ def assign_task():
     """
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Missing request body"}), 400
+        return jsonify({"error": "Bad request", "message": "Missing request body"}), 400
     
     # Required fields validation
     required = ['type', 'id', 'date', 'aide_id', 'start_time', 'end_time']
     missing = [field for field in required if field not in data]
     if missing:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+        return jsonify({"error": "Bad request", "message": f"Missing required fields: {', '.join(missing)}"}), 400
     
     try:
         result = daily_view_service.assign_task(data)
         if "error" in result:
-            return jsonify(result), 409
+            return jsonify({"error": "Conflict", "message": result["error"]}), 409
         return jsonify(result), 201
     except ValueError as e:
-        return jsonify({"error": "Invalid input", "message": str(e)}), 400
+        return jsonify({"error": "Bad request", "message": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 

@@ -16,7 +16,7 @@ def get_recurring_series(series_id: int):
     """Get a recurring series by ID"""
     series = db.session.get(RecurringSeries, series_id)
     if not series:
-        return {'error': 'Recurring series not found'}, 404
+        return {'error': 'Not found', 'message': 'Recurring series not found'}, 404
     return series.to_dict(include_relationships=True), 200
 
 
@@ -84,15 +84,17 @@ def update_recurring_series(series_id: int):
         if recurrence_rule:
             series.recurrence_rule = recurrence_rule
         
+        db.session.flush()
+        result = series.to_dict(include_relationships=True)
         db.session.commit()
-        return series.to_dict(include_relationships=True), 200
+        return result, 200
     
     except ValueError as e:
         db.session.rollback()
-        return {'error': str(e)}, 400
+        return {'error': 'Bad request', 'message': str(e)}, 400
     except Exception as e:
         db.session.rollback()
-        return {'error': f'Failed to update recurring series: {str(e)}'}, 500
+        return {'error': 'Internal server error', 'message': f'Failed to update recurring series: {str(e)}'}, 500
 
 
 @bp.delete('/recurring-series/<int:series_id>')
@@ -125,7 +127,7 @@ def delete_recurring_series(series_id: int):
     
     except Exception as e:
         db.session.rollback()
-        return {'error': f'Failed to delete recurring series: {str(e)}'}, 500
+        return {'error': 'Internal server error', 'message': f'Failed to delete recurring series: {str(e)}'}, 500
 
 
 @bp.get('/recurring-series')

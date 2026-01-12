@@ -27,7 +27,7 @@ def list_tasks():
         try:
             q = q.filter(Task.classroom_id == int(classroom_id))
         except ValueError:
-            return {'error': 'Invalid classroom_id'}, 400
+            return {'error': 'Bad request', 'message': 'Invalid classroom_id'}, 400
             
     tasks = q.order_by(Task.id).all()
     return [t.to_dict() for t in tasks], 200
@@ -37,7 +37,7 @@ def list_tasks():
 def get_task(task_id: int):
     task = db.session.get(Task, task_id)
     if not task:
-        return {'error': 'Task not found'}, 404
+        return {'error': 'Not found', 'message': 'Task not found'}, 404
     return task.to_dict(), 200
 
 
@@ -56,9 +56,14 @@ def create_task():
 
     # Basic validation
     if not title:
-        return {'error': 'title is required'}, 400
-    # if not category:
-    #     return {'error': 'category is required'}, 400
+        return {'error': 'Bad request', 'message': 'title is required'}, 400
+    if not category:
+        return {'error': 'Bad request', 'message': 'category is required'}, 400
+    
+    # Standardize category
+    category = category.upper()
+    if category not in TASK_CATEGORIES:
+        return {'error': 'Bad request', 'message': f'Invalid category. Must be one of: {", ".join(TASK_CATEGORIES)}'}, 400
 
     try:
         s_h, s_m = [int(x) for x in start_time.split(':')[:2]]
@@ -66,7 +71,7 @@ def create_task():
         s_t = dt_time(s_h, s_m)
         e_t = dt_time(e_h, e_m)
     except Exception:
-        return {'error': 'Invalid time format'}, 400
+        return {'error': 'Bad request', 'message': 'Invalid time format. Expected HH:MM'}, 400
 
     # Create task template (no assignment - stays in Task Bank)
     try:
@@ -79,11 +84,13 @@ def create_task():
             notes=notes
         )
         db.session.add(task)
+        db.session.flush()
+        result = task.to_dict()
         db.session.commit()
-        return task.to_dict(), 201
+        return result, 201
     except ValueError as e:
         db.session.rollback()
-        return {'error': str(e)}, 400
+        return {'error': 'Bad request', 'message': str(e)}, 400
 
 
 # Old /recurring-tasks endpoint removed - recurring tasks are now created
@@ -262,7 +269,7 @@ def update_task(task_id: int):
     """Update an existing task template and optionally create a recurring series"""
     task = db.session.get(Task, task_id)
     if not task:
-        return {'error': 'Task not found'}, 404
+        return {'error': 'Not found', 'message': 'Task not found'}, 404
 
     data = request.get_json(silent=True) or {}
     
@@ -280,7 +287,7 @@ def update_task(task_id: int):
     
     # Validate recurrence parameters
     if recurrence_rule is not None and expires_on is None:
-        return {'error': 'expires_on is required when recurrence_rule is provided'}, 400
+        return {'error': 'Bad request', 'message': 'expires_on is required when recurrence_rule is provided'}, 400
     
     # Check if recurrence is being requested
     is_creating_recurring = recurrence_rule is not None and expires_on is not None
@@ -385,22 +392,24 @@ def update_task(task_id: int):
                     )
                 )
         
+        db.session.flush()
+        result = task.to_dict()
         db.session.commit()
-        return task.to_dict(), 200
+        return result, 200
     
     except ValueError as e:
         db.session.rollback()
-        return {'error': str(e)}, 400
+        return {'error': 'Bad request', 'message': str(e)}, 400
     except Exception as e:
         db.session.rollback()
-        return {'error': f'Invalid data format: {str(e)}'}, 400
+        return {'error': 'Bad request', 'message': f'Invalid data format: {str(e)}'}, 400
 
 
 @bp.get('/tasks/<int:task_id>/assignments')
 def list_task_assignments(task_id: int):
     task = db.session.get(Task, task_id)
     if not task:
-        return {'error': 'Task not found'}, 404
+        return {'error': 'Not found', 'message': 'Task not found'}, 404
 
     items = (
         Assignment.query
@@ -416,7 +425,7 @@ def delete_task(task_id: int):
     """Delete a task and all its assignments"""
     task = db.session.get(Task, task_id)
     if not task:
-        return {'error': 'Task not found'}, 404
+        return {'error': 'Not found', 'message': 'Task not found'}, 404
     
     try:
         # Check if this is a reset operation (keep task, delete assignments)
