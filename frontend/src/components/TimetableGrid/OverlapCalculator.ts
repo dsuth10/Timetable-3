@@ -95,7 +95,17 @@ export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[
       const height = durationToPixels(assignment.start_time, assignment.end_time);
       const column = taskToColumn.get(assignment.id) || 0;
 
-      const width = (1 / maxColumns) * 100;
+      // Greedy spanning: check how many columns to the right this task can span
+      let colspan = 1;
+      for (let c = column + 1; c < maxColumns; c++) {
+        const hasCollision = columns[c].some(other =>
+          assignmentsOverlap(assignment, other)
+        );
+        if (hasCollision) break;
+        colspan++;
+      }
+
+      const width = (colspan / maxColumns) * 100;
       const left = (column / maxColumns) * 100;
 
       positions.push({

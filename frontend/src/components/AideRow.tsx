@@ -5,7 +5,7 @@ import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
 import { useMemo } from 'react';
 import { getAvailabilityInfo } from '../utils/availabilityUtils';
-import { snapToSlot, addMinutesToTime, timeIntervalsOverlap } from './TimetableGrid/timeUtils';
+import { addMinutesToTime, timeIntervalsOverlap, timeToMinutes } from './TimetableGrid/timeUtils';
 import { calculateGaps } from '../utils/gapUtils';
 import GapHighlight from './TimetableGrid/GapHighlight';
 
@@ -287,12 +287,14 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
         ))}
 
         {timelineConfig.slots.map((slot) => {
-          const slotStartTime = slot.start_time;
-          // Find tasks that snap to this slot (T054: Support non-aligned start times)
+          const slotStartTime = slot.start_time.substring(0, 5);
+          const slotEndTime = addMinutesToTime(slotStartTime, slot.duration_minutes);
+
+          // Find tasks that fall within this slot (T054: Support non-aligned start times)
           const slotTasks = taskLayouts.filter(l => {
-            const assignmentTime = l.assignment.start_time.substring(0, 5);
-            const snappedTime = snapToSlot(assignmentTime);
-            return snappedTime + ':00' === slotStartTime;
+            const taskStart = l.assignment.start_time.substring(0, 5);
+            return timeToMinutes(taskStart) >= timeToMinutes(slotStartTime) &&
+              timeToMinutes(taskStart) < timeToMinutes(slotEndTime);
           });
 
           // Find gaps that fall into this slot
@@ -350,9 +352,9 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                         position: 'absolute',
                         zIndex: 15,
                         ...layout.style,
-                        // Adjust style to be relative to this slot (T054: Support non-aligned start times)
-                        left: `${(startTimeToMinutes(layout.assignment.start_time) - startTimeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
-                        width: `${(startTimeToMinutes(layout.assignment.end_time) - startTimeToMinutes(layout.assignment.start_time)) / slot.duration_minutes * 100}%`,
+                        // Position relative to current slot (always positive offset)
+                        left: `${(timeToMinutes(layout.assignment.start_time) - timeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
+                        width: `${(timeToMinutes(layout.assignment.end_time) - timeToMinutes(layout.assignment.start_time)) / slot.duration_minutes * 100}%`,
                       }}
                     >
                       <TaskCard
