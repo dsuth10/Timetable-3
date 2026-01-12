@@ -374,11 +374,21 @@ def weekly_matrix():
     aides = TeacherAide.query.order_by(TeacherAide.id).all()
     aides_json = [a.to_dict() for a in aides]
 
-    # Time slots 08:00..17:00 per 15 min
+    from api.config import SCHEDULE_CONFIG
+    
+    # Use centralized configuration
     time_slots = []
-    for h in range(8, 18):
-        for m in (0, 15, 30, 45):
-            time_slots.append({'time': f"{h:02d}:{m:02d}:00"})
+    for start_time, duration in SCHEDULE_CONFIG["SEGMENTS"]:
+        time_slots.append({'start_time': start_time, 'duration_minutes': duration})
+
+    timeline_config = {
+        "slots": time_slots,
+        "start_time": SCHEDULE_CONFIG["START_TIME"],
+        "end_time": SCHEDULE_CONFIG["END_TIME"]
+    }
+    
+    # ...
+    # Skip build matrix lines as they are unchanged
 
     # Build matrix: aide_id -> {date -> [assignments/conflicts info]}
     matrix = {str(a.id): {} for a in aides}
@@ -387,6 +397,7 @@ def weekly_matrix():
     items = (
         Assignment.query
         .options(joinedload(Assignment.task))
+        .options(joinedload(Assignment.task).joinedload(Task.classroom))  # Also load classroom for color info
         .filter(Assignment.date >= days[0], Assignment.date <= days[-1])
         .order_by(Assignment.aide_id, Assignment.date, Assignment.start_time)
         .all()
@@ -419,11 +430,12 @@ def weekly_matrix():
             )
             if overlap:
                 conflicts.append({'assignment_id': asg.id, 'aide_id': asg.aide_id, 'date': asg.date.isoformat()})
-            lst.append(asg.to_dict())
+            lst.append(asg.to_dict(include_relationships=True))
 
     return {
         'aides': aides_json,
         'time_slots': time_slots,
         'matrix': matrix,
-        'conflicts': conflicts
+        'conflicts': conflicts,
+        'timeline_config': timeline_config
     }, 200

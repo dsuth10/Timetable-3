@@ -6,6 +6,7 @@ from api.models.assignment import Assignment
 from api.models.task import Task
 from api.models.absence import Absence
 from api.services.collision_service import CollisionService
+from api.config import SCHEDULE_CONFIG
 
 class DailyViewService:
     def __init__(self):
@@ -52,21 +53,8 @@ class DailyViewService:
             })
             
         # 7. Define timeline configuration
-        # Define custom schedule segments matching the frontend/PDF service
-        schedule_segments = [
-            ("08:50:00", 20), # 08:50 - 09:10
-            ("09:10:00", 30), # 09:10 - 09:40
-            ("09:40:00", 30), # 09:40 - 10:10
-            ("10:10:00", 30), # 10:10 - 10:40
-            ("10:40:00", 30), # 10:40 - 11:10
-            ("11:10:00", 40), # 11:10 - 11:50
-            ("11:50:00", 30), # 11:50 - 12:20
-            ("12:20:00", 30), # 12:20 - 12:50
-            ("12:50:00", 30), # 12:50 - 13:20
-            ("13:20:00", 40), # 13:20 - 14:00
-            ("14:00:00", 30), # 14:00 - 14:30
-            ("14:30:00", 30), # 14:30 - 15:00
-        ]
+        # Use centralized schedule segments from config
+        schedule_segments = SCHEDULE_CONFIG["SEGMENTS"]
         
         slots = []
         for start_time, duration in schedule_segments:
@@ -77,7 +65,9 @@ class DailyViewService:
             "relief_pool": relief_pool,
             "task_bank": [t.to_dict() for t in task_bank],
             "timeline_config": {
-                "slots": slots
+                "slots": slots,
+                "start_time": SCHEDULE_CONFIG["START_TIME"],
+                "end_time": SCHEDULE_CONFIG["END_TIME"]
             }
         }
 
@@ -139,9 +129,11 @@ class DailyViewService:
                 
             assignment.aide_id = aide_id
             assignment.status = 'ASSIGNED'
+            assignment.date = assign_date 
             assignment.start_time = start_time
             assignment.end_time = end_time
-            assignment.original_aide_id = None # Clear original aide reference
+            assignment.original_aide_id = None 
+            assignment.version += 1 # Increment version for optimistic locking
             
         db.session.commit()
         

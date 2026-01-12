@@ -1,14 +1,10 @@
 // Time calculation constants and utilities for calendar grid positioning
 
 export const PIXELS_PER_MINUTE = 2.5;
-export const START_TIME_MINUTES = 8 * 60 + 50; // 08:50
-export const END_TIME_MINUTES = 15 * 60; // 15:00
+export let START_TIME_MINUTES = 8 * 60 + 50; // 08:50 default
+export let END_TIME_MINUTES = 15 * 60; // 15:00 default
 
-// Kept for backward compatibility but should be phased out
-export const START_HOUR = 8; 
-export const END_HOUR = 15; 
-
-export const SCHEDULE_SEGMENTS = [
+export let SCHEDULE_SEGMENTS = [
   { start: '08:50', end: '09:10' },
   { start: '09:10', end: '09:40' },
   { start: '09:40', end: '10:10' },
@@ -19,16 +15,24 @@ export const SCHEDULE_SEGMENTS = [
   { start: '12:20', end: '12:50' },
   { start: '12:50', end: '13:20' },
   { start: '13:20', end: '14:00' },
-  { start: '14:00', end: '14:30' }, // Adjusted end time
-  { start: '14:30', end: '15:00' }, // Adjusted start time
+  { start: '14:00', end: '14:30' },
+  { start: '14:30', end: '15:00' },
 ];
 
-// Calculate total height based on linear time scale
-export const TOTAL_HEIGHT_PX = (END_TIME_MINUTES - START_TIME_MINUTES) * PIXELS_PER_MINUTE;
+export function updateScheduleConfig(config: { start_time: string, end_time: string, slots: { start_time: string, duration_minutes: number }[] }) {
+  START_TIME_MINUTES = timeToMinutes(config.start_time);
+  END_TIME_MINUTES = timeToMinutes(config.end_time);
+  SCHEDULE_SEGMENTS = config.slots.map(s => ({
+    start: s.start_time.substring(0, 5),
+    end: addMinutesToTime(s.start_time.substring(0, 5), s.duration_minutes)
+  }));
+}
 
-// Legacy constants, mapped to new values where possible
-export const SLOT_INTERVAL_MINUTES = 15; // Used as default step
-export const SLOT_HEIGHT_PX = 30; // Used as default height for 15 min
+// Calculate total height - this needs to be a function now if we want it to be dynamic after import,
+// but for now we'll just export it as a helper or update it.
+export const getTotalHeightPx = () => (END_TIME_MINUTES - START_TIME_MINUTES) * PIXELS_PER_MINUTE;
+// Legacy support
+export const TOTAL_HEIGHT_PX = (END_TIME_MINUTES - START_TIME_MINUTES) * PIXELS_PER_MINUTE;
 
 /**
  * Convert time string (HH:MM) to minutes since midnight
@@ -70,11 +74,11 @@ export function durationToPixels(startTime: string, endTime: string): number {
  */
 export function snapToSlot(timeStr: string): string {
   const minutes = timeToMinutes(timeStr);
-  
+
   // Find the closest segment start time
   let closestDiff = Infinity;
   let closestTime = SCHEDULE_SEGMENTS[0].start;
-  
+
   // Check all segment start times
   for (const segment of SCHEDULE_SEGMENTS) {
     const segStartMinutes = timeToMinutes(segment.start);
@@ -84,7 +88,7 @@ export function snapToSlot(timeStr: string): string {
       closestTime = segment.start;
     }
   }
-  
+
   // Also check end time of last segment
   const lastSegEndMinutes = timeToMinutes(SCHEDULE_SEGMENTS[SCHEDULE_SEGMENTS.length - 1].end);
   if (Math.abs(minutes - lastSegEndMinutes) < closestDiff) {
@@ -108,13 +112,13 @@ export function generateTimeSlots(): string[] {
 export function generateAllTimeSlots(): string[] {
   const slots: string[] = [];
   let currentMinutes = START_TIME_MINUTES;
-  
+
   // Generate all 5-minute increments from start to end time
   while (currentMinutes <= END_TIME_MINUTES) {
     slots.push(minutesToTime(currentMinutes));
     currentMinutes += 5; // 5-minute increments
   }
-  
+
   return slots;
 }
 
@@ -136,7 +140,7 @@ export function timeIntervalsOverlap(
   const end1Min = timeToMinutes(end1);
   const start2Min = timeToMinutes(start2);
   const end2Min = timeToMinutes(end2);
-  
+
   return start1Min < end2Min && start2Min < end1Min;
 }
 

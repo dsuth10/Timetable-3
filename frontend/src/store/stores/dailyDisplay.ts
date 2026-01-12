@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
 import type { DailyViewData, AssignTaskPayload } from '../../types';
+import { updateScheduleConfig } from '../../components/TimetableGrid/timeUtils';
 
 type DailyDisplayState = {
   data: DailyViewData | null;
@@ -17,7 +18,14 @@ export const useDailyDisplayStore = create<DailyDisplayState>((set, get) => ({
     try {
       set({ loading: true, error: undefined });
       const res = await api.get(`/daily-view/${date}`);
-      set({ data: res.data as DailyViewData });
+      const data = res.data as DailyViewData;
+
+      // Update global time config
+      if (data.timeline_config) {
+        updateScheduleConfig(data.timeline_config);
+      }
+
+      set({ data });
     } catch (e: any) {
       set({ error: e.message || 'Failed to fetch daily data' });
     } finally {

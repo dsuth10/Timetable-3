@@ -154,6 +154,8 @@ export interface TimelineSlotConfig {
 
 export interface TimelineConfig {
   slots: TimelineSlotConfig[];
+  start_time: string; // HH:MM:SS
+  end_time: string;   // HH:MM:SS
 }
 
 export interface DailyViewData {

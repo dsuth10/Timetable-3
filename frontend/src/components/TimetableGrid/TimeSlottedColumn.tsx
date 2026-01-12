@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Box } from '@mui/material';
 import type { Assignment, Task, Absence, Availability, TeacherAide } from '../../types';
-import { generateTimeSlots, timeToPixels, durationToPixels, TOTAL_HEIGHT_PX, getSegmentForTime, snapToSlot, timeIntervalsOverlap, addMinutesToTime } from './timeUtils';
+import { generateTimeSlots, timeToPixels, durationToPixels, getTotalHeightPx, getSegmentForTime, snapToSlot, timeIntervalsOverlap, addMinutesToTime } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';
 import { TaskCard } from './TaskCard';
 import { TimetableSlot } from './TimetableSlot';
@@ -44,7 +44,7 @@ export function TimeSlottedColumn({
     return map;
   }, [tasks]);
 
-  const totalHeight = TOTAL_HEIGHT_PX;
+  const totalHeight = getTotalHeightPx();
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
   // Calculate gaps for snapping

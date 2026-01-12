@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
-  Box, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  SelectChangeEvent, 
-  Button, 
-  Tooltip, 
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Button,
+  Tooltip,
   Menu
 } from '@mui/material';
 import { FileDownload as FileDownloadIcon, PictureAsPdf as PdfIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
@@ -21,7 +21,7 @@ import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
-import { addMinutesToTime, timeToMinutes, getSegmentForTime, calculateDuration } from '../components/TimetableGrid/timeUtils';
+import { addMinutesToTime, timeToMinutes, getSegmentForTime, calculateDuration, updateScheduleConfig } from '../components/TimetableGrid/timeUtils';
 import AppDragDropContext from '../components/DragDropContext';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
@@ -81,7 +81,7 @@ export default function Schedule() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { byAide: absencesByAide, listForAide, delete: deleteAbsence } = useAbsencesStore();
   const [selectedAbsenceDate, setSelectedAbsenceDate] = useState<string | null>(null);
-  
+
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
 
@@ -152,8 +152,13 @@ export default function Schedule() {
     assignmentsApi.weeklyMatrix(selectedWeekStartISO)
       .then((matrix: any) => {
         const byAide: Record<string, Assignment[]> = {};
-        
+
         if (matrix?.matrix) {
+          // Update global time config
+          if (matrix.timeline_config) {
+            updateScheduleConfig(matrix.timeline_config);
+          }
+
           Object.entries(matrix.matrix).forEach(([aideId, days]) => {
             const aideAssignments: Assignment[] = [];
             Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
@@ -164,7 +169,7 @@ export default function Schedule() {
             byAide[aideId] = aideAssignments;
           });
         }
-        
+
         setAssignmentsByAide(byAide);
       })
       .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
@@ -199,22 +204,22 @@ export default function Schedule() {
   // Transform assignments for selected aide into day-based structure
   const assignmentsByDay = useMemo(() => {
     if (!selectedAideId) return {};
-    
+
     const aideAssignments = assignmentsByAide[String(selectedAideId)] || [];
     const byDay: Record<string, Assignment[]> = {};
-    
+
     // Initialize empty arrays for each day
     weekDates.forEach(date => {
       byDay[date] = [];
     });
-    
+
     // Group assignments by date
     aideAssignments.forEach(assignment => {
       if (weekDates.includes(assignment.date)) {
         byDay[assignment.date].push(assignment);
       }
     });
-    
+
     return byDay;
   }, [selectedAideId, assignmentsByAide, weekDates]);
 
@@ -231,7 +236,7 @@ export default function Schedule() {
   // Transform assignments for selected class into day-based structure
   const classAssignmentsByDay = useMemo(() => {
     if (viewMode !== 'CLASS' || !selectedClassId) return {};
-    
+
     const byDay: Record<string, Assignment[]> = {};
     weekDates.forEach(date => {
       byDay[date] = [];
@@ -245,7 +250,7 @@ export default function Schedule() {
         }
       }
     });
-    
+
     return byDay;
   }, [viewMode, selectedClassId, assignmentsByAide, weekDates, tasks]);
 
@@ -305,8 +310,12 @@ export default function Schedule() {
     try {
       const matrix = await assignmentsApi.weeklyMatrix(selectedWeekStartISO);
       const byAide: Record<string, Assignment[]> = {};
-      
+
       if (matrix?.matrix) {
+        // Update global time config
+        if (matrix.timeline_config) {
+          updateScheduleConfig(matrix.timeline_config);
+        }
         Object.entries(matrix.matrix).forEach(([aideId, days]) => {
           const aideAssignments: Assignment[] = [];
           Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
@@ -317,7 +326,7 @@ export default function Schedule() {
           byAide[aideId] = aideAssignments;
         });
       }
-      
+
       setAssignmentsByAide(byAide);
       // Trigger refresh of unassigned panel
       setRefreshTrigger(prev => prev + 1);
@@ -340,12 +349,12 @@ export default function Schedule() {
   const handleExportIcs = async () => {
     handleExportClose();
     if (!weekDates.length) return;
-    
+
     setLoading(true);
     try {
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
-      
+
       // Mode-aware export: use aide_id or classroom_id based on viewMode
       const blob = await calendarApi.export({
         start_date: startDate,
@@ -353,14 +362,14 @@ export default function Schedule() {
         aide_id: viewMode === 'AIDE' ? (selectedAideId || undefined) : undefined,
         classroom_id: viewMode === 'CLASS' ? (selectedClassId || undefined) : undefined
       });
-      
+
       let filename = `schedule-${startDate}.ics`;
       if (viewMode === 'AIDE' && selectedAide) {
         filename = `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.ics`;
       } else if (viewMode === 'CLASS' && selectedClass) {
         filename = `schedule-${selectedClass.name.replace(/\s+/g, '_')}-${startDate}.ics`;
       }
-        
+
       downloadBlob(blob, filename);
     } catch (e: any) {
       setError(e.message || 'Failed to export schedule');
@@ -372,19 +381,19 @@ export default function Schedule() {
   const handleExportPdf = async () => {
     handleExportClose();
     if (!weekDates.length) return;
-    
+
     setLoading(true);
     try {
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
-      
+
       let filename = `schedule-${startDate}.pdf`;
       if (viewMode === 'AIDE' && selectedAide) {
         filename = `schedule-${selectedAide.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
       } else if (viewMode === 'CLASS' && selectedClass) {
         filename = `schedule-${selectedClass.name.replace(/\s+/g, '_')}-${startDate}.pdf`;
       }
-        
+
       await handleExport(filename);
     } catch (e: any) {
       setError(e.message || 'Failed to export PDF');
@@ -430,11 +439,11 @@ export default function Schedule() {
     // Calculate actual slot duration from SCHEDULE_SEGMENTS
     const segment = getSegmentForTime(time);
     let duration = 30; // Default fallback duration
-    
+
     if (segment) {
       duration = calculateDuration(segment.start, segment.end);
     }
-    
+
     setSelectedTimeSlot({ date, time, duration });
   };
 
@@ -489,71 +498,71 @@ export default function Schedule() {
           {/* Center: Timetable Grid */}
           <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
             {viewMode === 'AIDE' && (
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              {/* Aide Selector */}
-              <FormControl sx={{ minWidth: 200 }}>
-                <InputLabel id="aide-select-label">Select Aide</InputLabel>
-                <Select
-                  labelId="aide-select-label"
-                  value={selectedAideId || ''}
-                  label="Select Aide"
-                  onChange={(event: SelectChangeEvent<number>) => {
-                    setSelectedAideId(Number(event.target.value));
-                  }}
-                >
-                  {aides
-                    .filter(aide => visibleAideIds.has(aide.id))
-                    .map((aide) => (
-                      <MenuItem key={aide.id} value={aide.id}>
-                        {aide.name}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-              
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Tooltip title="Export Schedule">
-                  <Button
-                    startIcon={<FileDownloadIcon />}
-                    onClick={handleExportClick}
-                    disabled={loading}
-                    variant="outlined"
-                    size="small"
-                    aria-controls={exportMenuOpen ? 'export-menu' : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={exportMenuOpen ? 'true' : undefined}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                {/* Aide Selector */}
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel id="aide-select-label">Select Aide</InputLabel>
+                  <Select
+                    labelId="aide-select-label"
+                    value={selectedAideId || ''}
+                    label="Select Aide"
+                    onChange={(event: SelectChangeEvent<number>) => {
+                      setSelectedAideId(Number(event.target.value));
+                    }}
                   >
-                    Export
-                  </Button>
-                </Tooltip>
-                <Menu
-                  id="export-menu"
-                  anchorEl={exportAnchorEl}
-                  open={exportMenuOpen}
-                  onClose={handleExportClose}
-                  MenuListProps={{
-                    'aria-labelledby': 'basic-button',
-                  }}
-                >
-                  <MenuItem onClick={handleExportIcs}>
-                    <CalendarIcon fontSize="small" sx={{ mr: 1 }} />
-                    Export to Calendar (.ics)
-                  </MenuItem>
-                  <MenuItem onClick={handleExportPdf}>
-                    <PdfIcon fontSize="small" sx={{ mr: 1 }} />
-                    Export to PDF
-                  </MenuItem>
-                </Menu>
-                <UndoRedoControls />
+                    {aides
+                      .filter(aide => visibleAideIds.has(aide.id))
+                      .map((aide) => (
+                        <MenuItem key={aide.id} value={aide.id}>
+                          {aide.name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="Export Schedule">
+                    <Button
+                      startIcon={<FileDownloadIcon />}
+                      onClick={handleExportClick}
+                      disabled={loading}
+                      variant="outlined"
+                      size="small"
+                      aria-controls={exportMenuOpen ? 'export-menu' : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={exportMenuOpen ? 'true' : undefined}
+                    >
+                      Export
+                    </Button>
+                  </Tooltip>
+                  <Menu
+                    id="export-menu"
+                    anchorEl={exportAnchorEl}
+                    open={exportMenuOpen}
+                    onClose={handleExportClose}
+                    MenuListProps={{
+                      'aria-labelledby': 'basic-button',
+                    }}
+                  >
+                    <MenuItem onClick={handleExportIcs}>
+                      <CalendarIcon fontSize="small" sx={{ mr: 1 }} />
+                      Export to Calendar (.ics)
+                    </MenuItem>
+                    <MenuItem onClick={handleExportPdf}>
+                      <PdfIcon fontSize="small" sx={{ mr: 1 }} />
+                      Export to PDF
+                    </MenuItem>
+                  </Menu>
+                  <UndoRedoControls />
+                </Box>
               </Box>
-            </Box>
             )}
-            
+
             {viewMode === 'CLASS' && !selectedClass && (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 <Button variant="contained" onClick={() => setDrawerOpen(true)}>
                   Select a Class
-                 </Button>
+                </Button>
               </Box>
             )}
 
@@ -577,7 +586,7 @@ export default function Schedule() {
                     ))}
                   </Select>
                 </FormControl>
-                
+
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Tooltip title="Export Schedule">
                     <Button
@@ -621,9 +630,9 @@ export default function Schedule() {
                 {error}
               </Box>
             )}
-            
+
             {!loading && !error && viewMode === 'AIDE' && selectedAide && (
-              <TimetableGrid 
+              <TimetableGrid
                 key={`${selectedWeekStartISO}-${selectedAide.id}`}
                 selectedAide={selectedAide}
                 assignmentsByDay={assignmentsByDay}
@@ -648,15 +657,15 @@ export default function Schedule() {
                 onSlotClick={handleSlotClick}
               />
             )}
-            
+
             {ConflictUI}
             {DurationModal}
           </Box>
 
           {/* Right Panel */}
           {viewMode === 'AIDE' ? (
-            <TaskBank 
-              dateISO={selectedWeekStartISO} 
+            <TaskBank
+              dateISO={selectedWeekStartISO}
               refreshTrigger={refreshTrigger}
               onTaskDoubleClick={handleTaskDoubleClick}
             />
@@ -666,11 +675,11 @@ export default function Schedule() {
         </Box>
 
         {/* Hidden Export View (must be inside DragDropContext) */}
-        <Box sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          zIndex: -1000, 
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: -1000,
           pointerEvents: 'none',
           opacity: 0,
         }}>
@@ -680,7 +689,7 @@ export default function Schedule() {
             dateRange={`${weekDates[0]} to ${weekDates[weekDates.length - 1]}`}
           >
             {viewMode === 'AIDE' && selectedAide && (
-              <TimetableGrid 
+              <TimetableGrid
                 selectedAide={selectedAide}
                 assignmentsByDay={assignmentsByDay}
                 weekDates={weekDates}
@@ -711,8 +720,8 @@ export default function Schedule() {
       />
 
       {/* Modals */}
-      <TaskCreationModal 
-        open={showCreateTask} 
+      <TaskCreationModal
+        open={showCreateTask}
         onClose={async () => {
           setShowCreateTask(false);
           setTaskCreationDefaults(null);
@@ -744,14 +753,14 @@ export default function Schedule() {
         days={multiDayState}
         onToggle={(k) => setMultiDayState((s) => s.map((d) => d.key === k ? { ...d, selected: !d.selected } : d))}
         onApply={async (selected) => {
-          if (!selected.length || !selectedAideId || !selectedTaskId) { 
-            setShowMultiDay(false); 
-            return; 
+          if (!selected.length || !selectedAideId || !selectedTaskId) {
+            setShowMultiDay(false);
+            return;
           }
           const task = tasks.find((t) => t.id === selectedTaskId);
-          if (!task) { 
-            setShowMultiDay(false); 
-            return; 
+          if (!task) {
+            setShowMultiDay(false);
+            return;
           }
           const start = new Date(selectedWeekStartISO + 'T00:00:00');
           const dayToOffset: Record<string, number> = { MO: 0, TU: 1, WE: 2, TH: 3, FR: 4 } as any;
@@ -779,8 +788,8 @@ export default function Schedule() {
         }}
         onClose={() => setShowMultiDay(false)}
       />
-      <AbsenceModal 
-        open={showAbsenceModal} 
+      <AbsenceModal
+        open={showAbsenceModal}
         aides={aides}
         onClose={() => {
           setShowAbsenceModal(false);
@@ -864,7 +873,7 @@ export default function Schedule() {
               description: taskData.description,
               classroom_id: taskSelectionDraft.classroomId
             });
-            
+
             const payload = {
               aide_id: taskSelectionDraft.aideId,
               task_id: newTask.id,
@@ -898,10 +907,10 @@ export default function Schedule() {
               }
               throw e;
             }
-            
+
             await refreshData();
             // Also refresh tasks list
-            fetchTasks(); 
+            fetchTasks();
             setShowTaskSelection(false);
             setTaskSelectionDraft(null);
           } catch (e: any) {
