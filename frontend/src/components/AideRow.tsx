@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { getAvailabilityInfo } from '../utils/availabilityUtils';
 import { addMinutesToTime, timeIntervalsOverlap, timeToMinutes } from './TimetableGrid/timeUtils';
 import { calculateGaps } from '../utils/gapUtils';
+import { calculateOverlaps } from '../utils/overlapUtils';
 import GapHighlight from './TimetableGrid/GapHighlight';
 
 interface AideRowProps {
@@ -85,91 +86,28 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
   const taskLayouts = useMemo(() => {
     if (aide.assignments.length === 0) return [];
 
-    // Sort by start time
-    const sorted = [...aide.assignments].sort((a, b) =>
-      startTimeToMinutes(a.start_time) - startTimeToMinutes(b.start_time)
-    );
+    const overlapAssignments = calculateOverlaps(aide.assignments);
 
-    const layouts: { assignment: Assignment; style: React.CSSProperties }[] = [];
-    const processed = new Set<number>();
+    return overlapAssignments.map(({ item: assignment, lane, totalLanes, laneSpan }) => {
+      const startMins = startTimeToMinutes(assignment.start_time);
+      const endMins = startTimeToMinutes(assignment.end_time);
 
-    for (let i = 0; i < sorted.length; i++) {
-      if (processed.has(sorted[i].id)) continue;
+      const left = ((startMins - timelineStart) / totalMinutes) * 100;
+      const width = ((endMins - startMins) / totalMinutes) * 100;
+      const height = (laneSpan / totalLanes) * 100;
+      const top = (lane / totalLanes) * 100;
 
-      const group = [sorted[i]];
-      processed.add(sorted[i].id);
-
-      let found = true;
-      while (found) {
-        found = false;
-        for (let j = i + 1; j < sorted.length; j++) {
-          if (processed.has(sorted[j].id)) continue;
-
-          const overlaps = group.some(g => {
-            const startA = startTimeToMinutes(g.start_time);
-            const endA = startTimeToMinutes(g.end_time);
-            const startB = startTimeToMinutes(sorted[j].start_time);
-            const endB = startTimeToMinutes(sorted[j].end_time);
-            return startA < endB && endA > startB;
-          });
-
-          if (overlaps) {
-            group.push(sorted[j]);
-            processed.add(sorted[j].id);
-            found = true;
-          }
+      return {
+        assignment,
+        style: {
+          left: `${left}%`,
+          width: `${width}%`,
+          top: `${top}%`,
+          height: `${height}%`,
+          padding: '2px'
         }
-      }
-
-      // Greedy row assignment
-      const rows: Assignment[][] = [];
-      const taskToRow = new Map<number, number>();
-
-      const sortedGroup = [...group].sort((a, b) =>
-        startTimeToMinutes(a.start_time) - startTimeToMinutes(b.start_time)
-      );
-
-      for (const assignment of sortedGroup) {
-        let assigned = false;
-        for (let r = 0; r < rows.length; r++) {
-          const lastInRow = rows[r][rows[r].length - 1];
-          if (startTimeToMinutes(assignment.start_time) >= startTimeToMinutes(lastInRow.end_time)) {
-            rows[r].push(assignment);
-            taskToRow.set(assignment.id, r);
-            assigned = true;
-            break;
-          }
-        }
-        if (!assigned) {
-          rows.push([assignment]);
-          taskToRow.set(assignment.id, rows.length - 1);
-        }
-      }
-
-      const maxRows = rows.length;
-      group.forEach((assignment) => {
-        const startMins = startTimeToMinutes(assignment.start_time);
-        const endMins = startTimeToMinutes(assignment.end_time);
-        const rowIndex = taskToRow.get(assignment.id) || 0;
-
-        const left = ((startMins - timelineStart) / totalMinutes) * 100;
-        const width = ((endMins - startMins) / totalMinutes) * 100;
-        const height = (1 / maxRows) * 100;
-        const top = (rowIndex / maxRows) * 100;
-
-        layouts.push({
-          assignment,
-          style: {
-            left: `${left}%`,
-            width: `${width}%`,
-            top: `${top}%`,
-            height: `${height}%`,
-            padding: '2px'
-          }
-        });
-      });
-    }
-    return layouts;
+      };
+    });
   }, [aide.assignments, timelineStart, totalMinutes]);
 
   return (
