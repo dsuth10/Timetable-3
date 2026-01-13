@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
+import {
+  Box,
+  Paper,
+  Typography,
   CircularProgress,
   Alert,
   Button
@@ -11,7 +11,6 @@ import {
 import { addDays, subDays, format, isWeekend, nextMonday } from 'date-fns';
 import { Add as AddIcon } from '@mui/icons-material';
 import AppBar from '../components/Layout/AppBar';
-import { useDailyDisplayStore } from '../store/stores/dailyDisplay';
 import { useTasksStore } from '../store/stores/tasks';
 import DailyTimeline from '../components/DailyTimeline';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
@@ -27,13 +26,16 @@ import ClassroomsManagement from '../components/Management/ClassroomsManagement'
 import RequestsManagement from '../components/Management/RequestsManagement';
 import BackupManagement from '../components/Management/BackupManagement';
 import { useDragDrop } from '../hooks/useDragDrop';
+import { useDailyView } from '../hooks/useDailyView';
+import { useAssignTask } from '../hooks/useAssignTask';
 import type { Task, Assignment } from '../types';
 
 export default function DailyDisplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const dateParam = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
-  
-  const { data, loading, error, fetchDailyData, assignTask } = useDailyDisplayStore();
+
+  const { data, isLoading: loading, error, refetch: fetchDailyData } = useDailyView(dateParam);
+  const assignTaskMutation = useAssignTask();
   const { fetchTasks } = useTasksStore();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -51,14 +53,10 @@ export default function DailyDisplayPage() {
     aides: data?.aides || [],
     onSuccess: () => {
       // Refresh daily data after successful assignment
-      fetchDailyData(dateParam);
+      fetchDailyData();
       setRefreshTrigger(prev => prev + 1);
     }
   });
-
-  useEffect(() => {
-    fetchDailyData(dateParam);
-  }, [dateParam, fetchDailyData]);
 
   // Weekend redirect logic
   useEffect(() => {
@@ -79,10 +77,10 @@ export default function DailyDisplayPage() {
 
     const aideId = parseInt(destMatch[1]);
     const startTime = destMatch[2];
-    
+
     const slot = data?.timeline_config.slots.find(s => s.start_time === startTime);
     const duration = slot?.duration_minutes || 30;
-    
+
     const [h, m] = startTime.split(':').map(Number);
     const dateObj = new Date();
     dateObj.setHours(h, m + duration, 0);
@@ -91,14 +89,14 @@ export default function DailyDisplayPage() {
     // Draggable ID format for Relief Pool in unified component is `relief-pool-${task.id}`
     const assignmentId = parseInt(draggableId.replace('relief-pool-', ''));
     const reliefTask = data?.relief_pool.find(t => t.id === assignmentId);
-    
+
     setPendingAssignment({
       type: 'FROM_RELIEF',
       id: assignmentId,
       date: dateParam,
       aide_id: aideId,
       start_time: startTime,
-      end_time: reliefTask ? reliefTask.end_time : endTime, 
+      end_time: reliefTask ? reliefTask.end_time : endTime,
       title: reliefTask?.task?.title || 'Relief Task'
     });
     setConfirmOpen(true);
@@ -107,7 +105,7 @@ export default function DailyDisplayPage() {
   const handleConfirm = async (start: string, end: string) => {
     if (!pendingAssignment) return;
     try {
-      await assignTask({
+      await assignTaskMutation.mutateAsync({
         ...pendingAssignment,
         start_time: start,
         end_time: end
@@ -115,7 +113,7 @@ export default function DailyDisplayPage() {
       setConfirmOpen(false);
       setPendingAssignment(null);
       // Refresh after relief pool assignment
-      fetchDailyData(dateParam);
+      fetchDailyData();
       setRefreshTrigger(prev => prev + 1);
     } catch (e) {
       console.error('Failed to confirm assignment', e);
@@ -125,7 +123,7 @@ export default function DailyDisplayPage() {
   // Combined drag end handler
   const handleDragEnd = (result: any) => {
     const { source } = result;
-    
+
     // Handle relief pool drops separately
     if (source.droppableId === 'relief-pool') {
       handleReliefPoolDrop(result);
@@ -179,26 +177,26 @@ export default function DailyDisplayPage() {
     setShowEditTask(false);
     setSelectedTaskForEdit(null);
     setSelectedAssignmentForEdit(null);
-    fetchDailyData(dateParam);
+    fetchDailyData();
     fetchTasks();
   };
 
   const handleRefresh = () => {
-    fetchDailyData(dateParam);
+    fetchDailyData();
     fetchTasks();
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
-      <AppBar 
+      <AppBar
         weekLabel={dateParam}
-        onMenuClick={() => {}}
+        onMenuClick={() => { }}
         onPrevWeek={handlePrevDay}
         onNextWeek={handleNextDay}
         onToday={handleToday}
       />
-      
+
       <AppDragDropContext onDragEnd={handleDragEnd}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -215,7 +213,11 @@ export default function DailyDisplayPage() {
           </Button>
         </Box>
 
-        {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}
+        {(error || assignTaskMutation.error) && (
+          <Alert severity="error" sx={{ m: 2 }}>
+            {(error as any)?.message || assignTaskMutation.error?.message || 'An error occurred'}
+          </Alert>
+        )}
 
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Timeline Area (Horizontal Scroll) */}
@@ -225,31 +227,31 @@ export default function DailyDisplayPage() {
                 <CircularProgress />
               </Box>
             ) : data ? (
-              <DailyTimeline 
-                data={data} 
+              <DailyTimeline
+                data={data}
                 date={dateParam}
-                onTaskDoubleClick={handleTaskDoubleClick} 
+                onTaskDoubleClick={handleTaskDoubleClick}
               />
             ) : null}
           </Box>
 
           {/* Fixed Right Panel */}
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              width: 350, 
-              display: 'flex', 
-              flexDirection: 'column', 
-              borderLeft: 1, 
+          <Paper
+            elevation={3}
+            sx={{
+              width: 350,
+              display: 'flex',
+              flexDirection: 'column',
+              borderLeft: 1,
               borderColor: 'divider',
               zIndex: 10,
               overflow: 'hidden'
             }}
           >
-            <TaskBank 
-              noDrawer 
-              dateISO={dateParam} 
-              tasks={data?.task_bank} 
+            <TaskBank
+              noDrawer
+              dateISO={dateParam}
+              tasks={data?.task_bank}
               refreshTrigger={refreshTrigger}
             />
           </Paper>
