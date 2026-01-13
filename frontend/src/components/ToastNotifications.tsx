@@ -1,6 +1,12 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Snackbar, Alert, AlertColor, Box } from '@mui/material';
 
-type Toast = { id: number; message: string; type: 'error' | 'success' };
+type Toast = {
+  id: number;
+  message: string;
+  type: AlertColor;
+  open: boolean;
+};
 
 export default function ToastNotifications() {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -8,21 +14,19 @@ export default function ToastNotifications() {
   useEffect(() => {
     function onErrorEvent(e: CustomEvent<{ message: string }>) {
       const id = Date.now();
-      setToasts((t) => [...t, { id, message: e.detail.message, type: 'error' }]);
-      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+      setToasts((t) => [...t, { id, message: e.detail.message, type: 'error', open: true }]);
     }
-    
+
     function onSuccessEvent(e: CustomEvent<{ message: string }>) {
       const id = Date.now();
-      setToasts((t) => [...t, { id, message: e.detail.message, type: 'success' }]);
-      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+      setToasts((t) => [...t, { id, message: e.detail.message, type: 'success', open: true }]);
     }
-    
+
     // @ts-ignore
     window.addEventListener('app:error', onErrorEvent as any);
     // @ts-ignore
     window.addEventListener('app:success', onSuccessEvent as any);
-    
+
     return () => {
       // @ts-ignore
       window.removeEventListener('app:error', onErrorEvent as any);
@@ -31,25 +35,46 @@ export default function ToastNotifications() {
     };
   }, []);
 
-  if (!toasts.length) return null;
+  const handleClose = (id: number) => (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setToasts((prev) => prev.map(t => t.id === id ? { ...t, open: false } : t));
+    // Clean up after animation
+    setTimeout(() => {
+      setToasts((prev) => prev.filter(t => t.id !== id));
+    }, 500);
+  };
 
   return (
-    <div style={{ position: 'fixed', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 9999 }}>
-      {toasts.map((t) => (
-        <div 
-          key={t.id} 
-          style={{ 
-            background: t.type === 'error' ? '#111827' : '#10b981', 
-            color: 'white', 
-            padding: '8px 12px', 
-            borderRadius: 6, 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)' 
+    <Box sx={{ position: 'fixed', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 1, zIndex: 9999 }}>
+      {toasts.map((t, index) => (
+        <Snackbar
+          key={t.id}
+          open={t.open}
+          autoHideDuration={t.type === 'error' ? 8000 : 4000}
+          onClose={handleClose(t.id)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          // Stack them manually by offset if multiple are open
+          sx={{
+            position: 'relative',
+            bottom: 'auto',
+            right: 'auto',
+            transform: 'none',
+            mb: 1
           }}
         >
-          {t.message}
-        </div>
+          <Alert
+            onClose={handleClose(t.id)}
+            severity={t.type}
+            variant="filled"
+            sx={{ width: '100%', boxShadow: 3 }}
+          >
+            {t.message}
+          </Alert>
+        </Snackbar>
       ))}
-    </div>
+    </Box>
   );
 }
 
