@@ -1,12 +1,10 @@
 // Time calculation constants and utilities for calendar grid positioning
 
 export const PIXELS_PER_MINUTE = 2.5;
-export let START_TIME_MINUTES = 8 * 60; // 08:00 default aligned with backend
-export let END_TIME_MINUTES = 17 * 60; // 17:00 default aligned with backend
+export let START_TIME_MINUTES = 8 * 60 + 50; // 08:50 default aligned with backend
+export let END_TIME_MINUTES = 15 * 60; // 15:00 default aligned with backend
 
 export let SCHEDULE_SEGMENTS = [
-  { start: '08:00', end: '08:30' },
-  { start: '08:30', end: '08:50' },
   { start: '08:50', end: '09:10' },
   { start: '09:10', end: '09:40' },
   { start: '09:40', end: '10:10' },
@@ -19,10 +17,6 @@ export let SCHEDULE_SEGMENTS = [
   { start: '13:20', end: '14:00' },
   { start: '14:00', end: '14:30' },
   { start: '14:30', end: '15:00' },
-  { start: '15:00', end: '15:30' },
-  { start: '15:30', end: '16:00' },
-  { start: '16:00', end: '16:30' },
-  { start: '16:30', end: '17:00' },
 ];
 
 export function updateScheduleConfig(config: { start_time: string, end_time: string, slots: { start_time: string, duration_minutes: number }[] }) {

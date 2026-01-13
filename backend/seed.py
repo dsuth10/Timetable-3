@@ -57,11 +57,11 @@ def seed_database():
                 avail = Availability(
                     aide_id=aide1.id,
                     weekday=day,
-                    start_time=time(8, 0),
-                    end_time=time(16, 0)
+                    start_time=time(8, 50),
+                    end_time=time(15, 0)
                 )
                 session.add(avail)
-                print(f"  {aide1.name} available: {day} 08:00-16:00")
+                print(f"  {aide1.name} available: {day} 08:50-15:00")
 
             # Mary Johnson - Available Monday, Wednesday, Friday, 09:00-15:00
             for day in ['MO', 'WE', 'FR']:
@@ -208,16 +208,16 @@ def seed_database():
                 task_id=tasks[4].id,
                 aide_id=None,
                 date=next_monday + timedelta(days=2),
-                start_time=time(14, 0),
-                end_time=time(15, 30),
+                start_time=time(13, 0),
+                end_time=time(14, 30),
                 status='UNASSIGNED'
             ))
             assignments.append(Assignment(
                 task_id=tasks[7].id,
                 aide_id=None,
                 date=next_monday + timedelta(days=4),
-                start_time=time(13, 30),
-                end_time=time(14, 30),
+                start_time=time(11, 0),
+                end_time=time(12, 0),
                 status='UNASSIGNED'
             ))
             session.add_all(assignments)
