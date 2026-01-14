@@ -67,9 +67,8 @@ def test_assign_task_from_bank(daily_service, app, sample_aide, sample_task):
         assert result["id"] is not None
         
         # Verify assignment created
-        asg = Assignment.query.filter_by(aide_id=sample_aide.id, date=view_date).first()
+        asg = Assignment.query.filter_by(aide_id=sample_aide.id, date=view_date, start_time=time(10, 0)).first()
         assert asg is not None
-        assert asg.start_time == time(10, 0)
 
 def test_assign_task_collision(daily_service, app, sample_aide, sample_task):
     with app.app_context():
@@ -99,7 +98,4 @@ def test_assign_task_collision(daily_service, app, sample_aide, sample_task):
         
         result = daily_service.assign_task(payload)
         assert "error" in result
-        assert "error" in result
         assert "Time conflict" in result["error"]
-
-

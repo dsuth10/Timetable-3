@@ -76,7 +76,8 @@ class CollisionService:
         if exclude_assignment_id:
             query = query.filter(Assignment.id != exclude_assignment_id)
         
-        return query.all()
+        conflicts = query.all()
+        return conflicts
     
     @staticmethod
     def check_collision(
