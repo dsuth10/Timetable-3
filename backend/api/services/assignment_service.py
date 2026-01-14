@@ -111,14 +111,18 @@ class AssignmentSeriesService:
             }
             
         # Perform bulk deletion in a transaction
-        # Assignment.query.filter(Assignment.id.in_(deletable_ids)).delete(synchronize_session=False)
-        # Using a loop to ensure triggers and hooks are fired if any exist
-        for a_id in deletable_ids:
-            a = db.session.get(Assignment, a_id)
-            if a:
-                db.session.delete(a)
-                
-        db.session.commit()
+        try:
+            # Assignment.query.filter(Assignment.id.in_(deletable_ids)).delete(synchronize_session=False)
+            # Using a loop to ensure triggers and hooks are fired if any exist
+            for a_id in deletable_ids:
+                a = db.session.get(Assignment, a_id)
+                if a:
+                    db.session.delete(a)
+                    
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Failed to delete recurring series: {str(e)}")
         
         return {
             "deleted_count": len(deletable_ids),

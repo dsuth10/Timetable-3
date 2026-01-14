@@ -1,0 +1,101 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-8.0.2, pluggy-1.6.0 -- C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.0, cov-4.1.0, flask-1.3.0
+collecting ... collected 213 items / 211 deselected / 2 selected
+
+tests/contract/test_daily_view_assign.py::test_assign_task_from_bank PASSED [ 50%]
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank FAILED [100%]
+
+================================== FAILURES ===================================
+_________________________ test_assign_task_from_bank __________________________
+
+daily_service = <api.services.daily_view_service.DailyViewService object at 0x00000237779DD450>
+app = <Flask 'api'>, sample_aide = <TeacherAide 1: John Smith>
+sample_task = <Task 1: Reading Support (CLASS_SUPPORT)>
+
+    def test_assign_task_from_bank(daily_service, app, sample_aide, sample_task):
+        with app.app_context():
+            view_date = date(2025, 12, 8)
+            payload = {
+                "type": "FROM_BANK",
+                "id": sample_task.id,
+                "date": view_date.isoformat(),
+                "aide_id": sample_aide.id,
+                "start_time": "10:00:00",
+                "end_time": "11:00:00"
+            }
+    
+            result = daily_service.assign_task(payload)
+>           assert "error" not in result
+E           AssertionError: assert 'error' not in {'error': 'Task template not found'}
+
+tests\unit\test_daily_view_service.py:66: AssertionError
+============================== warnings summary ===============================
+venv\Lib\site-packages\dateutil\tz\tz.py:37
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\dateutil\tz\tz.py:37: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    EPOCH = datetime.datetime.utcfromtimestamp(0)
+
+tests/contract/test_daily_view_assign.py::test_assign_task_from_bank
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\api\services\daily_view_service.py:109: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    task = Task.query.get(item_id)
+
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+tests/unit/test_daily_view_service.py::test_assign_task_from_bank
+  C:\Users\dsuth\Documents\Code Projects\Timetable-3\backend\venv\Lib\site-packages\sqlalchemy\sql\schema.py:3594: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform win32, python 3.13.7-final-0 -----------
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+api\__init__.py                          61     14    77%   76-77, 81-82, 86-87, 91-92, 97, 103-108
+api\config.py                             1      0   100%
+api\middleware\validation.py             37     22    41%   22-31, 45-61
+api\models\__init__.py                   12      0   100%
+api\models\absence.py                    31      9    71%   47-49, 54-56, 60, 69, 82
+api\models\assignment.py                 81     45    44%   57-59, 64-71, 76-88, 93-112, 118-122, 126-150, 153-154
+api\models\availability.py               43     21    51%   44-51, 56-63, 68-80, 84, 93
+api\models\classroom.py                  66     27    59%   55, 57, 63-67, 72-76, 82, 88-92, 97-103, 107, 122
+api\models\recurring_series.py           69     36    48%   59-68, 73-75, 80-87, 92-104, 109-111, 115-136, 139-140
+api\models\request.py                    69     35    49%   56-60, 65-69, 74-81, 86-93, 98-100, 105-112, 116-132, 135
+api\models\task.py                       72     22    69%   66, 68, 75, 79, 86-93, 99, 103, 111, 115, 120, 126-146
+api\models\teacher_aide.py               40      8    80%   66, 68, 75, 79, 85-97
+api\routes\__init__.py                    0      0   100%
+api\routes\absences.py                   55     41    25%   30-76, 99-117, 136-141
+api\routes\aides.py                     165    140    15%   20-31, 36-56, 61-64, 69-91, 96-106, 120, 139-262
+api\routes\assignments.py               236    198    16%   24-27, 36-39, 46-121, 128-184, 193-203, 208-283, 294-330, 337-340, 346-357, 362-435
+api\routes\availability.py               61     48    21%   16-60, 65-70, 76-90
+api\routes\backup.py                     72     59    18%   16-18, 27-68, 77-110, 119-168
+api\routes\calendar.py                   58     46    21%   29-97
+api\routes\classrooms.py                198    176    11%   27, 32-73, 78-79, 84-138, 143-155, 179-320
+api\routes\daily_view.py                 33     15    55%   14-21, 31, 37, 43-47
+api\routes\recurring_series.py           72     58    19%   17-20, 26-97, 103-130, 136-149
+api\routes\relief_pool.py                70     58    17%   26-43, 56-60, 85-125, 147-174
+api\routes\requests.py                   99     83    16%   15-20, 25-68, 73-76, 81-121, 126-131
+api\routes\tasks.py                     245    220    10%   20-33, 38-41, 47-93, 106-264, 270-405, 410-420, 426-452
+api\scheduler.py                         41     41     0%   5-138
+api\services\__init__.py                  5      0   100%
+api\services\absence_service.py          48     35    27%   41-66, 88-133, 143
+api\services\assignment_service.py       80     66    18%   20-30, 46-78, 92-127, 146-197
+api\services\backup_service.py          308    264    14%   55-59, 63-70, 74, 78, 82, 86, 98-110, 123-256, 268-285, 289-328, 340-350, 363-382, 386-402, 406-421, 425-437, 441-461, 479-627, 639-645, 659-662
+api\services\calendar_service.py         42     35    17%   27-82
+api\services\collision_service.py        79     41    48%   43, 77, 103-120, 146, 162-193, 231, 243-249, 260-263, 293-313
+api\services\conflict_resolver.py        56     38    32%   44-52, 69-72, 100-141, 158-162, 182-190, 210-220
+api\services\daily_view_service.py       74     44    41%   24-63, 100, 113-148
+api\services\recurrence_service.py       62     47    24%   37-46, 77-107, 138-172, 205-238, 252-264
+api\services\relief_pool_service.py     109     90    17%   41-87, 101-126, 157-211, 233-252, 269-300
+-------------------------------------------------------------------
+TOTAL                                  2850   2082    27%
+
+=========================== short test summary info ===========================
+FAILED tests/unit/test_daily_view_service.py::test_assign_task_from_bank - As...
+=========== 1 failed, 1 passed, 211 deselected, 8 warnings in 0.41s ===========

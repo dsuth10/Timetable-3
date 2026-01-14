@@ -195,14 +195,18 @@ class ReliefPoolService:
             raise RuntimeError(validation['error'])
         
         # Update assignment
-        assignment.aide_id = aide_id
-        assignment.original_aide_id = None  # Clear original aide reference
-        assignment.status = 'ASSIGNED'
-        assignment.start_time = new_start
-        assignment.end_time = new_end
-        assignment.version += 1
-        
-        db.session.commit()
+        try:
+            assignment.aide_id = aide_id
+            assignment.original_aide_id = None  # Clear original aide reference
+            assignment.status = 'ASSIGNED'
+            assignment.start_time = new_start
+            assignment.end_time = new_end
+            assignment.version += 1
+            
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Failed to reassign task: {str(e)}")
         
         return assignment.to_dict()
 
@@ -238,8 +242,12 @@ class ReliefPoolService:
             raise ValueError(f"Version mismatch: expected {assignment.version}, got {version}")
         
         # Delete the assignment
-        db.session.delete(assignment)
-        db.session.commit()
+        try:
+            db.session.delete(assignment)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Failed to dismiss task: {str(e)}")
         
         return {
             'id': assignment_id,
@@ -280,10 +288,14 @@ class ReliefPoolService:
         
         count = len(expired_tasks)
         
-        for task in expired_tasks:
-            db.session.delete(task)
-        
-        db.session.commit()
+        try:
+            for task in expired_tasks:
+                db.session.delete(task)
+            
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Failed to cleanup expired tasks: {str(e)}")
         
         return {
             'cleaned_up': count,

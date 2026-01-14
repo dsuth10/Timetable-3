@@ -103,39 +103,43 @@ class DailyViewService:
                 "conflicts": [c.to_dict() for c in validation['conflicts']] if validation['conflicts'] else []
             }
             
-        if assignment_type == 'FROM_BANK':
-            # Create new assignment from template
-            task = Task.query.get(item_id)
-            if not task:
-                return {"error": "Task template not found"}
+        try:
+            if assignment_type == 'FROM_BANK':
+                # Create new assignment from template
+                task = Task.query.get(item_id)
+                if not task:
+                    return {"error": "Task template not found"}
+                    
+                new_assignment = Assignment(
+                    task_id=task.id,
+                    aide_id=aide_id,
+                    date=assign_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    status='ASSIGNED'
+                )
+                db.session.add(new_assignment)
                 
-            new_assignment = Assignment(
-                task_id=task.id,
-                aide_id=aide_id,
-                date=assign_date,
-                start_time=start_time,
-                end_time=end_time,
-                status='ASSIGNED'
-            )
-            db.session.add(new_assignment)
-            
-        elif assignment_type == 'FROM_RELIEF':
-            # Reassign existing relief assignment
-            assignment = Assignment.query.get(item_id)
-            if not assignment:
-                return {"error": "Relief assignment not found"}
-            if assignment.status != 'RELIEF_POOL':
-                return {"error": "Assignment is not in relief pool"}
+            elif assignment_type == 'FROM_RELIEF':
+                # Reassign existing relief assignment
+                assignment = Assignment.query.get(item_id)
+                if not assignment:
+                    return {"error": "Relief assignment not found"}
+                if assignment.status != 'RELIEF_POOL':
+                    return {"error": "Assignment is not in relief pool"}
+                    
+                assignment.aide_id = aide_id
+                assignment.status = 'ASSIGNED'
+                assignment.date = assign_date 
+                assignment.start_time = start_time
+                assignment.end_time = end_time
+                assignment.original_aide_id = None 
+                assignment.version += 1 # Increment version for optimistic locking
                 
-            assignment.aide_id = aide_id
-            assignment.status = 'ASSIGNED'
-            assignment.date = assign_date 
-            assignment.start_time = start_time
-            assignment.end_time = end_time
-            assignment.original_aide_id = None 
-            assignment.version += 1 # Increment version for optimistic locking
-            
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": f"Failed to assign task: {str(e)}"}
         
         # Return the resulting assignment for frontend sync
         if assignment_type == 'FROM_BANK':
