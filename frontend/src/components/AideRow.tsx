@@ -26,7 +26,7 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
 
   // Calculate gaps for snapping
   const gridLines = useMemo(() => {
-    const lines = timelineConfig.slots.map(s => s.start_time.substring(0, 5));
+    const lines = timelineConfig.slots.map(s => s.start_time?.substring(0, 5) || "00:00");
     // Add the end time of the last slot
     const lastSlot = timelineConfig.slots[timelineConfig.slots.length - 1];
     const [h, m] = lastSlot.start_time.split(':').map(Number);
@@ -222,12 +222,12 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
         ))}
 
         {timelineConfig.slots.map((slot) => {
-          const slotStartTime = slot.start_time.substring(0, 5);
+          const slotStartTime = slot.start_time?.substring(0, 5) || "00:00";
           const slotEndTime = addMinutesToTime(slotStartTime, slot.duration_minutes);
 
           // Find tasks that fall within this slot (T054: Support non-aligned start times)
           const slotTasks = taskLayouts.filter(l => {
-            const taskStart = l.assignment.start_time.substring(0, 5);
+            const taskStart = l.assignment.start_time?.substring(0, 5) || "00:00";
             return timeToMinutes(taskStart) >= timeToMinutes(slotStartTime) &&
               timeToMinutes(taskStart) < timeToMinutes(slotEndTime);
           });
@@ -236,7 +236,7 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
           const slotGaps = gaps.filter(g => {
             const gapStart = g.start_time;
             const gapEnd = g.end_time;
-            return timeIntervalsOverlap(slotStartTime.substring(0, 5), addMinutesToTime(slotStartTime.substring(0, 5), slot.duration_minutes), gapStart, gapEnd);
+            return timeIntervalsOverlap(slotStartTime, addMinutesToTime(slotStartTime, slot.duration_minutes), gapStart, gapEnd);
           });
 
           return (

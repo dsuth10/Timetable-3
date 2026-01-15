@@ -50,36 +50,23 @@ def create_absence():
     if existing:
         return {'error': 'Absence already exists for this date'}, 409
 
-    # Query assignments that will be moved to Relief Pool (before the cascade)
-    to_release = (
-        Assignment.query
-        .filter(
-            Assignment.aide_id == aide_id,
-            Assignment.date == absence_date,
-            Assignment.status.in_(['ASSIGNED', 'IN_PROGRESS'])
-        ).all()
-    )
-    assignment_ids = [a.id for a in to_release]
-
     absence = Absence(aide_id=aide_id, date=absence_date, reason=reason)
     db.session.add(absence)
-    # Flush triggers after_insert hook that moves to Relief Pool
     db.session.flush()
-    db.session.commit()
 
-    # Re-fetch the assignments to get their updated state (now in Relief Pool)
-    relief_pool_tasks = []
-    if assignment_ids:
-        updated = Assignment.query.filter(Assignment.id.in_(assignment_ids)).all()
-        relief_pool_tasks = [a.to_dict() for a in updated]
+    # Move assignments to Relief Pool via Service
+    released_assignments = AbsenceService.release_assignments_for_date(aide_id, absence_date)
+    
+    db.session.commit()
 
     return {
         'id': absence.id,
         'aide_id': absence.aide_id,
         'date': absence.date.isoformat(),
         'reason': absence.reason,
-        'relief_pool_tasks': relief_pool_tasks,
-        'relief_pool_count': len(relief_pool_tasks)
+        'released_assignments': released_assignments,
+        'relief_pool_tasks': released_assignments,
+        'relief_pool_count': len(released_assignments)
     }, 201
 
 

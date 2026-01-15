@@ -19,9 +19,15 @@ from api.middleware.validation import require_json, validate_time_30min
 bp = Blueprint('assignments', __name__, url_prefix='/api')
 
 
+@bp.get('/assignments')
+def list_assignments():
+    items = Assignment.query.order_by(Assignment.date, Assignment.start_time).all()
+    return [a.to_dict() for a in items], 200
+
+
 @bp.get('/assignments/<int:assignment_id>')
 def get_assignment(assignment_id: int):
-    assignment = Assignment.query.get(assignment_id)
+    assignment = db.session.get(Assignment, assignment_id)
     if not assignment:
         return {'error': 'Assignment not found'}, 404
     return assignment.to_dict(), 200
@@ -89,8 +95,8 @@ def create_assignment():
                         'existing_assignment_id': conflict.id,
                         'task_id': conflict.task_id,
                         'date': conflict.date.isoformat(),
-                        'start_time': conflict.start_time.strftime('%H:%M'),
-                        'end_time': conflict.end_time.strftime('%H:%M'),
+                        'start_time': conflict.start_time.strftime('%H:%M:%S'),
+                        'end_time': conflict.end_time.strftime('%H:%M:%S'),
                         'status': conflict.status
                     })
                 return {
@@ -190,7 +196,7 @@ def batch_assignments():
 @bp.delete('/assignments/<int:assignment_id>')
 def delete_assignment(assignment_id: int):
     """Delete a specific assignment instance"""
-    assignment = Assignment.query.get(assignment_id)
+    assignment = db.session.get(Assignment, assignment_id)
     if not assignment:
         return {'error': 'Assignment not found'}, 404
     
@@ -205,7 +211,7 @@ def delete_assignment(assignment_id: int):
 
 @bp.put('/assignments/<int:assignment_id>')
 def update_assignment(assignment_id: int):
-    assignment = Assignment.query.get(assignment_id)
+    assignment = db.session.get(Assignment, assignment_id)
     if not assignment:
         return {'error': 'Assignment not found'}, 404
 

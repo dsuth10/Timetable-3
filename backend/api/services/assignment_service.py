@@ -202,8 +202,8 @@ class AssignmentSeriesService:
                 "room_number": classroom.room_number,
                 "teacher": classroom.teacher
             } if classroom else None,
-            "start_time": assignment.start_time.strftime('%H:%M'),
-            "end_time": assignment.end_time.strftime('%H:%M'),
+            "start_time": assignment.start_time.strftime('%H:%M:%S'),
+            "end_time": assignment.end_time.strftime('%H:%M:%S'),
             "duration_minutes": duration_minutes,
             "assigned_aides": assigned_aides,
             "recurrence": recurrence_info,

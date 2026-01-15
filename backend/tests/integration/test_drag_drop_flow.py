@@ -41,6 +41,8 @@ def test_drag_drop_assignment_flow(client):
     # Step 3: Create classroom
     classroom_payload = {
         "name": "Room 101",
+        "room_number": "101",
+        "teacher": "Mr. Brown",
         "capacity": 25,
         "notes": "Grade 3A"
     }
@@ -121,7 +123,7 @@ def test_drag_drop_reassignment_flow(client):
         client.post(f'/api/aides/{aide_id}/availability', json=avail)
     
     # Create classroom and task
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR1", "teacher": "Test Teacher", "capacity": 20}).json
     task = client.post('/api/tasks', json={
         "title": "Test Task",
         "category": "CLASS_SUPPORT",
@@ -167,7 +169,12 @@ def test_drag_drop_unassign_flow(client):
         "weekday": "TU", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={
+        "name": "Test Room",
+        "room_number": "TR2",
+        "teacher": "Test Teacher 2",
+        "capacity": 20
+    }).json
     task = client.post('/api/tasks', json={
         "title": "Test Task",
         "category": "PLAYGROUND",

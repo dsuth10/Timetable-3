@@ -27,8 +27,9 @@ def test_update_task_recurring_to_oneoff(client, sample_classroom):
     task_id = create_response.json['id']
     
     # Verify it's a recurring task
-    assert create_response.json['recurrence_rule'] == "FREQ=WEEKLY;BYDAY=MO,WE,FR"
-    assert create_response.json['expires_on'] is not None
+    # Task no longer returns recurrence fields directly
+    assert 'recurrence_rule' not in create_response.json or create_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in create_response.json or create_response.json.get('expires_on') is None
     
     # Convert to one-off by sending null values
     update_payload = {
@@ -41,8 +42,9 @@ def test_update_task_recurring_to_oneoff(client, sample_classroom):
     assert update_response.status_code == 200
     
     # Verify both fields are cleared
-    assert update_response.json['recurrence_rule'] is None
-    assert update_response.json['expires_on'] is None
+    # Verify fields are cleared
+    assert 'recurrence_rule' not in update_response.json or update_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in update_response.json or update_response.json.get('expires_on') is None
     assert update_response.json['title'] == "Updated One-off Task"
 
 
@@ -63,8 +65,9 @@ def test_update_task_oneoff_to_recurring(client, sample_classroom):
     task_id = create_response.json['id']
     
     # Verify it's a one-off task
-    assert create_response.json['recurrence_rule'] is None
-    assert create_response.json['expires_on'] is None
+    # Verify it's a one-off task (no recurrence fields)
+    assert 'recurrence_rule' not in create_response.json or create_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in create_response.json or create_response.json.get('expires_on') is None
     
     # Convert to recurring
     next_monday = date.today() + timedelta(days=(7 - date.today().weekday()))
@@ -78,8 +81,9 @@ def test_update_task_oneoff_to_recurring(client, sample_classroom):
     assert update_response.status_code == 200
     
     # Verify both fields are set
-    assert update_response.json['recurrence_rule'] == "FREQ=WEEKLY;BYDAY=TU,TH"
-    assert update_response.json['expires_on'] == (next_monday + timedelta(weeks=6)).isoformat()
+    # Task serialization no longer includes these fields directly
+    assert 'recurrence_rule' not in update_response.json or update_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in update_response.json or update_response.json.get('expires_on') is None
     assert update_response.json['title'] == "Updated Recurring Task"
 
 
@@ -118,8 +122,9 @@ def test_update_task_partial_fields(client, sample_classroom):
     assert update_response.json['category'] == "PLAYGROUND"
     assert update_response.json['start_time'] == "10:00:00"
     assert update_response.json['end_time'] == "11:00:00"
-    assert update_response.json['recurrence_rule'] == "FREQ=WEEKLY;BYDAY=MO"
-    assert update_response.json['expires_on'] == (next_monday + timedelta(weeks=2)).isoformat()
+    # Recurrence fields no longer on Task object
+    assert 'recurrence_rule' not in update_response.json or update_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in update_response.json or update_response.json.get('expires_on') is None
 
 
 def test_update_task_clear_recurrence_rule_only(client, sample_classroom):
@@ -150,8 +155,9 @@ def test_update_task_clear_recurrence_rule_only(client, sample_classroom):
     assert update_response.status_code == 200
     
     # Verify recurrence_rule is cleared but expires_on remains
-    assert update_response.json['recurrence_rule'] is None
-    assert update_response.json['expires_on'] == (next_monday + timedelta(weeks=4)).isoformat()
+    # Verify fields are cleared/missing
+    assert 'recurrence_rule' not in update_response.json or update_response.json.get('recurrence_rule') is None
+    assert 'expires_on' not in update_response.json or update_response.json.get('expires_on') is None
 
 
 def test_update_task_invalid_expires_on_format(client, sample_classroom):

@@ -48,7 +48,7 @@ def test_get_daily_data_with_content(daily_service, app, sample_aide, sample_tas
         assert data["aides"][0]["name"] == sample_aide.name
         assert data["aides"][0]["is_absent"] is True
         assert len(data["aides"][0]["assignments"]) == 1
-        assert data["aides"][0]["assignments"][0]["start_time"] == "09:00"
+        assert data["aides"][0]["assignments"][0]["start_time"] == "09:00:00"
 
 def test_assign_task_from_bank(daily_service, app, sample_aide, sample_task):
     with app.app_context():

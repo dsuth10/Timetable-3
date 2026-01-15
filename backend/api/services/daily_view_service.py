@@ -106,7 +106,7 @@ class DailyViewService:
         try:
             if assignment_type == 'FROM_BANK':
                 # Create new assignment from template
-                task = Task.query.get(item_id)
+                task = db.session.get(Task, item_id)
                 if not task:
                     return {"error": "Task template not found"}
                     
@@ -122,7 +122,7 @@ class DailyViewService:
                 
             elif assignment_type == 'FROM_RELIEF':
                 # Reassign existing relief assignment
-                assignment = Assignment.query.get(item_id)
+                assignment = db.session.get(Assignment, item_id)
                 if not assignment:
                     return {"error": "Relief assignment not found"}
                 if assignment.status != 'RELIEF_POOL':

@@ -42,6 +42,7 @@ def get_task(task_id: int):
 
 
 @bp.post('/tasks')
+@bp.post('/recurring-tasks')
 def create_task():
     """Create a task template (no assignment until dragged to calendar)"""
     data = request.get_json(silent=True) or {}
@@ -53,6 +54,11 @@ def create_task():
     classroom_id = data.get('classroom_id')
     # Support both 'notes' (legacy) and 'description' (new contract) for compatibility
     notes = data.get('notes') or data.get('description')
+
+    # Recurrence fields for initial create
+    recurrence_rule = data.get('recurrence_rule')
+    expires_on = data.get('expires_on')
+    aide_id = data.get('aide_id')
 
     # Basic validation
     if not title:
@@ -71,9 +77,9 @@ def create_task():
         s_t = dt_time(s_h, s_m)
         e_t = dt_time(e_h, e_m)
     except Exception:
-        return {'error': 'Bad request', 'message': 'Invalid time format. Expected HH:MM'}, 400
+        return {'error': 'Bad request', 'message': 'Invalid time format. Expected HH:MM or HH:MM:SS'}, 400
 
-    # Create task template (no assignment - stays in Task Bank)
+    # Create task template
     try:
         task = Task(
             title=title,
@@ -85,12 +91,57 @@ def create_task():
         )
         db.session.add(task)
         db.session.flush()
+
+        # If recurrence is requested during creation
+        if recurrence_rule and expires_on:
+            expires_on_date = dt_date.fromisoformat(expires_on)
+            series = RecurringSeries(
+                task_id=task.id,
+                aide_id=aide_id,
+                recurrence_rule=recurrence_rule,
+                expires_on=expires_on_date,
+                start_time=s_t,
+                end_time=e_t,
+                base_date=dt_date.today()
+            )
+            db.session.add(series)
+            db.session.flush()
+
+            # Generate recurring assignments
+            from api.services.recurrence_service import RecurrenceService
+            assignments_data = RecurrenceService.generate_assignments_for_task(
+                task_id=task.id,
+                rrule_string=recurrence_rule,
+                task_start_time=s_t,
+                task_end_time=e_t,
+                expires_on=expires_on_date,
+                aide_id=aide_id,
+                recurring_series_id=series.id
+            )
+            
+            for a_data in assignments_data:
+                ash = Assignment(
+                    task_id=a_data['task_id'],
+                    aide_id=a_data['aide_id'],
+                    recurring_series_id=a_data['recurring_series_id'],
+                    date=a_data['date'],
+                    start_time=a_data['start_time'],
+                    end_time=a_data['end_time'],
+                    status=a_data['status'],
+                    version=a_data['version']
+                )
+                db.session.add(ash)
+            db.session.flush()
+
         result = task.to_dict()
         db.session.commit()
         return result, 201
     except ValueError as e:
         db.session.rollback()
         return {'error': 'Bad request', 'message': str(e)}, 400
+    except Exception as e:
+        db.session.rollback()
+        return {'error': 'Bad request', 'message': f'Invalid data: {str(e)}'}, 400
 
 
 # Old /recurring-tasks endpoint removed - recurring tasks are now created
@@ -207,8 +258,8 @@ def quick_create_task():
                 'existing_assignment_id': conflict.id,
                 'task_id': conflict.task_id,
                 'date': conflict.date.isoformat(),
-                'start_time': conflict.start_time.strftime('%H:%M'),
-                'end_time': conflict.end_time.strftime('%H:%M'),
+                'start_time': conflict.start_time.strftime('%H:%M:%S'),
+                'end_time': conflict.end_time.strftime('%H:%M:%S'),
                 'status': conflict.status
             })
         return {
@@ -288,6 +339,12 @@ def update_task(task_id: int):
     # Validate recurrence parameters
     if recurrence_rule is not None and expires_on is None:
         return {'error': 'Bad request', 'message': 'expires_on is required when recurrence_rule is provided'}, 400
+    
+    if expires_on is not None:
+        try:
+            dt_date.fromisoformat(expires_on)
+        except (ValueError, TypeError):
+            return {'error': 'Bad request', 'message': 'Invalid expires_on format. Expected YYYY-MM-DD'}, 400
     
     # Check if recurrence is being requested
     is_creating_recurring = recurrence_rule is not None and expires_on is not None
@@ -391,6 +448,11 @@ def update_task(task_id: int):
                         version=a['version']
                     )
                 )
+        elif recurrence_rule is None and 'recurrence_rule' in data:
+            # Explicitly clearing recurrence
+            for series in task.recurring_series.all():
+                db.session.delete(series)
+            db.session.flush()
         
         db.session.flush()
         result = task.to_dict()

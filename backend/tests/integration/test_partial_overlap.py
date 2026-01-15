@@ -24,7 +24,7 @@ def test_partial_overlap_auto_shorten(client):
     })
     
     # Create classroom and tasks
-    classroom = client.post('/api/classrooms', json={"name": "Room 101", "capacity": 25}).json
+    classroom = client.post('/api/classrooms', json={"name": "Room 101", "room_number": "101", "teacher": "Test Teacher", "capacity": 25}).json
     
     task1 = client.post('/api/tasks', json={
         "title": "Long Task",
@@ -86,7 +86,7 @@ def test_auto_shorten_requires_flag(client):
         "weekday": "FR", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR1", "teacher": "Test Teacher", "capacity": 20}).json
     
     task1 = client.post('/api/tasks', json={
         "title": "Task 1", "category": "CLASS_SUPPORT",
@@ -128,7 +128,7 @@ def test_auto_shorten_multi_slot_task(client):
         "weekday": "MO", "start_time": "08:00", "end_time": "17:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Library", "capacity": 50}).json
+    classroom = client.post('/api/classrooms', json={"name": "Library", "room_number": "LIB", "teacher": "Librarian", "capacity": 50}).json
     
     # Create 2-hour task
     long_task = client.post('/api/tasks', json={

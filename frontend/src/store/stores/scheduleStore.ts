@@ -55,17 +55,27 @@ export const useScheduleStore = create<ScheduleState>((set) => ({
     endTimeMinutes: DEFAULT_END_TIME_MINUTES,
     scheduleSegments: DEFAULT_SEGMENTS,
     setScheduleConfig: (config) => {
-        const startTimeMinutes = timeToMinutes(config.start_time);
-        const endTimeMinutes = timeToMinutes(config.end_time);
-        const scheduleSegments = config.slots.map(s => ({
-            start: s.start_time.substring(0, 5),
-            end: addMinutesToTime(s.start_time.substring(0, 5), s.duration_minutes)
-        }));
+        if (!config) return;
 
-        set({
-            startTimeMinutes,
-            endTimeMinutes,
-            scheduleSegments
-        });
+        try {
+            const startTimeMinutes = timeToMinutes(config.start_time || "08:50");
+            const endTimeMinutes = timeToMinutes(config.end_time || "15:00");
+
+            const scheduleSegments = (config.slots || []).map(s => {
+                const start = s.start_time ? s.start_time.substring(0, 5) : "00:00";
+                return {
+                    start,
+                    end: addMinutesToTime(start, s.duration_minutes || 30)
+                };
+            });
+
+            set({
+                startTimeMinutes,
+                endTimeMinutes,
+                scheduleSegments
+            });
+        } catch (e) {
+            console.warn("Failed to set schedule config:", e);
+        }
     },
 }));

@@ -23,7 +23,7 @@ def test_time_overlap_conflict_detection(client):
     })
     
     # Create classroom and tasks
-    classroom = client.post('/api/classrooms', json={"name": "Room 101", "capacity": 25}).json
+    classroom = client.post('/api/classrooms', json={"name": "Room 101", "room_number": "101", "teacher": "Test Teacher", "capacity": 25}).json
     
     task1 = client.post('/api/tasks', json={
         "title": "Task 1",
@@ -82,7 +82,7 @@ def test_exact_time_match_conflict(client):
         "weekday": "TU", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR1", "teacher": "Test Teacher", "capacity": 20}).json
     
     task1 = client.post('/api/tasks', json={
         "title": "Task A", "category": "PLAYGROUND",
@@ -125,7 +125,7 @@ def test_no_conflict_different_days(client):
             "weekday": day, "start_time": "08:00", "end_time": "16:00"
         })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR1", "teacher": "Test Teacher", "capacity": 20}).json
     task = client.post('/api/tasks', json={
         "title": "Daily Task", "category": "CLASS_SUPPORT",
         "start_time": "09:00", "end_time": "10:00",
@@ -160,7 +160,7 @@ def test_no_conflict_adjacent_times(client):
         "weekday": "WE", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR1", "teacher": "Test Teacher", "capacity": 20}).json
     
     task1 = client.post('/api/tasks', json={
         "title": "Task 1", "category": "CLASS_SUPPORT",

@@ -121,7 +121,7 @@ class Assignment(db.Model):
         
         return value
     
-    def to_dict(self, include_relationships=False, include_seconds=False):
+    def to_dict(self, include_relationships=False, include_seconds=True):
         """Convert to dictionary for JSON serialization"""
         time_format = '%H:%M:%S' if include_seconds else '%H:%M'
         data = {

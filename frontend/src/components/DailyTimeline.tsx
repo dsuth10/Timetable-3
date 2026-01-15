@@ -12,12 +12,12 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
   const { aides, timeline_config } = data;
 
   return (
-    <Paper 
-      elevation={1} 
-      sx={{ 
+    <Paper
+      elevation={1}
+      sx={{
         overflow: 'auto', // Handle both X and Y in one container
-        height: '100%', 
-        display: 'flex', 
+        height: '100%',
+        display: 'flex',
         flexDirection: 'column',
         bgcolor: 'background.paper'
       }}
@@ -25,26 +25,26 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
       <Box sx={{ width: '100%' }}>
         <Box sx={{ minWidth: 'fit-content', display: 'flex', flexDirection: 'column' }}>
           {/* Timeline Header (Sticky) */}
-          <Box sx={{ 
-            display: 'flex', 
-            borderBottom: 2, 
-            borderColor: 'divider', 
-            bgcolor: 'grey.100', 
-            position: 'sticky', 
-            top: 0, 
-            zIndex: 20 
+          <Box sx={{
+            display: 'flex',
+            borderBottom: 2,
+            borderColor: 'divider',
+            bgcolor: 'grey.100',
+            position: 'sticky',
+            top: 0,
+            zIndex: 20
           }}>
-            <Box sx={{ 
-              width: 150, 
-              flexShrink: 0, 
-              position: 'sticky', 
-              left: 0, 
-              p: 1, 
-              zIndex: 21, 
-              bgcolor: 'grey.100', 
-              boxShadow: 2, 
-              borderRight: 1, 
-              borderColor: 'divider' 
+            <Box sx={{
+              width: 150,
+              flexShrink: 0,
+              position: 'sticky',
+              left: 0,
+              p: 1,
+              zIndex: 21,
+              bgcolor: 'grey.100',
+              boxShadow: 2,
+              borderRight: 1,
+              borderColor: 'divider'
             }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                 Teacher Aide
@@ -54,9 +54,9 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
               {timeline_config.slots.map((slot) => {
                 const totalMinutes = timeline_config.slots.reduce((acc, s) => acc + s.duration_minutes, 0);
                 return (
-                  <Box 
+                  <Box
                     key={slot.start_time}
-                    sx={{ 
+                    sx={{
                       flex: `0 0 ${(slot.duration_minutes / totalMinutes) * 100}%`,
                       p: 0.5,
                       pl: 1,
@@ -67,7 +67,7 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                      {slot.start_time.substring(0, 5)}
+                      {slot.start_time?.substring(0, 5) || "00:00"}
                     </Typography>
                   </Box>
                 );
@@ -78,9 +78,9 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
           {/* Aide Rows */}
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             {aides.map((aide) => (
-              <AideRow 
-                key={aide.id} 
-                aide={aide} 
+              <AideRow
+                key={aide.id}
+                aide={aide}
                 date={date}
                 timelineConfig={timeline_config}
                 onTaskDoubleClick={onTaskDoubleClick}

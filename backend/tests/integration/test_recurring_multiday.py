@@ -31,7 +31,7 @@ def test_recurring_task_multi_day_selection(client):
         })
     
     # Create classroom
-    classroom = client.post('/api/classrooms', json={"name": "Library", "capacity": 50}).json
+    classroom = client.post('/api/classrooms', json={"name": "Library", "room_number": "LIB", "teacher": "Librarian", "capacity": 50}).json
     
     # Create recurring task (Mon/Wed/Fri for 4 weeks)
     next_monday = date.today() + timedelta(days=(7 - date.today().weekday()))
@@ -87,7 +87,7 @@ def test_recurring_task_full_series_assignment(client):
             "weekday": day, "start_time": "08:00", "end_time": "17:00"
         })
     
-    classroom = client.post('/api/classrooms', json={"name": "Playground", "capacity": 100}).json
+    classroom = client.post('/api/classrooms', json={"name": "Playground", "room_number": "PLAY", "teacher": "Yard Duty", "capacity": 100}).json
     
     # Create daily recurring task (Mon-Fri for 2 weeks)
     next_monday = date.today() + timedelta(days=(7 - date.today().weekday()))
@@ -133,7 +133,7 @@ def test_recurring_task_partial_series_with_conflicts(client):
         "weekday": "TU", "start_time": "08:00", "end_time": "16:00"
     })
     
-    classroom = client.post('/api/classrooms', json={"name": "Test Room", "capacity": 20}).json
+    classroom = client.post('/api/classrooms', json={"name": "Test Room", "room_number": "TR5", "teacher": "Test Teacher", "capacity": 20}).json
     
     # Create recurring task (Tuesdays for 3 weeks)
     next_tuesday = date.today() + timedelta(days=(8 - date.today().weekday()) % 7)

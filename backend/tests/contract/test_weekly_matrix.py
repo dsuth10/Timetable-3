@@ -70,10 +70,10 @@ def test_get_weekly_matrix_time_slots(client):
     time_slots = response.json['time_slots']
     assert len(time_slots) > 0
     
-    # Should include 08:00, 08:30, 09:00, etc.
+    # Should include 08:50, 09:10, 14:30, etc. (based on SCHEDULE_CONFIG)
     time_strings = [slot['time'] for slot in time_slots]
-    assert "08:00:00" in time_strings
-    assert "17:00:00" in time_strings
+    assert "08:50:00" in time_strings
+    assert "14:30:00" in time_strings
 
 
 def test_get_weekly_matrix_includes_conflicts(client, sample_aide, sample_task, sample_classroom):

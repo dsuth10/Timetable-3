@@ -15,8 +15,8 @@ def test_get_tooltip_data_basic(db_session, sample_assignment, sample_task, samp
     assert data['task_title'] == sample_task.title
     assert data['category'] == sample_task.category
     assert data['classroom']['name'] == sample_classroom.name
-    assert data['start_time'] == "09:00"
-    assert data['end_time'] == "10:00"
+    assert data['start_time'] == "09:00:00"
+    assert data['end_time'] == "10:00:00"
     assert "John Smith" in data['assigned_aides']
     assert data['recurrence']['is_recurring'] is False
     assert data['notes'] == sample_task.notes
@@ -64,13 +64,20 @@ def test_get_tooltip_data_recurring(db_session, sample_task, sample_aide):
     assert len(data['recurrence']['dates']) == 2
     assert data['recurrence']['has_more'] is False
 
-def test_get_tooltip_data_no_notes(db_session, sample_task, sample_aide):
-    """Test get_tooltip_data returns placeholder for missing notes"""
-    sample_task.notes = None
-    db_session.commit()
+    # Create a fresh task with no notes
+    task = Task(
+        title="No Notes Task",
+        category="CLASS_SUPPORT",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        classroom_id=1,
+        notes=None
+    )
+    db_session.add(task)
+    db_session.flush()
     
     asg = Assignment(
-        task_id=sample_task.id,
+        task_id=task.id,
         aide_id=sample_aide.id,
         date=date(2025, 10, 6),
         start_time=time(9, 0),

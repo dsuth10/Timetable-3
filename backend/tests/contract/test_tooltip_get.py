@@ -6,6 +6,7 @@ import pytest
 from datetime import date, time
 from api.models.assignment import Assignment
 from api.models.teacher_aide import TeacherAide
+from api.models.task import Task
 
 def test_get_tooltip_success(client, sample_assignment, sample_task, sample_classroom, sample_aide):
     """Test GET /api/assignments/{id}/tooltip returns correct structure and data"""
@@ -19,8 +20,8 @@ def test_get_tooltip_success(client, sample_assignment, sample_task, sample_clas
     assert data['task_title'] == sample_task.title
     assert data['category'] == sample_task.category
     assert data['classroom']['name'] == sample_classroom.name
-    assert data['start_time'] == "09:00"
-    assert data['end_time'] == "10:00"
+    assert data['start_time'] == "09:00:00"
+    assert data['end_time'] == "10:00:00"
     assert "assigned_aides" in data
     assert sample_aide.name in data['assigned_aides']
     assert "recurrence" in data
@@ -35,11 +36,20 @@ def test_get_tooltip_not_found(client):
 
 def test_get_tooltip_no_notes_placeholder(client, db_session, sample_task, sample_aide):
     """Test tooltip returns placeholder for empty notes"""
-    sample_task.notes = None
-    db_session.commit()
+    # Create a new task with no notes
+    task = Task(
+        title="No Notes Task",
+        category="CLASS_SUPPORT",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        classroom_id=1,
+        notes=None
+    )
+    db_session.add(task)
+    db_session.flush()
     
     assignment = Assignment(
-        task_id=sample_task.id,
+        task_id=task.id,
         aide_id=sample_aide.id,
         date=date(2025, 10, 6),
         start_time=time(9, 0),

@@ -49,32 +49,19 @@ def app():
 def db_session(app):
     """Creates a new database session for a test with absolute isolation."""
     with app.app_context():
-        # 1. Setup connection and transaction
-        connection = db.engine.connect()
-        transaction = connection.begin()
+        # Clean up any existing session
+        db.session.remove()
         
-        # 2. Configure session
-        db.session.configure(bind=connection, expire_on_commit=False)
+        # Drop and create tables for every test (bulletproof isolation)
+        db.drop_all()
+        db.create_all()
         
-        # 3. Global Monkeypatch of Session.commit to Session.flush
-        # This is more robust than patching just the proxy.
-        original_commit = Session.commit
-        def mocked_commit(self):
-            self.flush()
-        Session.commit = mocked_commit
-        
-        # 4. Clean tables
-        for table in ['assignments', 'recurring_series', 'availability', 'absences', 'requests', 'tasks', 'classrooms', 'teacher_aides']:
-            db.session.execute(sa_text(f'DELETE FROM {table}'))
-        db.session.flush()
+        # Configure session
+        db.session.configure(expire_on_commit=False)
         
         try:
             yield db.session
         finally:
-            # 5. Restore and cleanup
-            Session.commit = original_commit
-            transaction.rollback()
-            connection.close()
             db.session.remove()
 
 
@@ -98,7 +85,7 @@ def sample_aide(db_session, app):
             colour_hex="#FF5733"
         )
         db_session.add(aide)
-        db_session.flush()
+        db_session.commit()
         return aide
 
 
@@ -111,7 +98,7 @@ def sample_classroom(db_session, app):
             notes="Grade 3A"
         )
         db_session.add(classroom)
-        db_session.flush()
+        db_session.commit()
         return classroom
 
 
@@ -127,7 +114,7 @@ def sample_task(db_session, app, sample_classroom):
             notes="Small group reading"
         )
         db_session.add(task)
-        db_session.flush()
+        db_session.commit()
         return task
 
 
@@ -144,7 +131,7 @@ def sample_assignment(db_session, app, sample_task, sample_aide):
             version=1
         )
         db_session.add(assignment)
-        db_session.flush()
+        db_session.commit()
         return assignment
 
 
@@ -158,6 +145,6 @@ def sample_availability(db_session, app, sample_aide):
             end_time=time(16, 0)
         )
         db_session.add(avail)
-        db_session.flush()
+        db_session.commit()
         return avail
 

@@ -836,23 +836,29 @@ export function useDragDrop(options?: UseDragDropOptions) {
       }
     } else if (type === 'relief-pool-reassign' && assignmentId && reliefPoolTask) {
       // Handle Relief Pool task reassignment
+      const reassignPayload: ReliefPoolReassignRequest = {
+        aide_id: data.aideId!,
+        start_time: data.startTime,
+        end_time: data.endTime,
+        version: reliefPoolTask.version,
+      };
+
       try {
-        await reliefPoolApi.reassign(assignmentId, {
-          aide_id: data.aideId!,
-          start_time: data.startTime,
-          end_time: data.endTime,
-          version: reliefPoolTask.version,
-        });
+        const reliefPoolStore = useReliefPoolStore.getState();
+        await reliefPoolStore.reassign(assignmentId, reassignPayload);
 
         await handleRecurrence(task.id);
 
-        // Refresh the Relief Pool store
-        const reliefPoolStore = useReliefPoolStore.getState();
-        reliefPoolStore.fetch();
+        // Success feedback
+        window.dispatchEvent(new CustomEvent('app:success', {
+          detail: { message: `Successfully reassigned ${task.title}` }
+        }));
 
         // Refresh the main view
         options?.onSuccess?.();
       } catch (error: any) {
+        // Error is handled by store and set in store.error, 
+        // but we also show a global error toast for immediate feedback
         const errorMessage = error?.response?.data?.error || error?.message || 'Failed to reassign task';
         window.dispatchEvent(new CustomEvent('app:error', {
           detail: { message: errorMessage }

@@ -1,9 +1,9 @@
 import { Assignment, Absence, Availability } from '../types';
-import { 
-  timeToMinutes, 
-  minutesToTime, 
-  calculateDuration, 
-  timeIntervalsOverlap 
+import {
+  timeToMinutes,
+  minutesToTime,
+  calculateDuration,
+  timeIntervalsOverlap
 } from '../components/TimetableGrid/timeUtils';
 import { getWeekdayFromDate } from './availabilityUtils';
 
@@ -33,7 +33,7 @@ export function calculateGaps(
   availability?: Availability[]
 ): Gap[] {
   const gaps: Gap[] = [];
-  
+
   // Ensure we have arrays even if null/undefined was passed (though default params handle undefined)
   const safeAssignments = assignments || [];
   const safeAbsences = absences || [];
@@ -49,8 +49,8 @@ export function calculateGaps(
 
     // Tighten interval to availability boundaries if they exist
     if (dayAvail) {
-      const availStart = dayAvail.start_time.substring(0, 5);
-      const availEnd = dayAvail.end_time.substring(0, 5);
+      const availStart = dayAvail.start_time?.substring(0, 5) || "08:00";
+      const availEnd = dayAvail.end_time?.substring(0, 5) || "16:00";
 
       // If availability doesn't overlap with this grid interval at all, skip it
       if (!timeIntervalsOverlap(intervalStart, intervalEnd, availStart, availEnd)) {
@@ -70,7 +70,7 @@ export function calculateGaps(
         continue;
       }
     }
-    
+
     // Sort assignments in this interval by start time
     const relevantAssignments = safeAssignments
       .filter(asg => {
@@ -110,7 +110,7 @@ export function calculateGaps(
           });
         }
       }
-      
+
       // Advance position to end of assignment
       currentPos = Math.max(currentPos, asgEndMin);
     }
