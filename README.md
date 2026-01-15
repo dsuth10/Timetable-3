@@ -22,7 +22,8 @@ The CHARLOTTE application is a desktop-optimized web application that enables sc
 ✅ **Flexible Time Slots** - Support for 5-minute increments (e.g. school bell times)  
 ✅ **Simplified Task Creation** - Create task templates with just title, category, classroom, and notes  
 ✅ **Quick-Click Task Creation** - Instant task and assignment creation directly from time slots with "+" button  
-✅ **Task Bank** - Unscheduled tasks shown as "Not scheduled" until dragged to calendar  
+✅ **Task Bank** - Organize tasks "By Category" or "By Class" with search and filtering capabilities
+✅ **Requests Management** - Dedicated interface for teachers to request aide support with approval workflow and status tracking  
 ✅ **Automatic Time Assignment** - Times set automatically based on where task is dropped  
 ✅ **Weekly View** - View individual aide schedules across Monday-Friday with aide selector  
 ✅ **Daily Display** - Single-day view showing all aides simultaneously with timeline slots and drag-and-drop assignment  
@@ -168,7 +169,7 @@ npm run dev
 - **Build Tool**: Vite
 - **UI Library**: Material-UI v5
 - **Date Picker**: @mui/x-date-pickers
-- **State Management**: Zustand with auto-refresh on updates
+- **State Management**: TanStack Query v5 (Server State) + Zustand (Client State)
 - **Drag & Drop**: @hello-pangea/dnd with cross-day support
 - **HTTP Client**: Axios with optimistic locking
 - **Testing**: Vitest, React Testing Library, Cypress
@@ -508,10 +509,12 @@ Option 3: Auto-Shorten (Partial Overlap)
 ### 5. Task Management
 
 ```
-Editing Task Templates (Task Bank):
-1. Tasks in Task Bank are templates without assigned times/dates
-2. Display as "Not scheduled" until dragged to calendar
-3. Can edit title, category, classroom, notes at any time
+Organizing and Editing Tasks:
+1. **View Modes**: Toggle between "By Category" and "By Class" tabs in the Task Bank to organized views
+2. **Search**: Filter tasks instantly by title, category, or classroom using the search bar
+3. **Relief Pool**: Access the "Relief Pool" tab to manage orphaned tasks from absent aides
+4. **Editing**: Tasks in the bank are templates - edits here affect future assignments
+5. **Drag-and-Drop**: Drag from any tab directly to the calendar to schedule
 
 Editing Assignments (Calendar):
 1. Double-click any assignment on the calendar
@@ -638,6 +641,32 @@ Exporting to Calendar (.ics):
 3. Select "Export to Calendar (.ics)"
 4. The generated file can be imported into Outlook, Google Calendar, or Apple Calendar
 5. Includes all scheduled tasks with correct times and recurrence rules
+
+### 11. Requests Management
+
+The Requests Management system allows administrators to track, review, and convert teacher requests into scheduled tasks.
+
+```
+Accessing Requests:
+1. Navigate to the "Requests" page via the sidebar or Management panel
+2. View list of all requests with status indicators (Pending, Approved, Rejected, Completed)
+3. Filter by status to focus on actionable items
+
+Managing Requests:
+1. Create New Request:
+   - Click "New Request" button
+   - Enter Teacher Name, Task Title, Category, Preferred Date/Time, and optional Classroom/Notes
+   - Request appears in list as "PENDING"
+
+2. Reviewing Requests:
+   - Approve: Click the green checkmark to mark as APPROVED
+   - Reject: Click the red X to mark as REJECTED
+   - Delete: Remove erroneous requests permanently
+
+3. Fulfilling Requests (Workflow):
+   - Approved requests can be used as reference to create actual Tasks/Assignments
+   - Once scheduled, marking the request as COMPLETED helps track fulfillment
+```
 ```
 
 ---

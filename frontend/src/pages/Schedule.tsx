@@ -277,8 +277,11 @@ export default function Schedule() {
   const handleMarkAbsence = (aideId: number) => {
     setSelectedAbsenceAideId(aideId);
     setSelectedAbsenceDate(null);
-    setShowAbsenceModal(true);
     setDrawerOpen(false);
+    // Defer modal opening to prevent focus race conditions with Drawer closing
+    setTimeout(() => {
+      setShowAbsenceModal(true);
+    }, 200);
   };
 
   const handleAddAbsence = (aideId: number, date: string) => {
@@ -290,9 +293,12 @@ export default function Schedule() {
   const handleRemoveAbsence = async (absenceId: number) => {
     try {
       await deleteAbsence(absenceId);
-      await refreshData();
-      // Refresh Relief Pool since removing absence may restore tasks from Relief Pool
-      useReliefPoolStore.getState().refresh();
+      // Refresh both schedule and relief pool in parallel to ensure consistent state
+      // (Removing absence may restore tasks from Relief Pool, so we must refresh both)
+      await Promise.all([
+        refreshData(),
+        useReliefPoolStore.getState().refresh()
+      ]);
     } catch (e: any) {
       setError(e.message || 'Failed to remove absence');
     }

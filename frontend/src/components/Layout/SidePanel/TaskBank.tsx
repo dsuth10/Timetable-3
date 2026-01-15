@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { 
-  Drawer, 
-  Box, 
-  Typography, 
+import {
+  Drawer,
+  Box,
+  Typography,
   Divider,
   TextField,
   InputAdornment,
@@ -102,11 +102,11 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
   // Fetch assignments for the current week
   useEffect(() => {
     if (!dateISO) return;
-    
+
     assignmentsApi.weeklyMatrix(dateISO)
       .then((matrix: any) => {
         const allAssignments: Assignment[] = [];
-        
+
         if (matrix?.matrix) {
           Object.entries(matrix.matrix).forEach(([, days]) => {
             Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
@@ -116,7 +116,7 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
             });
           });
         }
-        
+
         setAssignments(allAssignments);
       })
       .catch(() => {
@@ -130,8 +130,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       return task.title.toLowerCase().includes(query) ||
-             task.category.toLowerCase().includes(query) ||
-             task.classroom?.name.toLowerCase().includes(query);
+        task.category.toLowerCase().includes(query) ||
+        task.classroom?.name.toLowerCase().includes(query);
     });
 
     const groups = new Map<string, Task[]>();
@@ -151,8 +151,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       return task.title.toLowerCase().includes(query) ||
-             task.category.toLowerCase().includes(query) ||
-             task.classroom?.name.toLowerCase().includes(query);
+        task.category.toLowerCase().includes(query) ||
+        task.classroom?.name.toLowerCase().includes(query);
     });
 
     const groups = new Map<string, Task[]>();
@@ -217,30 +217,30 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={handleTabChange}
           variant="fullWidth"
           aria-label="Task bank sections"
         >
-          <Tab 
-            icon={<Inventory fontSize="small" />}
-            iconPosition="start"
-            label="By Category"
-            {...a11yProps(0)}
-            sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
-          />
-          <Tab 
+          <Tab
             icon={<School fontSize="small" />}
             iconPosition="start"
             label="By Class"
+            {...a11yProps(0)}
+            sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
+          />
+          <Tab
+            icon={<Inventory fontSize="small" />}
+            iconPosition="start"
+            label="By Category"
             {...a11yProps(1)}
             sx={{ minHeight: 48, textTransform: 'none', px: 1 }}
           />
-          <Tab 
+          <Tab
             icon={
-              <Badge 
-                badgeContent={reliefPoolCount} 
+              <Badge
+                badgeContent={reliefPoolCount}
                 color="warning"
                 max={99}
               >
@@ -255,117 +255,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
         </Tabs>
       </Box>
 
-      {/* Task Bank Tab Content (By Category) */}
-      <TabPanel value={activeTab} index={0}>
-        {/* Search */}
-        <Box sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            aria-label="Search tasks"
-          />
-        </Box>
-        <Divider />
-
-        {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-          {loading && tasks.length === 0 && <LoadingState variant="skeleton" rows={5} />}
-          {error && (
-            <Typography color="error" role="alert" sx={{ p: 2 }}>
-              {error}
-            </Typography>
-          )}
-          {!loading && !error && tasks.length === 0 && (
-            <EmptyState
-              icon={<AssignmentLate />}
-              title="No Tasks"
-              description="Create tasks to see them here."
-            />
-          )}
-          {!loading && !error && groupedTasks.length === 0 && searchQuery && (
-            <EmptyState
-              title="No Results"
-              description={`No tasks found matching "${searchQuery}"`}
-            />
-          )}
-          
-          {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
-          <Droppable droppableId="unassigned">
-            {(provided, snapshot) => {
-              let globalIndex = 0; // Track index across all categories
-              
-              return (
-                <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  sx={{ 
-                    minHeight: '100%',
-                    bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
-                    transition: 'background-color 0.2s',
-                    borderRadius: 1,
-                  }}
-                >
-                  {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
-                    <Accordion 
-                      key={category} 
-                      expanded={expandedCategories.has(category)}
-                      onChange={handleCategoryToggle(category)}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {category.replace(/_/g, ' ')}
-                        </Typography>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ ml: 1, color: 'text.secondary' }}
-                        >
-                          ({categoryTasks.length})
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ p: 1 }}>
-                        {categoryTasks.map((task, taskIndex) => {
-                          const currentIndex = globalIndex++;
-                          // Use combination of category, task.id, and index to ensure unique keys
-                          const uniqueKey = `${category}-${task.id}-${taskIndex}`;
-                          return (
-                            <Box key={uniqueKey}>
-                              <TaskTemplateCard
-                                task={task}
-                                index={currentIndex}
-                                assignments={assignments}
-                                aides={aides}
-                                onDoubleClick={(t) => {
-                                  if (onTaskDoubleClick) {
-                                    // Handle double click if needed, though card currently doesn't provide assignment here
-                                  }
-                                }}
-                              />
-                            </Box>
-                          );
-                        })}
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                  {provided.placeholder}
-                </Box>
-              );
-            }}
-          </Droppable>
-        </Box>
-      </TabPanel>
-
       {/* Task Bank Tab Content (By Class) */}
-      <TabPanel value={activeTab} index={1}>
+      <TabPanel value={activeTab} index={0}>
         {/* Search */}
         <Box sx={{ p: 2 }}>
           <TextField
@@ -407,17 +298,17 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
               description={`No tasks found matching "${searchQuery}"`}
             />
           )}
-          
+
           {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
           <Droppable droppableId="unassigned">
             {(provided, snapshot) => {
               let globalIndex = 0; // Track index across all classes
-              
+
               return (
                 <Box
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  sx={{ 
+                  sx={{
                     minHeight: '100%',
                     bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
                     transition: 'background-color 0.2s',
@@ -427,8 +318,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                   {!loading && !error && groupedTasksByClass.map(([className, classTasks]) => {
                     const classColor = classTasks[0]?.classroom?.colour_hex;
                     return (
-                      <Accordion 
-                        key={className} 
+                      <Accordion
+                        key={className}
                         expanded={expandedClasses.has(className)}
                         onChange={handleClassToggle(className)}
                         sx={{
@@ -441,7 +332,7 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                           overflow: 'hidden'
                         }}
                       >
-                        <AccordionSummary 
+                        <AccordionSummary
                           expandIcon={<ExpandMore sx={{ color: classColor || 'inherit' }} />}
                           sx={{
                             bgcolor: classColor ? alpha(classColor, 0.1) : 'transparent',
@@ -464,8 +355,8 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                           <Typography variant="body2">
                             {className}
                           </Typography>
-                          <Typography 
-                            variant="caption" 
+                          <Typography
+                            variant="caption"
                             sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
                           >
                             ({classTasks.length})
@@ -496,6 +387,115 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
                       </Accordion>
                     );
                   })}
+                  {provided.placeholder}
+                </Box>
+              );
+            }}
+          </Droppable>
+        </Box>
+      </TabPanel>
+
+      {/* Task Bank Tab Content (By Category) */}
+      <TabPanel value={activeTab} index={1}>
+        {/* Search */}
+        <Box sx={{ p: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            aria-label="Search tasks"
+          />
+        </Box>
+        <Divider />
+
+        {/* Content */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          {loading && tasks.length === 0 && <LoadingState variant="skeleton" rows={5} />}
+          {error && (
+            <Typography color="error" role="alert" sx={{ p: 2 }}>
+              {error}
+            </Typography>
+          )}
+          {!loading && !error && tasks.length === 0 && (
+            <EmptyState
+              icon={<AssignmentLate />}
+              title="No Tasks"
+              description="Create tasks to see them here."
+            />
+          )}
+          {!loading && !error && groupedTasks.length === 0 && searchQuery && (
+            <EmptyState
+              title="No Results"
+              description={`No tasks found matching "${searchQuery}"`}
+            />
+          )}
+
+          {/* Droppable Area - Dropping here means "Unassign/Delete Assignment" */}
+          <Droppable droppableId="unassigned">
+            {(provided, snapshot) => {
+              let globalIndex = 0; // Track index across all categories
+
+              return (
+                <Box
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  sx={{
+                    minHeight: '100%',
+                    bgcolor: snapshot.isDraggingOver ? 'action.hover' : 'transparent',
+                    transition: 'background-color 0.2s',
+                    borderRadius: 1,
+                  }}
+                >
+                  {!loading && !error && groupedTasks.map(([category, categoryTasks]) => (
+                    <Accordion
+                      key={category}
+                      expanded={expandedCategories.has(category)}
+                      onChange={handleCategoryToggle(category)}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {category.replace(/_/g, ' ')}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ ml: 1, color: 'text.secondary' }}
+                        >
+                          ({categoryTasks.length})
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ p: 1 }}>
+                        {categoryTasks.map((task, taskIndex) => {
+                          const currentIndex = globalIndex++;
+                          // Use combination of category, task.id, and index to ensure unique keys
+                          const uniqueKey = `${category}-${task.id}-${taskIndex}`;
+                          return (
+                            <Box key={uniqueKey}>
+                              <TaskTemplateCard
+                                task={task}
+                                index={currentIndex}
+                                assignments={assignments}
+                                aides={aides}
+                                onDoubleClick={(t) => {
+                                  if (onTaskDoubleClick) {
+                                    // Handle double click if needed, though card currently doesn't provide assignment here
+                                  }
+                                }}
+                              />
+                            </Box>
+                          );
+                        })}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
                   {provided.placeholder}
                 </Box>
               );

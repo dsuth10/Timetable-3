@@ -49,7 +49,7 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
 
   const handleSubmit = async () => {
     if (!dateValue) return;
-    
+
     setSubmitting(true);
     setError(undefined);
     try {
@@ -59,10 +59,10 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
       const month = String(dateValue.getMonth() + 1).padStart(2, '0');
       const day = String(dateValue.getDate()).padStart(2, '0');
       const dateISO = `${year}-${month}-${day}`;
-      await absencesApi.create({ 
-        aide_id: Number(aideId), 
-        date: dateISO, 
-        reason: reason || null 
+      await absencesApi.create({
+        aide_id: Number(aideId),
+        date: dateISO,
+        reason: reason || null
       });
       onCreated?.(Number(aideId));
       onClose();
@@ -76,8 +76,8 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
   // const selectedAide = aides.find(a => a.id === Number(aideId));
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="sm"
       fullWidth
@@ -95,6 +95,7 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
             <Select
               value={aideId}
               label="Aide"
+              autoFocus
               onChange={(e) => setAideId(e.target.value)}
               data-testid="absence-aide"
             >
@@ -104,10 +105,10 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
               {aides.map((aide) => (
                 <MenuItem key={aide.id} value={aide.id}>
                   <ListItemIcon>
-                    <Avatar 
-                      sx={{ 
-                        width: 24, 
-                        height: 24, 
+                    <Avatar
+                      sx={{
+                        width: 24,
+                        height: 24,
                         bgcolor: aide.colour_hex,
                         fontSize: '0.75rem',
                       }}

@@ -20,7 +20,7 @@ type TimetableGridProps = {
 export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks, onTaskDoubleClick, absences = [], onAddAbsence, onRemoveAbsence, onCreateTask }: TimetableGridProps) {
   // Day names for headers
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  
+
   // Format date for display (e.g., "Oct 13")
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
@@ -36,9 +36,9 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
       {/* Day Columns */}
-      <Box 
-        sx={{ 
-          display: 'grid', 
+      <Box
+        sx={{
+          display: 'grid',
           gridTemplateColumns: `repeat(5, minmax(200px, 1fr))`,
           gap: 1,
           flex: 1,
@@ -74,7 +74,7 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
           const assignments = assignmentsByDay[date] || [];
           const absenceForDate = absences.find(a => a.aide_id === selectedAide.id && a.date === date);
           const hasAbsence = !!absenceForDate;
-          
+
           return (
             <Box key={date} sx={{ display: 'flex', flexDirection: 'column' }}>
               {/* Day Header */}
@@ -117,37 +117,35 @@ export function TimetableGrid({ selectedAide, assignmentsByDay, weekDates, tasks
                 {onAddAbsence && onRemoveAbsence && (
                   <Box className="hide-for-export" sx={{ ml: 1 }}>
                     {hasAbsence && absenceForDate ? (
-                      <Tooltip title="Remove absence">
-                        <IconButton
-                          size="small"
-                          onClick={() => onRemoveAbsence(absenceForDate.id)}
-                          sx={{
-                            color: 'white',
-                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
-                          }}
-                          aria-label="Remove absence"
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onRemoveAbsence(absenceForDate.id)}
+                        sx={{
+                          color: 'white',
+                          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+                        }}
+                        aria-label="Remove absence"
+                        title="Remove absence"
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
                     ) : (
-                      <Tooltip title="Add absence">
-                        <Button
-                          size="small"
-                          onClick={() => onAddAbsence(selectedAide.id, date)}
-                          sx={{
-                            color: 'white',
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.5,
-                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
-                          }}
-                          aria-label="Add absence"
-                        >
-                          Absent.
-                        </Button>
-                      </Tooltip>
+                      <Button
+                        size="small"
+                        onClick={() => onAddAbsence(selectedAide.id, date)}
+                        sx={{
+                          color: 'white',
+                          fontSize: '0.75rem',
+                          minWidth: 'auto',
+                          px: 1,
+                          py: 0.5,
+                          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+                        }}
+                        aria-label="Add absence"
+                        title="Mark as absent"
+                      >
+                        Absent.
+                      </Button>
                     )}
                   </Box>
                 )}
