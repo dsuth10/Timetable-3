@@ -25,7 +25,7 @@ import { classroomsApi } from '../../services/classroomsApi';
 import { assignmentsApi } from '../../services/assignmentsApi';
 import type { Task, TaskCategory, Classroom, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
-import { generateAllTimeSlots, timeToMinutes, addMinutesToTime, END_TIME_MINUTES, minutesToTime } from '../TimetableGrid/timeUtils';
+import { useTimeUtils } from '../TimetableGrid/timeUtils';
 import { useTasksStore } from '../../store/stores/tasks';
 
 type Props = {
@@ -46,6 +46,13 @@ const CATEGORIES: { value: TaskCategory; label: string }[] = [
 ];
 
 export default function TaskCreationModal({ open, onClose, onCreated, defaultStartTime, defaultEndTime, defaultDate, defaultAideId }: Props) {
+  const {
+    generateAllTimeSlots,
+    timeToMinutes,
+    addMinutesToTime,
+    endTimeMinutes,
+    minutesToTime
+  } = useTimeUtils();
   const { addTask } = useTasksStore();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('CLASS_SUPPORT');
@@ -60,10 +67,10 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
   const [numWeeks, setNumWeeks] = useState<number>(4);
-  
+
   // Determine if this is template-only creation (no assignment will be created)
   const isTemplateOnly = !defaultDate || !defaultAideId;
-  
+
   // Classrooms
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
@@ -97,7 +104,7 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
         const calculatedEnd = addMinutesToTime(defaultStartTime, 30);
         // Ensure it doesn't exceed working hours
         const endMinutes = timeToMinutes(calculatedEnd);
-        const maxMinutes = END_TIME_MINUTES;
+        const maxMinutes = endTimeMinutes;
         if (endMinutes > maxMinutes) {
           setEndTime(minutesToTime(maxMinutes));
         } else {
@@ -124,8 +131,8 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   };
 
   const handleWeekdayToggle = (weekday: Weekday) => {
-    setSelectedWeekdays(prev => 
-      prev.includes(weekday) 
+    setSelectedWeekdays(prev =>
+      prev.includes(weekday)
         ? prev.filter(d => d !== weekday)
         : [...prev, weekday]
     );
@@ -140,7 +147,7 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
       // Set end time to 30 minutes after start, but don't exceed working hours
       const calculatedEnd = addMinutesToTime(newStartTime, 30);
       const calculatedEndMinutes = timeToMinutes(calculatedEnd);
-      const maxMinutes = END_TIME_MINUTES;
+      const maxMinutes = endTimeMinutes;
       if (calculatedEndMinutes > maxMinutes) {
         setEndTime(minutesToTime(maxMinutes));
       } else {
@@ -152,12 +159,12 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   async function submit() {
     setBusy(true);
     setError(undefined);
-    
+
     // For template-only creation, use placeholder times and skip validation
     // For tasks with assignments, validate times
     let startTimeFormatted: string;
     let endTimeFormatted: string;
-    
+
     if (isTemplateOnly) {
       // Use placeholder times for template-only tasks
       startTimeFormatted = '09:00:00';
@@ -166,14 +173,14 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
       // Validate times when creating with assignment
       const startMinutes = timeToMinutes(startTime);
       const endMinutes = timeToMinutes(endTime);
-      
+
       if (endMinutes <= startMinutes) {
         setError('End time must be after start time');
         setBusy(false);
         return;
       }
 
-      const maxMinutes = END_TIME_MINUTES;
+      const maxMinutes = endTimeMinutes;
       if (startMinutes < 0 || startMinutes >= maxMinutes) {
         setError(`Start time must be within working hours (08:50 - ${minutesToTime(maxMinutes)})`);
         setBusy(false);
@@ -199,26 +206,26 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
           return;
         }
       }
-      
+
       // Format times as HH:MM:SS for API (append ':00' to seconds)
       startTimeFormatted = `${startTime}:00`;
       endTimeFormatted = `${endTime}:00`;
     }
-    
+
     try {
-      
-      const task = await tasksApi.createOneOff({ 
-        title, 
-        category, 
+
+      const task = await tasksApi.createOneOff({
+        title,
+        category,
         start_time: startTimeFormatted,
         end_time: endTimeFormatted,
-        classroom_id: classroomId, 
+        classroom_id: classroomId,
         notes: notes || null
       });
-      
+
       // Optimistically add task to store so it appears immediately
       addTask(task);
-      
+
       // If we have a date and aide ID, also create an assignment so it appears on the schedule
       if (defaultDate && defaultAideId) {
         try {
@@ -236,7 +243,7 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
           if (isRecurring && selectedWeekdays.length > 0 && numWeeks > 0) {
             const expiresOn = new Date(defaultDate);
             expiresOn.setDate(expiresOn.getDate() + (numWeeks * 7));
-            
+
             await tasksApi.update(task.id, {
               recurrence_rule: `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`,
               expires_on: expiresOn.toISOString().split('T')[0],
@@ -256,7 +263,7 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
           return;
         }
       }
-      
+
       onCreated?.(task);
       handleClose();
     } catch (e: any) {
@@ -267,8 +274,8 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
   }
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
@@ -295,7 +302,7 @@ export default function TaskCreationModal({ open, onClose, onCreated, defaultSta
             autoFocus
             placeholder="e.g., Reading support for Year 3"
           />
-          
+
           <FormControl fullWidth required>
             <InputLabel>Category</InputLabel>
             <Select

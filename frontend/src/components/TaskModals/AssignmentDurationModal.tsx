@@ -24,12 +24,8 @@ import { Schedule, Person, CalendarMonth, AccessTime, Repeat } from '@mui/icons-
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import type { Task, TeacherAide, Weekday } from '../../types';
 import { categoryColors } from '../../theme/theme';
-import { 
-  timeToMinutes, 
-  minutesToTime, 
-  START_TIME_MINUTES, 
-  END_TIME_MINUTES,
-  addMinutesToTime
+import {
+  useTimeUtils
 } from '../TimetableGrid/timeUtils';
 
 const DURATION_OPTIONS = [
@@ -75,6 +71,7 @@ export default function AssignmentDurationModal({
   aides,
   initialData,
 }: Props) {
+  const { startTimeMinutes, endTimeMinutes, minutesToTime } = useTimeUtils();
   const [aideId, setAideId] = useState<number | null>(initialData.aideId);
   const [date, setDate] = useState<Date | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -90,11 +87,11 @@ export default function AssignmentDurationModal({
   useEffect(() => {
     if (open && initialData) {
       setAideId(initialData.aideId);
-      
+
       // Parse date
       const parsedDate = new Date(initialData.date + 'T12:00:00');
       setDate(parsedDate);
-      
+
       // Parse start time (HH:MM:SS format)
       const startParts = initialData.startTime.split(':');
       const startDate = new Date();
@@ -102,7 +99,7 @@ export default function AssignmentDurationModal({
       startDate.setMinutes(parseInt(startParts[1], 10));
       startDate.setSeconds(0);
       setStartTime(startDate);
-      
+
       // Parse end time (HH:MM:SS format)
       const endParts = initialData.endTime.split(':');
       const endDate = new Date();
@@ -110,7 +107,7 @@ export default function AssignmentDurationModal({
       endDate.setMinutes(parseInt(endParts[1], 10));
       endDate.setSeconds(0);
       setEndTime(endDate);
-      
+
       setError(undefined);
       setIsRecurring(false);
       setSelectedWeekdays([]);
@@ -119,7 +116,7 @@ export default function AssignmentDurationModal({
   }, [open, initialData]);
 
   // Calculate current duration in minutes
-  const currentDuration = startTime && endTime 
+  const currentDuration = startTime && endTime
     ? Math.round((endTime.getTime() - startTime.getTime()) / 60000)
     : 0;
 
@@ -139,7 +136,7 @@ export default function AssignmentDurationModal({
         const startMinutes = newTime.getHours() * 60 + newTime.getMinutes();
         const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
         const duration = endMinutes - startMinutes;
-        
+
         // If end time is before start time, automatically set end to start + 30 minutes
         if (duration <= 0) {
           const newEndDate = new Date(newTime);
@@ -152,44 +149,44 @@ export default function AssignmentDurationModal({
 
   const handleSubmit = async () => {
     setError(undefined);
-    
+
     // Validation
     if (!date) {
       setError('Please select a date');
       return;
     }
-    
+
     if (!startTime) {
       setError('Please select a start time');
       return;
     }
-    
+
     if (!endTime) {
       setError('Please select an end time');
       return;
     }
-    
+
     // Convert times to minutes for validation
     const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
     const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
-    
+
     // Check if end time is after start time
     if (endMinutes <= startMinutes) {
       setError('End time must be after start time');
       return;
     }
-    
+
     // Check if times are within working hours
-    const workingStartMinutes = START_TIME_MINUTES;
-    const workingEndMinutes = END_TIME_MINUTES;
-    
+    const workingStartMinutes = startTimeMinutes;
+    const workingEndMinutes = endTimeMinutes;
+
     if (startMinutes < workingStartMinutes || startMinutes >= workingEndMinutes) {
-      setError(`Start time must be between ${minutesToTime(START_TIME_MINUTES)} and ${minutesToTime(END_TIME_MINUTES)}`);
+      setError(`Start time must be between ${minutesToTime(startTimeMinutes)} and ${minutesToTime(endTimeMinutes)}`);
       return;
     }
-    
+
     if (endMinutes > workingEndMinutes) {
-      setError(`End time cannot exceed ${minutesToTime(END_TIME_MINUTES)} (end of working hours)`);
+      setError(`End time cannot exceed ${minutesToTime(endTimeMinutes)} (end of working hours)`);
       return;
     }
 
@@ -204,12 +201,12 @@ export default function AssignmentDurationModal({
         return;
       }
     }
-    
+
     // Format data for submission
     const dateStr = date.toISOString().slice(0, 10);
     const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}:00`;
     const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}:00`;
-    
+
     try {
       await onConfirm({
         aideId,
@@ -232,8 +229,8 @@ export default function AssignmentDurationModal({
   };
 
   const handleWeekdayToggle = (weekday: Weekday) => {
-    setSelectedWeekdays(prev => 
-      prev.includes(weekday) 
+    setSelectedWeekdays(prev =>
+      prev.includes(weekday)
         ? prev.filter(d => d !== weekday)
         : [...prev, weekday]
     );

@@ -5,7 +5,7 @@ import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
 import { useMemo } from 'react';
 import { getAvailabilityInfo } from '../utils/availabilityUtils';
-import { addMinutesToTime, timeIntervalsOverlap, timeToMinutes } from './TimetableGrid/timeUtils';
+import { addMinutesToTime, timeIntervalsOverlap, timeToMinutes, useTimeUtils } from './TimetableGrid/timeUtils';
 import { calculateGaps } from '../utils/gapUtils';
 import { calculateOverlaps } from '../utils/overlapUtils';
 import GapHighlight from './TimetableGrid/GapHighlight';
@@ -18,12 +18,9 @@ interface AideRowProps {
 }
 
 export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick }: AideRowProps) {
-  const startTimeToMinutes = (timeStr: string) => {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-  };
+  const { timeToMinutes } = useTimeUtils();
 
-  const timelineStart = startTimeToMinutes(timelineConfig.slots[0].start_time);
+  const timelineStart = timeToMinutes(timelineConfig.slots[0].start_time);
   const timelineEnd = timelineStart + timelineConfig.slots.reduce((acc, slot) => acc + slot.duration_minutes, 0);
   const totalMinutes = timelineEnd - timelineStart;
 
@@ -56,8 +53,8 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
     }
 
     const blocks = [];
-    const availStart = startTimeToMinutes(availabilityInfo.timeWindow.start);
-    const availEnd = startTimeToMinutes(availabilityInfo.timeWindow.end);
+    const availStart = timeToMinutes(availabilityInfo.timeWindow.start);
+    const availEnd = timeToMinutes(availabilityInfo.timeWindow.end);
 
     // Block before availability
     if (availStart > timelineStart) {
@@ -89,8 +86,8 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
     const overlapAssignments = calculateOverlaps(aide.assignments);
 
     return overlapAssignments.map(({ item: assignment, lane, totalLanes, laneSpan }) => {
-      const startMins = startTimeToMinutes(assignment.start_time);
-      const endMins = startTimeToMinutes(assignment.end_time);
+      const startMins = timeToMinutes(assignment.start_time);
+      const endMins = timeToMinutes(assignment.end_time);
 
       const left = ((startMins - timelineStart) / totalMinutes) * 100;
       const width = ((endMins - startMins) / totalMinutes) * 100;
@@ -274,8 +271,8 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                         top: 0,
                         bottom: 0,
                         // Position relative to slot
-                        left: `${(startTimeToMinutes(gap.start_time) - startTimeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
-                        width: `${(startTimeToMinutes(gap.end_time) - startTimeToMinutes(gap.start_time)) / slot.duration_minutes * 100}%`,
+                        left: `${(timeToMinutes(gap.start_time) - timeToMinutes(slotStartTime)) / slot.duration_minutes * 100}%`,
+                        width: `${(timeToMinutes(gap.end_time) - timeToMinutes(gap.start_time)) / slot.duration_minutes * 100}%`,
                       }}
                     >
                       <GapHighlight colour_hex={aide.colour_hex} />

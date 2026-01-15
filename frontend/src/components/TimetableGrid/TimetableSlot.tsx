@@ -4,7 +4,7 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { memo } from 'react';
 import { Gap } from '../../utils/gapUtils';
 import GapHighlight from './GapHighlight';
-import { timeToPixels, durationToPixels } from './timeUtils';
+import { useTimeUtils } from './timeUtils';
 
 type TimetableSlotProps = {
   aideId: number;
@@ -20,6 +20,7 @@ type TimetableSlotProps = {
 };
 
 function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onClick, onQuickCreate, gaps = [], aideColor }: TimetableSlotProps) {
+  const { timeToPixels, durationToPixels } = useTimeUtils();
   const droppableId = `aide-${aideId}-date-${date}-time-${timeSlot}`;
 
   const handleQuickCreateClick = (e: React.MouseEvent) => {
@@ -43,13 +44,13 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
             borderBottom: '1px dashed',
             borderColor: 'divider',
             zIndex: 1,
-            backgroundColor: snapshot.isDraggingOver 
-              ? 'rgba(25, 118, 210, 0.12)' 
+            backgroundColor: snapshot.isDraggingOver
+              ? 'rgba(25, 118, 210, 0.12)'
               : 'transparent',
             transition: 'background-color 0.2s ease',
             overflow: 'visible', // Allow children to extend beyond slot
             '&:hover': {
-              backgroundColor: snapshot.isDraggingOver 
+              backgroundColor: snapshot.isDraggingOver
                 ? 'rgba(25, 118, 210, 0.12)'
                 : 'rgba(0, 0, 0, 0.02)',
             },
@@ -106,7 +107,7 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
               <AddIcon sx={{ fontSize: 16 }} />
             </IconButton>
           )}
-          
+
           {/* Border highlight during drag over */}
           {snapshot.isDraggingOver && (
             <>
@@ -143,14 +144,14 @@ function TimetableSlotBase({ aideId, date, timeSlot, children, top, height, onCl
                     zIndex: 5,
                   }}
                 >
-                  <GapHighlight 
-                    colour_hex={aideColor || '#1976d2'} 
+                  <GapHighlight
+                    colour_hex={aideColor || '#1976d2'}
                   />
                 </Box>
               ))}
             </>
           )}
-          
+
           {children}
           {provided.placeholder}
         </Box>

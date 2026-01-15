@@ -24,7 +24,7 @@ import { assignmentsApi } from '../../services/assignmentsApi';
 import { useTasksStore } from '../../store/stores/tasks';
 import type { Task, TaskCategory, Classroom, Weekday, Assignment } from '../../types';
 import { categoryColors } from '../../theme/theme';
-import { generateAllTimeSlots, minutesToTime, END_TIME_MINUTES } from '../TimetableGrid/timeUtils';
+import { useTimeUtils } from '../TimetableGrid/timeUtils';
 import TaskDeleteDialog from './TaskDeleteDialog';
 
 type Props = {
@@ -52,8 +52,9 @@ const WEEKDAY_MAP: Record<string, Weekday> = {
 };
 
 export default function TaskEditModal({ open, onClose, task, assignment, onUpdated, onDeleted }: Props) {
+  const { generateAllTimeSlots } = useTimeUtils();
   const { updateTask } = useTasksStore();
-  
+
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('CLASS_SUPPORT');
   const [start, setStart] = useState('09:00');
@@ -62,16 +63,16 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
-  
+
   // Recurring task fields
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
   const [numWeeks, setNumWeeks] = useState<number>(4);
-  
+
   // Classrooms
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
-  
+
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -102,7 +103,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
       setEnd(toHHMM(assignment?.end_time ?? task.end_time)); // HH:MM
       setClassroomId(task.classroom_id || null);
       setNotes(task.notes || '');
-      
+
       // Check if this assignment is part of a recurring series
       // Note: Task no longer has recurrence_rule, but we can check the assignment
       if (assignment?.recurring_series_id) {
@@ -128,8 +129,8 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   };
 
   const handleWeekdayToggle = (weekday: Weekday) => {
-    setSelectedWeekdays(prev => 
-      prev.includes(weekday) 
+    setSelectedWeekdays(prev =>
+      prev.includes(weekday)
         ? prev.filter(d => d !== weekday)
         : [...prev, weekday]
     );
@@ -137,10 +138,10 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
 
   async function submit() {
     if (!task) return;
-    
+
     setBusy(true);
     setError(undefined);
-    
+
     if (start >= end) {
       setError('End time must be after start time');
       setBusy(false);
@@ -179,14 +180,14 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
             setBusy(false);
             return;
           }
-          
+
           taskPayload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
-          
+
           // Include the assignment's times for the recurring series
           // This ensures recurring instances use the same times as the original assignment
           taskPayload.start_time = start;
           taskPayload.end_time = end;
-          
+
           // Calculate expiry date based on number of weeks from assignment date
           if (assignment.date) {
             const startDate = new Date(assignment.date);
@@ -197,26 +198,26 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
             startDate.setDate(startDate.getDate() + (numWeeks * 7));
             taskPayload.expires_on = startDate.toISOString().split('T')[0];
           }
-          
+
           if (assignment.aide_id) {
             taskPayload.aide_id = assignment.aide_id;
           }
-          
+
           taskPayload.existing_assignment_date = assignment.date;
         } else {
-            taskPayload.recurrence_rule = null;
-            taskPayload.expires_on = null;
+          taskPayload.recurrence_rule = null;
+          taskPayload.expires_on = null;
         }
 
         const updatedTask = await updateTask(task.id, taskPayload);
-        
+
         // Dispatch success event
         try {
-          window.dispatchEvent(new CustomEvent('app:success', { 
-            detail: { message: 'Task and assignment updated successfully' } 
+          window.dispatchEvent(new CustomEvent('app:success', {
+            detail: { message: 'Task and assignment updated successfully' }
           }));
-        } catch {}
-        
+        } catch { }
+
         onUpdated?.(updatedTask);
       } else {
         // Editing task template only (Task Bank)
@@ -228,7 +229,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           classroom_id: classroomId,
           notes: notes || null,
         };
-        
+
         // Handle recurring task fields
         if (isRecurring) {
           if (selectedWeekdays.length === 0) {
@@ -241,9 +242,9 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
             setBusy(false);
             return;
           }
-          
+
           payload.recurrence_rule = `FREQ=WEEKLY;BYDAY=${selectedWeekdays.join(',')}`;
-          
+
           // Fallback to weeks from today
           const startDate = new Date();
           startDate.setDate(startDate.getDate() + (numWeeks * 7));
@@ -252,19 +253,19 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
           payload.recurrence_rule = null;
           payload.expires_on = null;
         }
-        
+
         const updatedTask = await updateTask(task.id, payload);
-        
+
         // Dispatch success event
         try {
-          window.dispatchEvent(new CustomEvent('app:success', { 
-            detail: { message: 'Task updated successfully' } 
+          window.dispatchEvent(new CustomEvent('app:success', {
+            detail: { message: 'Task updated successfully' }
           }));
-        } catch {}
-        
+        } catch { }
+
         onUpdated?.(updatedTask);
       }
-      
+
       handleClose();
     } catch (e: any) {
       setError(e.message || 'Failed to update task');
@@ -276,8 +277,8 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
   if (!task) return null;
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
@@ -314,7 +315,7 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
             autoFocus
             placeholder="e.g., Reading support for Year 3"
           />
-          
+
           <FormControl fullWidth required>
             <InputLabel>Category</InputLabel>
             <Select
@@ -457,8 +458,8 @@ export default function TaskEditModal({ open, onClose, task, assignment, onUpdat
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
-        <Button 
-          onClick={() => setShowDeleteDialog(true)} 
+        <Button
+          onClick={() => setShowDeleteDialog(true)}
           disabled={busy}
           color="error"
           startIcon={<DeleteIcon />}

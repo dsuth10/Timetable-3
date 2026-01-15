@@ -1,5 +1,4 @@
-import type { Assignment } from '../../types';
-import { timeIntervalsOverlap, timeToMinutes, timeToPixels, durationToPixels } from './timeUtils';
+import { timeIntervalsOverlap, timeToMinutes } from './timeUtils';
 import { calculateOverlaps } from '../../utils/overlapUtils';
 
 export interface TaskPosition {
@@ -15,7 +14,11 @@ export interface TaskPosition {
 /**
  * Calculate positioning for all assignments in a day to handle overlaps
  */
-export function calculateTaskPositions(assignments: Assignment[]): TaskPosition[] {
+export function calculateTaskPositions(
+  assignments: Assignment[],
+  timeToPixels: (time: string) => number,
+  durationToPixels: (start: string, end: string) => number
+): TaskPosition[] {
   if (assignments.length === 0) return [];
 
   const overlapAssignments = calculateOverlaps(assignments);

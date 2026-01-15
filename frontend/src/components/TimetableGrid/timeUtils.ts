@@ -1,35 +1,34 @@
 // Time calculation constants and utilities for calendar grid positioning
+import { useScheduleStore } from '../../store/stores/scheduleStore';
 
 export const PIXELS_PER_MINUTE = 2.5;
-export let START_TIME_MINUTES = 8 * 60 + 50; // 08:50 default aligned with backend
-export let END_TIME_MINUTES = 15 * 60; // 15:00 default aligned with backend
 
-export let SCHEDULE_SEGMENTS = [
-  { start: '08:50', end: '09:10' },
-  { start: '09:10', end: '09:40' },
-  { start: '09:40', end: '10:10' },
-  { start: '10:10', end: '10:40' },
-  { start: '10:40', end: '11:10' },
-  { start: '11:10', end: '11:50' },
-  { start: '11:50', end: '12:20' },
-  { start: '12:20', end: '12:50' },
-  { start: '12:50', end: '13:20' },
-  { start: '13:20', end: '14:00' },
-  { start: '14:00', end: '14:30' },
-  { start: '14:30', end: '15:00' },
-];
+/**
+ * Hook to provide reactive time calculation utilities
+ */
+export function useTimeUtils() {
+  const { startTimeMinutes, endTimeMinutes, scheduleSegments } = useScheduleStore();
 
-export function updateScheduleConfig(config: { start_time: string, end_time: string, slots: { start_time: string, duration_minutes: number }[] }) {
-  START_TIME_MINUTES = timeToMinutes(config.start_time);
-  END_TIME_MINUTES = timeToMinutes(config.end_time);
-  SCHEDULE_SEGMENTS = config.slots.map(s => ({
-    start: s.start_time.substring(0, 5),
-    end: addMinutesToTime(s.start_time.substring(0, 5), s.duration_minutes)
-  }));
+  return {
+    startTimeMinutes,
+    endTimeMinutes,
+    scheduleSegments,
+    getTotalHeightPx: () => (endTimeMinutes - startTimeMinutes) * PIXELS_PER_MINUTE,
+    timeToPixels: (timeStr: string) => timeToPixelsStandalone(timeStr, startTimeMinutes),
+    durationToPixels: (startTime: string, endTime: string) => durationToPixelsStandalone(startTime, endTime),
+    snapToSlot: (timeStr: string) => snapToSlotStandalone(timeStr, scheduleSegments),
+    generateTimeSlots: () => scheduleSegments.map(segment => segment.start),
+    generateAllTimeSlots: () => generateAllTimeSlotsStandalone(startTimeMinutes, endTimeMinutes),
+    getSegmentForTime: (timeStr: string) => scheduleSegments.find(s => s.start === timeStr),
+    isWithinWorkingHours: (timeStr: string) => isWithinWorkingHoursStandalone(timeStr, startTimeMinutes, endTimeMinutes),
+    // Re-export pure utilities for convenience
+    timeToMinutes,
+    minutesToTime,
+    addMinutesToTime,
+    calculateDuration,
+    timeIntervalsOverlap,
+  };
 }
-
-// Calculate total height - export as a function to ensure it's always dynamic
-export const getTotalHeightPx = () => (END_TIME_MINUTES - START_TIME_MINUTES) * PIXELS_PER_MINUTE;
 
 /**
  * Convert time string (HH:MM) to minutes since midnight
@@ -49,17 +48,17 @@ export function minutesToTime(minutes: number): string {
 }
 
 /**
- * Calculate pixel position for a given time
+ * Standlone pixel position calculation
  */
-export function timeToPixels(timeStr: string): number {
+export function timeToPixelsStandalone(timeStr: string, startTimeMinutes: number): number {
   const minutes = timeToMinutes(timeStr);
-  return (minutes - START_TIME_MINUTES) * PIXELS_PER_MINUTE;
+  return (minutes - startTimeMinutes) * PIXELS_PER_MINUTE;
 }
 
 /**
- * Calculate pixel height for a given duration
+ * Standalone pixel height calculation
  */
-export function durationToPixels(startTime: string, endTime: string): number {
+export function durationToPixelsStandalone(startTime: string, endTime: string): number {
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = timeToMinutes(endTime);
   const durationMinutes = endMinutes - startMinutes;
@@ -69,15 +68,17 @@ export function durationToPixels(startTime: string, endTime: string): number {
 /**
  * Snap a time to the nearest segment start time
  */
-export function snapToSlot(timeStr: string): string {
+export function snapToSlotStandalone(timeStr: string, segments: { start: string, end: string }[]): string {
   const minutes = timeToMinutes(timeStr);
+
+  if (segments.length === 0) return timeStr;
 
   // Find the closest segment start time
   let closestDiff = Infinity;
-  let closestTime = SCHEDULE_SEGMENTS[0].start;
+  let closestTime = segments[0].start;
 
   // Check all segment start times
-  for (const segment of SCHEDULE_SEGMENTS) {
+  for (const segment of segments) {
     const segStartMinutes = timeToMinutes(segment.start);
     const diff = Math.abs(minutes - segStartMinutes);
     if (diff < closestDiff) {
@@ -87,43 +88,27 @@ export function snapToSlot(timeStr: string): string {
   }
 
   // Also check end time of last segment
-  const lastSegEndMinutes = timeToMinutes(SCHEDULE_SEGMENTS[SCHEDULE_SEGMENTS.length - 1].end);
+  const lastSegEndMinutes = timeToMinutes(segments[segments.length - 1].end);
   if (Math.abs(minutes - lastSegEndMinutes) < closestDiff) {
-    closestTime = SCHEDULE_SEGMENTS[SCHEDULE_SEGMENTS.length - 1].end;
+    closestTime = segments[segments.length - 1].end;
   }
 
   return closestTime;
 }
 
 /**
- * Generate start times for all defined segments (used for display)
- */
-export function generateTimeSlots(): string[] {
-  return SCHEDULE_SEGMENTS.map(segment => segment.start);
-}
-
-/**
  * Generate all possible time slots at 5-minute increments within working hours
- * This ensures dropdowns can handle any valid assignment time (e.g., 11:40)
  */
-export function generateAllTimeSlots(): string[] {
+export function generateAllTimeSlotsStandalone(startTimeMinutes: number, endTimeMinutes: number): string[] {
   const slots: string[] = [];
-  let currentMinutes = START_TIME_MINUTES;
+  let currentMinutes = startTimeMinutes;
 
-  // Generate all 5-minute increments from start to end time
-  while (currentMinutes <= END_TIME_MINUTES) {
+  while (currentMinutes <= endTimeMinutes) {
     slots.push(minutesToTime(currentMinutes));
-    currentMinutes += 5; // 5-minute increments
+    currentMinutes += 5;
   }
 
   return slots;
-}
-
-/**
- * Get segment details for a specific start time
- */
-export function getSegmentForTime(timeStr: string) {
-  return SCHEDULE_SEGMENTS.find(s => s.start === timeStr);
 }
 
 /**
@@ -159,7 +144,7 @@ export function addMinutesToTime(timeStr: string, minutes: number): string {
 /**
  * Check if a time is within working hours
  */
-export function isWithinWorkingHours(timeStr: string): boolean {
+export function isWithinWorkingHoursStandalone(timeStr: string, startTimeMinutes: number, endTimeMinutes: number): boolean {
   const minutes = timeToMinutes(timeStr);
-  return minutes >= START_TIME_MINUTES && minutes <= END_TIME_MINUTES;
+  return minutes >= startTimeMinutes && minutes <= endTimeMinutes;
 }

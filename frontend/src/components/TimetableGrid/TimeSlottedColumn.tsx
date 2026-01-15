@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Box } from '@mui/material';
 import type { Assignment, Task, Absence, Availability, TeacherAide } from '../../types';
-import { generateTimeSlots, timeToPixels, durationToPixels, getTotalHeightPx, getSegmentForTime, snapToSlot, timeIntervalsOverlap, addMinutesToTime } from './timeUtils';
+import { addMinutesToTime, useTimeUtils } from './timeUtils';
 import { calculateTaskPositions } from './OverlapCalculator';
 import { TaskCard } from './TaskCard';
 import { TimetableSlot } from './TimetableSlot';
@@ -38,6 +38,16 @@ export function TimeSlottedColumn({
   onSlotClick,
   onQuickCreate,
 }: TimeSlottedColumnProps) {
+  const {
+    getTotalHeightPx,
+    generateTimeSlots,
+    getSegmentForTime,
+    snapToSlot,
+    timeToPixels,
+    durationToPixels,
+    timeIntervalsOverlap,
+  } = useTimeUtils();
+
   const taskMap = useMemo(() => {
     const map = new Map<number, Task>();
     tasks.forEach(task => map.set(task.id, task));
@@ -45,7 +55,7 @@ export function TimeSlottedColumn({
   }, [tasks]);
 
   const totalHeight = getTotalHeightPx();
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
+  const timeSlots = useMemo(() => generateTimeSlots(), [generateTimeSlots]);
 
   // Calculate gaps for snapping
   const gridLines = useMemo(() => {
@@ -95,7 +105,7 @@ export function TimeSlottedColumn({
     }));
   }, [assignments, showAideName, aides]);
 
-  const taskPositions = useMemo(() => calculateTaskPositions(processedAssignments), [processedAssignments]);
+  const taskPositions = useMemo(() => calculateTaskPositions(processedAssignments, timeToPixels, durationToPixels), [processedAssignments, timeToPixels, durationToPixels]);
 
   // Map task positions to their starting time slots
   const tasksBySlot = useMemo(() => {

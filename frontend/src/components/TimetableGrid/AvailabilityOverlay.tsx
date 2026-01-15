@@ -1,7 +1,7 @@
 import { Box, Tooltip } from '@mui/material';
 import { EventBusy } from '@mui/icons-material';
 import type { Availability, Absence } from '../../types';
-import { START_TIME_MINUTES, END_TIME_MINUTES, PIXELS_PER_MINUTE } from './timeUtils';
+import { useTimeUtils } from './timeUtils';
 
 type AvailabilityOverlayProps = {
   aideId: number;
@@ -117,8 +117,10 @@ export default function AvailabilityOverlay({
     return hh * 60 + mm;
   };
 
-  const workStart = START_TIME_MINUTES;
-  const workEnd = END_TIME_MINUTES;
+  const { startTimeMinutes, endTimeMinutes, PIXELS_PER_MINUTE } = useTimeUtils();
+
+  const workStart = startTimeMinutes;
+  const workEnd = endTimeMinutes;
   const availStart = Math.max(workStart, toMinutes(dayWindow.start_time));
   const availEnd = Math.min(workEnd, toMinutes(dayWindow.end_time));
 

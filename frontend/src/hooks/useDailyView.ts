@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import type { DailyViewData } from '../types';
-import { updateScheduleConfig } from '../components/TimetableGrid/timeUtils';
+import { useScheduleStore } from '../store/stores/scheduleStore';
 
 export const dailyKeys = {
     all: ['daily'] as const,
@@ -9,6 +9,8 @@ export const dailyKeys = {
 };
 
 export function useDailyView(date: string) {
+    const setScheduleConfig = useScheduleStore(s => s.setScheduleConfig);
+
     return useQuery({
         queryKey: dailyKeys.date(date),
         queryFn: async () => {
@@ -17,7 +19,7 @@ export function useDailyView(date: string) {
 
             // Maintain side effect for global config
             if (data.timeline_config) {
-                updateScheduleConfig(data.timeline_config);
+                setScheduleConfig(data.timeline_config);
             }
 
             return data;

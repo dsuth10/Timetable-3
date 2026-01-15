@@ -21,7 +21,8 @@ import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
-import { addMinutesToTime, timeToMinutes, getSegmentForTime, calculateDuration, updateScheduleConfig } from '../components/TimetableGrid/timeUtils';
+import { useTimeUtils } from '../components/TimetableGrid/timeUtils';
+import { useScheduleStore } from '../store/stores/scheduleStore';
 import AppDragDropContext from '../components/DragDropContext';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import TeacherAideListPanel from '../components/Layout/SidePanel/TeacherAideListPanel';
@@ -52,6 +53,13 @@ import { TimetableExportView } from '../components/TimetableExportView';
 import { useTimetableExport } from '../hooks/useTimetableExport';
 
 export default function Schedule() {
+  const {
+    getSegmentForTime,
+    calculateDuration,
+    addMinutesToTime,
+    timeToMinutes
+  } = useTimeUtils();
+  const setScheduleConfig = useScheduleStore(s => s.setScheduleConfig);
   const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
   const { tasks, fetchTasks } = useTasksStore();
@@ -156,7 +164,7 @@ export default function Schedule() {
         if (matrix?.matrix) {
           // Update global time config
           if (matrix.timeline_config) {
-            updateScheduleConfig(matrix.timeline_config);
+            setScheduleConfig(matrix.timeline_config);
           }
 
           Object.entries(matrix.matrix).forEach(([aideId, days]) => {
@@ -314,7 +322,7 @@ export default function Schedule() {
       if (matrix?.matrix) {
         // Update global time config
         if (matrix.timeline_config) {
-          updateScheduleConfig(matrix.timeline_config);
+          setScheduleConfig(matrix.timeline_config);
         }
         Object.entries(matrix.matrix).forEach(([aideId, days]) => {
           const aideAssignments: Assignment[] = [];

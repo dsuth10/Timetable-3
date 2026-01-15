@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { AccessTime, Schedule } from '@mui/icons-material';
 import { aidesApi } from '../services/aidesApi';
-import { generateAllTimeSlots, timeToMinutes, snapToSlot, minutesToTime, END_TIME_MINUTES } from './TimetableGrid/timeUtils';
+import { useTimeUtils } from './TimetableGrid/timeUtils';
 import type { Availability, ID, Weekday } from '../types';
 
 type AvailabilityEditorProps = {
@@ -50,6 +50,7 @@ export default function AvailabilityEditor({
   disabled = false,
   draftMode = false,
 }: AvailabilityEditorProps) {
+  const { generateAllTimeSlots, timeToMinutes } = useTimeUtils();
   const [dayAvailability, setDayAvailability] = useState<DayAvailability[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -59,7 +60,7 @@ export default function AvailabilityEditor({
   useEffect(() => {
     // In draft mode with no initial availability, enable all days by default
     const shouldEnableAllByDefault = draftMode && initialAvailability.length === 0;
-    
+
     const days: DayAvailability[] = WEEKDAYS.map(day => {
       const existing = initialAvailability.find(avail => avail.weekday === day.key);
       return {
@@ -71,7 +72,7 @@ export default function AvailabilityEditor({
       };
     });
     setDayAvailability(days);
-    
+
     // Notify parent of initial state in draft mode (only once)
     if (shouldEnableAllByDefault && !hasNotifiedInitialState.current) {
       const draftAvailability = days.map(d => ({
@@ -108,7 +109,7 @@ export default function AvailabilityEditor({
         availabilityId: enabled ? day.availabilityId : undefined,
       };
       setDayAvailability(updatedDays);
-      
+
       // Notify parent of changes (without IDs in draft mode)
       const draftAvailability = updatedDays.filter(d => d.enabled).map(d => ({
         aide_id: aideId || 0, // Placeholder
@@ -204,7 +205,7 @@ export default function AvailabilityEditor({
         endTime,
       };
       setDayAvailability(updatedDays);
-      
+
       // Notify parent of changes (without IDs in draft mode)
       const draftAvailability = updatedDays.filter(d => d.enabled).map(d => ({
         aide_id: aideId || 0, // Placeholder
@@ -336,11 +337,11 @@ export default function AvailabilityEditor({
 
                 {dayData.enabled && (
                   <Box sx={{ mt: 2 }}>
-                    <Box 
-                      sx={{ 
-                        display: 'flex', 
+                    <Box
+                      sx={{
+                        display: 'flex',
                         flexDirection: { xs: 'column', sm: 'row' },
-                        gap: 1.5, 
+                        gap: 1.5,
                         alignItems: { xs: 'stretch', sm: 'center' },
                         flexWrap: 'wrap'
                       }}
@@ -348,6 +349,7 @@ export default function AvailabilityEditor({
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
                         <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
                         <TextField
+                          id={`availability-start-${day.key}`}
                           select
                           size="small"
                           label="Start"
@@ -356,6 +358,10 @@ export default function AvailabilityEditor({
                           disabled={disabled || loading}
                           SelectProps={{
                             native: true,
+                          }}
+                          inputProps={{
+                            'aria-label': `${day.label} Start Time`,
+                            'title': `${day.label} Start Time`,
                           }}
                           sx={{ width: '100%', minWidth: 100 }}
                         >
@@ -367,10 +373,10 @@ export default function AvailabilityEditor({
                         </TextField>
                       </Box>
 
-                      <Typography 
-                        variant="body2" 
+                      <Typography
+                        variant="body2"
                         color="text.secondary"
-                        sx={{ 
+                        sx={{
                           alignSelf: 'center',
                           display: { xs: 'none', sm: 'block' }
                         }}
@@ -381,6 +387,7 @@ export default function AvailabilityEditor({
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
                         <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
                         <TextField
+                          id={`availability-end-${day.key}`}
                           select
                           size="small"
                           label="End"
@@ -389,6 +396,10 @@ export default function AvailabilityEditor({
                           disabled={disabled || loading}
                           SelectProps={{
                             native: true,
+                          }}
+                          inputProps={{
+                            'aria-label': `${day.label} End Time`,
+                            'title': `${day.label} End Time`,
                           }}
                           sx={{ width: '100%', minWidth: 100 }}
                         >
@@ -415,7 +426,7 @@ export default function AvailabilityEditor({
       )}
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-        💡 Tip: To make an aide unavailable on a specific day, simply toggle it off. 
+        💡 Tip: To make an aide unavailable on a specific day, simply toggle it off.
         Days without availability are shown as unavailable in the schedule.
       </Typography>
     </Box>
