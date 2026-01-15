@@ -4,7 +4,9 @@ import {
   Typography,
   Switch,
   FormControlLabel,
-  TextField,
+  FormControl,
+  InputLabel,
+  Select,
   Grid,
   Paper,
   Chip,
@@ -348,29 +350,28 @@ export default function AvailabilityEditor({
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
                         <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
-                        <TextField
-                          id={`availability-start-${day.key}`}
-                          select
-                          size="small"
-                          label="Start"
-                          value={dayData.startTime}
-                          onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
-                          disabled={disabled || loading}
-                          SelectProps={{
-                            native: true,
-                          }}
-                          inputProps={{
-                            'aria-label': `${day.label} Start Time`,
-                            'title': `${day.label} Start Time`,
-                          }}
-                          sx={{ width: '100%', minWidth: 100 }}
-                        >
-                          {timeSlots.map(time => (
-                            <option key={time} value={time}>
-                              {time}
-                            </option>
-                          ))}
-                        </TextField>
+                        <FormControl size="small" sx={{ width: '100%', minWidth: 100 }}>
+                          <InputLabel id={`label-start-${day.key}`} shrink>Start</InputLabel>
+                          <Select
+                            labelId={`label-start-${day.key}`}
+                            id={`availability-start-${day.key}`}
+                            native
+                            value={dayData.startTime}
+                            onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
+                            disabled={disabled || loading}
+                            title={`${day.label} Start Time`}
+                            inputProps={{
+                              'aria-label': `${day.label} Start Time`,
+                              'title': `${day.label} Start Time`,
+                            }}
+                          >
+                            {timeSlots.map(time => (
+                              <option key={time} value={time}>
+                                {time}
+                              </option>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </Box>
 
                       <Typography
@@ -386,29 +387,28 @@ export default function AvailabilityEditor({
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: '120px' } }}>
                         <AccessTime fontSize="small" color="action" sx={{ flexShrink: 0 }} />
-                        <TextField
-                          id={`availability-end-${day.key}`}
-                          select
-                          size="small"
-                          label="End"
-                          value={dayData.endTime}
-                          onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
-                          disabled={disabled || loading}
-                          SelectProps={{
-                            native: true,
-                          }}
-                          inputProps={{
-                            'aria-label': `${day.label} End Time`,
-                            'title': `${day.label} End Time`,
-                          }}
-                          sx={{ width: '100%', minWidth: 100 }}
-                        >
-                          {timeSlots.map(time => (
-                            <option key={time} value={time}>
-                              {time}
-                            </option>
-                          ))}
-                        </TextField>
+                        <FormControl size="small" sx={{ width: '100%', minWidth: 100 }}>
+                          <InputLabel id={`label-end-${day.key}`} shrink>End</InputLabel>
+                          <Select
+                            labelId={`label-end-${day.key}`}
+                            id={`availability-end-${day.key}`}
+                            native
+                            value={dayData.endTime}
+                            onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
+                            disabled={disabled || loading}
+                            title={`${day.label} End Time`}
+                            inputProps={{
+                              'aria-label': `${day.label} End Time`,
+                              'title': `${day.label} End Time`,
+                            }}
+                          >
+                            {timeSlots.map(time => (
+                              <option key={time} value={time}>
+                                {time}
+                              </option>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </Box>
                     </Box>
                   </Box>

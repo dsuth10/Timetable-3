@@ -164,14 +164,18 @@ export function useDragDrop(options?: UseDragDropOptions) {
 
   const onDragEnd = useCallback(async (result: DropResult) => {
     const { destination, source, draggableId } = result;
-    if (!destination) return;
+    if (!destination) {
+      return;
+    }
 
     const isTaskTemplate = draggableId.startsWith('task-');
     const isAssignment = draggableId.startsWith('asg-');
     const isTeacherAide = draggableId.startsWith('aide-') && !draggableId.includes('date');
     const isReliefPool = draggableId.startsWith('relief-pool-');
 
-    if (!isTaskTemplate && !isAssignment && !isTeacherAide && !isReliefPool) return;
+    if (!isTaskTemplate && !isAssignment && !isTeacherAide && !isReliefPool) {
+      return;
+    }
 
     // Handle destination - could be aide-date-time, aide-date, or unassigned
     const destDroppableId = destination.droppableId;
@@ -185,7 +189,6 @@ export function useDragDrop(options?: UseDragDropOptions) {
     if (destDroppableId === 'unassigned') {
       destAideId = null;
     } else if (destDroppableId.startsWith('aide-') && destDroppableId.includes('-date-')) {
-      // Parse format: "aide-{id}-date-{date}-time-{HH:MM}" or "aide-{id}-date-{date}"
       const parts = destDroppableId.split('-');
       if (parts.length >= 4) {
         destAideId = Number(parts[1]);
@@ -193,33 +196,34 @@ export function useDragDrop(options?: UseDragDropOptions) {
         const timeIndex = parts.indexOf('time');
 
         if (timeIndex !== -1 && timeIndex > dateIndex) {
-          // Has time component
           destDate = parts.slice(dateIndex + 1, timeIndex).join('-');
-          destTime = parts[timeIndex + 1]; // HH:MM format
+          destTime = parts[timeIndex + 1];
         } else {
-          // No time component (old format)
           destDate = parts.slice(dateIndex + 1).join('-');
         }
       }
     } else if (destDroppableId.startsWith('aide-') && destDroppableId.includes('-slot-')) {
-      // Parse Daily View format: "aide-{id}-slot-{HH:MM:SS}"
       const parts = destDroppableId.split('-');
       if (parts.length >= 4) {
         destAideId = Number(parts[1]);
         const slotIndex = parts.indexOf('slot');
         if (slotIndex !== -1) {
-          const timeStr = parts.slice(slotIndex + 1).join('-'); // Rejoin in case of HH:MM:SS
-          destTime = timeStr.substring(0, 5); // Extract HH:MM from HH:MM:SS
-          destDate = options?.defaultDate || null; // Use defaultDate from options
+          const timeStr = parts.slice(slotIndex + 1).join('-');
+          destTime = timeStr.substring(0, 5);
+          destDate = options?.defaultDate || null;
         }
       }
     } else {
-      // Fallback for old format (just aide ID)
       destAideId = Number(destDroppableId);
     }
 
+    console.log('[useDragDrop] Parsed destination', { destAideId, destDate, destTime });
+
     // Validate destination aide ID if not unassigned
-    if (destAideId !== null && !Number.isFinite(destAideId)) return;
+    if (destAideId !== null && !Number.isFinite(destAideId)) {
+      console.log('[useDragDrop] Invalid destAideId');
+      return;
+    }
 
     // Helper to check for small gaps and show error
     const checkForSmallGap = (aideId: number, checkDate: string | null, time: string): boolean => {

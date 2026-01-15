@@ -25,7 +25,6 @@ import {
   Edit,
   Search,
   Sort,
-  FilterList
 } from '@mui/icons-material';
 import { useTasksStore } from '../../store/stores/tasks';
 import { assignmentsApi } from '../../services/assignmentsApi';
@@ -170,6 +169,14 @@ export default function TasksManagement({ refreshTrigger, onChanged }: Props) {
     return result;
   }, [tasks, searchQuery, categoryFilter, classroomFilter, sortBy, sortOrder]);
 
+  const isFiltered = searchQuery !== '' || categoryFilter !== 'all' || classroomFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('all');
+    setClassroomFilter('all');
+  };
+
   if (loading) {
     return <LoadingState variant="skeleton" rows={5} />;
   }
@@ -269,6 +276,25 @@ export default function TasksManagement({ refreshTrigger, onChanged }: Props) {
             </IconButton>
           </Tooltip>
         </Box>
+
+        {isFiltered && (
+          <Button
+            size="small"
+            onClick={clearFilters}
+            sx={{
+              height: 40,
+              px: 2,
+              color: 'text.secondary',
+              textTransform: 'none',
+              '&:hover': {
+                bgcolor: 'action.hover',
+                color: 'primary.main',
+              }
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
       </Box>
 
       <List>
@@ -472,7 +498,7 @@ export default function TasksManagement({ refreshTrigger, onChanged }: Props) {
           onChanged?.();
         }}
       />
-    </Box>
+    </Box >
   );
 }
 

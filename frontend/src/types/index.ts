@@ -141,6 +141,32 @@ export interface ReliefPoolDismissRequest {
   version: number;
 }
 
+export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
+export interface Request {
+  id: ID;
+  requesting_teacher: string;
+  task_title: string;
+  task_category: TaskCategory;
+  preferred_date: string; // YYYY-MM-DD
+  preferred_time: string; // HH:MM:SS
+  classroom_id?: ID | null;
+  notes?: string | null;
+  status: RequestStatus;
+  created_at?: string;
+  classroom?: Classroom;
+}
+
+export interface TeacherRequestCreate {
+  requesting_teacher: string;
+  task_title: string;
+  task_category: TaskCategory;
+  preferred_date: string;
+  preferred_time: string;
+  classroom_id?: ID | null;
+  notes?: string | null;
+}
+
 // Daily View types
 export interface AideWithStatus extends TeacherAide {
   is_absent: boolean;
