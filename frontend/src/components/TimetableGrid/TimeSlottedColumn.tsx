@@ -132,7 +132,7 @@ export function TimeSlottedColumn({
         borderColor: 'divider',
         borderRadius: 1,
         overflow: 'hidden',
-        backgroundColor: 'background.default',
+        backgroundColor: 'background.paper',
       }}
     >
       {/* Availability / Absence overlay (non-blocking) */}

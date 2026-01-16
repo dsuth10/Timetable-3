@@ -21,6 +21,8 @@ export default function AvailabilityOverlay({
     absence => absence.aide_id === aideId && absence.date === date
   );
 
+
+
   // Get day of week from date (using UTC to avoid timezone issues)
   const [year, month, day] = date.split('-').map(Number);
   const dateObj = new Date(Date.UTC(year, month - 1, day));

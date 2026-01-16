@@ -6,9 +6,11 @@ interface DailyTimelineProps {
   data: DailyViewData;
   date: string; // YYYY-MM-DD
   onTaskDoubleClick?: (assignment: Assignment) => void;
+  onEditAide?: (aide: any) => void;
+  onMarkAbsence?: (aideId: number) => void;
 }
 
-export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTimelineProps) {
+export default function DailyTimeline({ data, date, onTaskDoubleClick, onEditAide, onMarkAbsence }: DailyTimelineProps) {
   const { aides, timeline_config } = data;
 
   return (
@@ -84,6 +86,8 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
                 date={date}
                 timelineConfig={timeline_config}
                 onTaskDoubleClick={onTaskDoubleClick}
+                onEditAide={onEditAide}
+                onMarkAbsence={onMarkAbsence}
               />
             ))}
           </Box>

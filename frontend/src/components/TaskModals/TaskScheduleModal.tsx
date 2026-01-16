@@ -43,7 +43,7 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
   // Load aides when modal opens
   useEffect(() => {
     if (open) {
-      fetchAides().catch(() => undefined);
+      fetchAides({ includeAvailability: true }).catch(() => undefined);
     }
   }, [open, fetchAides]);
 
@@ -73,10 +73,10 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -85,14 +85,14 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
       setError('Please select at least one date');
       return;
     }
-    
+
     setBusy(true);
     setError(undefined);
     setConflicts([]);
-    
+
     try {
       const dateStrings = selectedDates.map(d => d.toISOString().slice(0, 10));
-      
+
       const result = await assignmentsApi.batch({
         task_id: task.id,
         aide_id: selectedAideId,
@@ -100,18 +100,18 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
         start_time: task.start_time,
         end_time: task.end_time,
       });
-      
+
       if (result.conflicts && result.conflicts.length > 0) {
         setConflicts(result.conflicts);
         setError(`Some assignments could not be created due to conflicts. ${result.assignments.length} assignments were created successfully.`);
       } else {
         // Success
         try {
-          window.dispatchEvent(new CustomEvent('app:success', { 
-            detail: { message: `Successfully created ${result.assignments.length} assignment(s)` } 
+          window.dispatchEvent(new CustomEvent('app:success', {
+            detail: { message: `Successfully created ${result.assignments.length} assignment(s)` }
           }));
-        } catch {}
-        
+        } catch { }
+
         onScheduled?.();
         handleClose();
       }
@@ -125,8 +125,8 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
   if (!task) return null;
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
@@ -143,7 +143,7 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
             {error}
           </Alert>
         )}
-        
+
         {conflicts.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
@@ -152,7 +152,7 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
             <List dense>
               {conflicts.map((conflict, index) => (
                 <ListItem key={index} sx={{ py: 0 }}>
-                  <ListItemText 
+                  <ListItemText
                     primary={`${conflict.date}: ${conflict.reason}`}
                     sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem' } }}
                   />
@@ -199,7 +199,7 @@ export default function TaskScheduleModal({ open, onClose, task, onScheduled }: 
             value={null}
             onChange={handleDateChange}
             slotProps={{
-              textField: { 
+              textField: {
                 fullWidth: true,
                 helperText: 'Click to add dates to schedule'
               }

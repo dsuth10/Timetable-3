@@ -1,5 +1,5 @@
-import { Box, Typography, Avatar, alpha, Tooltip } from '@mui/material';
-import { EventBusy } from '@mui/icons-material';
+import { Box, Typography, Avatar, alpha, Tooltip, IconButton } from '@mui/material';
+import { EventBusy, Edit, Visibility } from '@mui/icons-material';
 import type { AideWithStatus, TimelineConfig, Assignment, Absence } from '../types';
 import { Droppable } from '@hello-pangea/dnd';
 import { TaskCard } from './TimetableGrid/TaskCard';
@@ -15,9 +15,11 @@ interface AideRowProps {
   date: string; // YYYY-MM-DD
   timelineConfig: TimelineConfig;
   onTaskDoubleClick?: (assignment: Assignment) => void;
+  onEditAide?: (aide: any) => void;
+  onMarkAbsence?: (aideId: number) => void;
 }
 
-export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick }: AideRowProps) {
+export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick, onEditAide, onMarkAbsence }: AideRowProps) {
   const { timeToMinutes } = useTimeUtils();
 
   const timelineStart = timelineConfig.slots.length > 0 ? timeToMinutes(timelineConfig.slots[0].start_time || "08:50:00") : 0;
@@ -142,11 +144,12 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            flexDirection: 'column',
+            justifyContent: 'center',
             p: 1,
             width: '100%',
-            height: 50,
+            height: '100%',
+            maxHeight: 60,
             bgcolor: alpha(aide.colour_hex || '#1976d2', 0.08),
             borderRadius: 2,
             borderLeft: `4px solid ${aide.colour_hex || '#1976d2'}`,
@@ -154,29 +157,95 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
             overflow: 'hidden'
           }}
         >
-          <Avatar
-            sx={{
-              bgcolor: aide.colour_hex || '#1976d2',
-              width: 28,
-              height: 28,
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {aide.name.charAt(0)}
-          </Avatar>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              color: 'text.primary'
-            }}
-          >
-            {aide.name}
-          </Typography>
+          {/* Top: Avatar + Name */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Avatar
+              sx={{
+                bgcolor: aide.colour_hex || '#1976d2',
+                width: 24,
+                height: 24,
+                fontSize: '0.65rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {aide.name.charAt(0)}
+            </Avatar>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: 'text.primary'
+              }}
+            >
+              {aide.name}
+            </Typography>
+          </Box>
+
+          {/* Bottom: Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 0.5, ml: 4 }}>
+            {onMarkAbsence && (
+              <Tooltip title="Set Absence">
+                <IconButton
+                  size="small"
+                  onClick={() => onMarkAbsence(aide.id)}
+                  sx={{
+                    p: 0.25,
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    '& .MuiSvgIcon-root': { fontSize: '0.875rem' }
+                  }}
+                >
+                  <EventBusy />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {onEditAide && (
+              <Tooltip title="Edit Details & Availability">
+                <IconButton
+                  size="small"
+                  onClick={() => onEditAide(aide)}
+                  sx={{
+                    p: 0.25,
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    '& .MuiSvgIcon-root': { fontSize: '0.875rem' }
+                  }}
+                >
+                  <Edit />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <Tooltip title="View Weekly Schedule">
+              <IconButton
+                size="small"
+                // Local view schedule logic might need to be replicated or centralized
+                onClick={() => {
+                  // We don't have navigate here, but we can use window.location if necessary or pass handleViewSchedule
+                  // For now, let's assume this button stays in the sidebar or we pass a handler
+                  // Actually, let's look at how sidebar does it.
+                  const url = `/schedule?aideId=${aide.id}&week=${date}&view=AIDE`;
+                  window.location.href = url;
+                }}
+                sx={{
+                  p: 0.25,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '& .MuiSvgIcon-root': { fontSize: '0.875rem' }
+                }}
+              >
+                <Visibility />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       </Box>
 

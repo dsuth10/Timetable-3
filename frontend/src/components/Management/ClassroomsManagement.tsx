@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { 
-  Box, 
-  List, 
-  ListItem, 
+import {
+  Box,
+  List,
+  ListItem,
   ListItemText,
   Button,
   Typography,
@@ -65,7 +65,7 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
     try {
       const result = await classroomsApi.batchUpload(file);
       setUploadResult(result);
-      
+
       // Refresh classrooms list if any were created
       if (result.created > 0) {
         await fetchClassrooms();
@@ -129,25 +129,25 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">All Classes</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button 
-            variant="outlined" 
-            startIcon={<DownloadIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
             size="small"
             onClick={() => downloadSampleClassroomsCSV()}
           >
             Download Sample CSV
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<UploadIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
             size="small"
             onClick={handleUploadClick}
           >
             Upload CSV
           </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             size="small"
             onClick={() => {
               setSelectedClassroom(null);
@@ -186,12 +186,12 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
                     <Typography variant="subtitle1" component="span" fontWeight="medium">
                       {classroom.name}
                     </Typography>
-                    <Chip 
-                      label={`Room: ${classroom.room_number}`} 
-                      size="small" 
-                      variant="outlined" 
-                      sx={{ 
-                        fontSize: '0.75rem', 
+                    <Chip
+                      label={`Room: ${classroom.room_number}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontSize: '0.75rem',
                         height: 24,
                         borderColor: alpha(classroom.colour_hex || '#1976d2', 0.3),
                         bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.05)
@@ -206,8 +206,8 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
                         }
                         size="small"
                         variant="outlined"
-                        sx={{ 
-                          fontSize: '0.75rem', 
+                        sx={{
+                          fontSize: '0.75rem',
                           height: 24,
                           color: classroom.colour_hex || 'primary.main',
                           borderColor: alpha(classroom.colour_hex || '#1976d2', 0.5),
@@ -219,16 +219,17 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
                 }
                 secondary={
                   <Box sx={{ mt: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" component="div">
                       Teacher: {classroom.teacher}
                     </Typography>
                     {classroom.notes && (
-                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', display: 'block', mt: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', display: 'block', mt: 0.5 }} component="div">
                         {classroom.notes}
                       </Typography>
                     )}
                   </Box>
                 }
+                secondaryTypographyProps={{ component: 'div' }}
               />
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Tooltip title="Edit Class">

@@ -507,7 +507,7 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
       {/* Relief Pool Tab Content */}
       <TabPanel value={activeTab} index={2}>
         <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-          <ReliefPoolTab onDismiss={handleDismiss} />
+          <ReliefPoolTab onDismiss={handleDismiss} refreshTrigger={refreshTrigger} />
         </Box>
       </TabPanel>
     </Box>

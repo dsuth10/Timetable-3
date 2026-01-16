@@ -109,9 +109,7 @@ export default function ManagementPanel({
         anchor="bottom"
         open={open}
         onClose={() => toggleDrawer(false)}
-        ModalProps={{
-          keepMounted: true,
-        }}
+        ModalProps={{}}
         PaperProps={{
           sx: {
             height: '60vh',

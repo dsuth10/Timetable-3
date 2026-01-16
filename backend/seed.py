@@ -27,6 +27,12 @@ def seed_database():
     app = create_app()
     with app.app_context():
         print("Seeding database...")
+        
+        # Reset database
+        print("Resetting database...")
+        db.drop_all()
+        db.create_all()
+        
         session = db.session
         try:
             print("\n=== Seeding Teacher Aides ===")
@@ -63,8 +69,8 @@ def seed_database():
                 session.add(avail)
                 print(f"  {aide1.name} available: {day} 08:50-15:00")
 
-            # Mary Johnson - Available Monday, Wednesday, Friday, 09:00-15:00
-            for day in ['MO', 'WE', 'FR']:
+            # Mary Johnson - Available Monday-Friday, 09:00-15:00
+            for day in ['MO', 'TU', 'WE', 'TH', 'FR']:
                 avail = Availability(
                     aide_id=aide2.id,
                     weekday=day,
@@ -227,14 +233,14 @@ def seed_database():
                 task = session.get(Task, assignment.task_id)
                 print(f"Created assignment: {task.title} -> {aide_name} on {assignment.date}")
 
-            print("\n=== Seeding Sample Absence ===")
-            absence = Absence(
-                aide_id=aide1.id,
-                date=next_monday + timedelta(days=3),
-                reason="Medical appointment"
-            )
-            session.add(absence)
-            print(f"Created absence: {aide1.name} on {absence.date} ({absence.reason})")
+            # print("\n=== Seeding Sample Absence ===")
+            # absence = Absence(
+            #     aide_id=aide1.id,
+            #     date=next_monday + timedelta(days=3),
+            #     reason="Medical appointment"
+            # )
+            # session.add(absence)
+            # print(f"Created absence: {aide1.name} on {absence.date} ({absence.reason})")
 
             print("\n=== Seeding Sample Request ===")
             request = Request(

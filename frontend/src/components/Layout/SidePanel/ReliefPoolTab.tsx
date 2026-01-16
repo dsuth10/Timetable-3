@@ -28,6 +28,7 @@ import type { ReliefPoolTask } from '../../../types';
 
 interface Props {
   onDismiss?: (task: ReliefPoolTask) => void;
+  refreshTrigger?: number;
 }
 
 function formatTime(timeStr: string): string {
@@ -42,17 +43,17 @@ function formatDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   if (date.getTime() === today.getTime()) {
     return 'Today';
   }
   if (date.getTime() === tomorrow.getTime()) {
     return 'Tomorrow';
   }
-  
+
   return date.toLocaleDateString('en-AU', {
     weekday: 'short',
     month: 'short',
@@ -68,7 +69,7 @@ interface ReliefPoolCardProps {
 
 function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
   const draggableId = `relief-pool-${task.id}`;
-  
+
   return (
     <Draggable draggableId={draggableId} index={index}>
       {(provided, snapshot) => (
@@ -105,14 +106,14 @@ function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
                 <Typography variant="subtitle2" fontWeight={600} noWrap>
                   {task.task?.title || 'Unknown Task'}
                 </Typography>
-                
+
                 <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.5 }}>
                   <AccessTime fontSize="inherit" sx={{ color: 'text.secondary', fontSize: 14 }} />
                   <Typography variant="caption" color="text.secondary">
                     {formatTime(task.start_time)} - {formatTime(task.end_time)}
                   </Typography>
                 </Stack>
-                
+
                 {task.classroom && (
                   <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25 }}>
                     <Class fontSize="inherit" sx={{ color: 'text.secondary', fontSize: 14 }} />
@@ -121,7 +122,7 @@ function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
                     </Typography>
                   </Stack>
                 )}
-                
+
                 <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25 }}>
                   <Person fontSize="inherit" sx={{ color: 'text.secondary', fontSize: 14 }} />
                   <Typography variant="caption" color="text.secondary" noWrap>
@@ -129,7 +130,7 @@ function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
                   </Typography>
                 </Stack>
               </Box>
-              
+
               {onDismiss && (
                 <Tooltip title="Dismiss task (not needed)">
                   <IconButton
@@ -146,7 +147,7 @@ function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
                 </Tooltip>
               )}
             </Box>
-            
+
             {task.task?.category && (
               <Chip
                 label={task.task.category.replace(/_/g, ' ')}
@@ -162,25 +163,25 @@ function ReliefPoolCard({ task, index, onDismiss }: ReliefPoolCardProps) {
   );
 }
 
-export default function ReliefPoolTab({ onDismiss }: Props) {
+export default function ReliefPoolTab({ onDismiss, refreshTrigger }: Props) {
   const { loading, error, fetch } = useReliefPoolStore();
   const tasksByDate = useReliefPoolByDate();
-  
-  // Fetch Relief Pool tasks on mount
+
+  // Fetch Relief Pool tasks on mount and when refresh triggered
   useEffect(() => {
     fetch();
-  }, [fetch]);
-  
+  }, [fetch, refreshTrigger]);
+
   const sortedDates = useMemo(() => Object.keys(tasksByDate).sort(), [tasksByDate]);
   const totalTasks = useMemo(
     () => Object.values(tasksByDate).reduce((sum, tasks) => sum + tasks.length, 0),
     [tasksByDate]
   );
-  
+
   if (loading && totalTasks === 0) {
     return <LoadingState variant="skeleton" rows={3} />;
   }
-  
+
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }} role="alert">
@@ -188,7 +189,7 @@ export default function ReliefPoolTab({ onDismiss }: Props) {
       </Alert>
     );
   }
-  
+
   if (totalTasks === 0) {
     return (
       <EmptyState
@@ -198,10 +199,10 @@ export default function ReliefPoolTab({ onDismiss }: Props) {
       />
     );
   }
-  
+
   // Track global index for drag-and-drop
   let globalIndex = 0;
-  
+
   return (
     <Droppable droppableId="relief-pool" isDropDisabled>
       {(provided) => (
@@ -214,7 +215,7 @@ export default function ReliefPoolTab({ onDismiss }: Props) {
         >
           {sortedDates.map((date) => {
             const dateTasks = tasksByDate[date];
-            
+
             return (
               <Accordion
                 key={date}

@@ -79,7 +79,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchAides();
+    fetchAides({ includeAvailability: true });
     fetchClassrooms();
   }, [fetchAides, fetchClassrooms]);
 
@@ -108,7 +108,7 @@ export default function Home() {
   };
 
   const handleRefresh = () => {
-    fetchAides();
+    fetchAides({ includeAvailability: true });
     fetchClassrooms();
   };
 
@@ -197,13 +197,13 @@ export default function Home() {
               Manage class allocations and teacher aide rosters from your dashboard.
             </Typography>
           </Box>
-          
+
           <Box>
-            <Card 
-              elevation={0} 
-              sx={{ 
-                border: '2px solid', 
-                borderColor: 'primary.main', 
+            <Card
+              elevation={0}
+              sx={{
+                border: '2px solid',
+                borderColor: 'primary.main',
                 borderRadius: 3,
                 bgcolor: 'primary.50',
                 transition: 'transform 0.2s',
@@ -242,9 +242,9 @@ export default function Home() {
                       borderRadius: 2,
                       transition: 'all 0.2s',
                       bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.08),
-                      '&:hover': { 
-                        borderColor: 'primary.main', 
-                        boxShadow: 2, 
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: 2,
                         transform: 'translateY(-2px)',
                         bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.15)
                       }
@@ -255,12 +255,12 @@ export default function Home() {
                         <Typography variant="subtitle1" fontWeight="bold" noWrap>
                           {classroom.name}
                         </Typography>
-                        <Box sx={{ 
-                          bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.1), 
-                          color: classroom.colour_hex || 'primary.main', 
-                          p: 0.5, 
-                          borderRadius: '50%', 
-                          display: 'flex' 
+                        <Box sx={{
+                          bgcolor: alpha(classroom.colour_hex || '#1976d2', 0.1),
+                          color: classroom.colour_hex || 'primary.main',
+                          p: 0.5,
+                          borderRadius: '50%',
+                          display: 'flex'
                         }}>
                           <ArrowForwardIcon sx={{ fontSize: 14 }} />
                         </Box>
@@ -296,23 +296,23 @@ export default function Home() {
                 <Grid item xs={12} sm={6} key={aide.id}>
                   <Card
                     elevation={0}
-                      sx={{
-                        height: '100%',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 3,
-                        transition: 'all 0.2s',
-                        bgcolor: alpha(aide.colour_hex || '#1976d2', 0.08),
-                        '&:hover': { 
-                          borderColor: 'primary.main', 
-                          bgcolor: alpha(aide.colour_hex || '#1976d2', 0.15) 
-                        }
-                      }}
+                    sx={{
+                      height: '100%',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 3,
+                      transition: 'all 0.2s',
+                      bgcolor: alpha(aide.colour_hex || '#1976d2', 0.08),
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: alpha(aide.colour_hex || '#1976d2', 0.15)
+                      }
+                    }}
+                  >
+                    <CardActionArea
+                      onClick={() => handleAideClick(aide.id)}
+                      sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
                     >
-                      <CardActionArea
-                        onClick={() => handleAideClick(aide.id)}
-                        sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
-                      >
                       <Box sx={{ position: 'relative', mr: 2 }}>
                         <Avatar
                           sx={{

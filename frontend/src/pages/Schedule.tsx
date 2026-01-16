@@ -61,7 +61,18 @@ export default function Schedule() {
     timeToMinutes
   } = useTimeUtils();
   const setScheduleConfig = useScheduleStore(s => s.setScheduleConfig);
-  const { selectedWeekStartISO, nextWeek, prevWeek, thisWeek, viewMode, selectedClassId, setSelectedClassId, setSelectedTimeSlot } = useUiStore();
+  const {
+    selectedWeekStartISO,
+    nextWeek,
+    prevWeek,
+    thisWeek,
+    viewMode,
+    selectedClassId,
+    setSelectedClassId,
+    setSelectedTimeSlot,
+    setWeekStart,
+    setViewMode
+  } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
   const { tasks, fetchTasks } = useTasksStore();
   const { classrooms, fetchClassrooms } = useClassroomsStore();
@@ -126,8 +137,21 @@ export default function Schedule() {
     const newParams = new URLSearchParams(searchParams);
     if (aideId !== null) {
       newParams.set('aideId', String(aideId));
+      newParams.delete('classId'); // Clear class ID when aide is selected
     } else {
       newParams.delete('aideId');
+    }
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Helper function to set selected class ID and update URL
+  const setSelectedClassIdUrl = useCallback((classId: number | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (classId !== null) {
+      newParams.set('classId', String(classId));
+      newParams.delete('aideId'); // Clear aide ID when class is selected
+    } else {
+      newParams.delete('classId');
     }
     setSearchParams(newParams, { replace: true });
   }, [searchParams, setSearchParams]);
@@ -139,22 +163,23 @@ export default function Schedule() {
     }
   }, [aides, visibleAideIds.size]);
 
-  // Set default selected aide when aides are loaded (only if no URL parameter exists)
+  // Set default selected aide when aides are loaded (only if no URL parameter exists AND in AIDE view)
   useEffect(() => {
     const aideIdParam = searchParams.get('aideId');
-    if (aides.length > 0 && visibleAideIds.size > 0 && !aideIdParam) {
+    const classIdParam = searchParams.get('classId');
+    if (viewMode === 'AIDE' && aides.length > 0 && visibleAideIds.size > 0 && !aideIdParam && !classIdParam) {
       const firstVisibleAide = aides.find(aide => visibleAideIds.has(aide.id));
       if (firstVisibleAide) {
         setSelectedAideId(firstVisibleAide.id);
       }
     }
-  }, [aides, visibleAideIds, searchParams, setSelectedAideId]);
+  }, [aides, visibleAideIds, searchParams, setSelectedAideId, viewMode]);
 
-  // Sync state from URL parameters (week, view)
-  const { setWeekStart, setViewMode } = useUiStore();
+  // Sync state from URL parameters (week, view, classId)
   useEffect(() => {
     const weekParam = searchParams.get('week');
     const viewParam = searchParams.get('view');
+    const classIdParam = searchParams.get('classId');
 
     if (weekParam) {
       setWeekStart(weekParam);
@@ -163,7 +188,13 @@ export default function Schedule() {
     if (viewParam === 'AIDE' || viewParam === 'CLASS') {
       setViewMode(viewParam);
     }
-  }, [searchParams, setWeekStart, setViewMode]);
+
+    if (classIdParam) {
+      setSelectedClassId(Number(classIdParam));
+    } else {
+      setSelectedClassId(null);
+    }
+  }, [searchParams, setWeekStart, setViewMode, setSelectedClassId]);
 
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
@@ -530,7 +561,7 @@ export default function Schedule() {
               classrooms={classrooms}
               selectedClassId={selectedClassId}
               onSelectClass={(id) => {
-                setSelectedClassId(id);
+                setSelectedClassIdUrl(id);
                 setDrawerOpen(false);
               }}
             />
@@ -617,7 +648,7 @@ export default function Schedule() {
                     value={selectedClassId || ''}
                     label="Select Class"
                     onChange={(event: SelectChangeEvent<number>) => {
-                      setSelectedClassId(Number(event.target.value));
+                      setSelectedClassIdUrl(Number(event.target.value));
                     }}
                   >
                     {classrooms.map((classroom) => (

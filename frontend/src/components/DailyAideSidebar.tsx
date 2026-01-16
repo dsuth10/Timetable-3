@@ -1,5 +1,5 @@
 import { Box, Paper, Typography, IconButton, Tooltip, Avatar, Chip } from '@mui/material';
-import { Edit, Visibility, Book } from '@mui/icons-material';
+import { Edit, Visibility, EventBusy as AbsenceIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfWeek } from 'date-fns';
 import type { AideWithStatus, TeacherAide, Weekday } from '../types';
@@ -8,9 +8,10 @@ type Props = {
     aides: AideWithStatus[];
     date: string;
     onEditAide: (aide: TeacherAide) => void;
+    onMarkAbsence?: (aideId: number) => void;
 };
 
-export default function DailyAideSidebar({ aides, date, onEditAide }: Props) {
+export default function DailyAideSidebar({ aides, date, onEditAide, onMarkAbsence }: Props) {
     const navigate = useNavigate();
 
     const handleViewSchedule = (aideId: number) => {
@@ -52,7 +53,7 @@ export default function DailyAideSidebar({ aides, date, onEditAide }: Props) {
                             borderColor: 'divider',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 1,
+                            gap: 0.75,
                             bgcolor: aide.is_absent ? 'action.hover' : 'transparent',
                             opacity: aide.is_absent ? 0.7 : 1,
                         }}
@@ -71,7 +72,7 @@ export default function DailyAideSidebar({ aides, date, onEditAide }: Props) {
                                 {aide.name.charAt(0)}
                             </Avatar>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography variant="subtitle2" noWrap>
+                                <Typography variant="subtitle2" noWrap sx={{ mb: 0.1 }}>
                                     {aide.name}
                                 </Typography>
                                 {aide.details && (
@@ -82,11 +83,19 @@ export default function DailyAideSidebar({ aides, date, onEditAide }: Props) {
                             </Box>
                         </Box>
 
-                        {aide.is_absent && (
-                            <Chip label="Absent" color="error" size="small" sx={{ alignSelf: 'start' }} />
-                        )}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5, mt: -0.25, ml: 4 }}>
+                            {onMarkAbsence && (
+                                <Tooltip title="Set Absence">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => onMarkAbsence(aide.id)}
+                                        sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}
+                                    >
+                                        <AbsenceIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
 
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, mt: 0.5 }}>
                             <Tooltip title="Edit Details & Availability">
                                 <IconButton
                                     size="small"
@@ -106,17 +115,16 @@ export default function DailyAideSidebar({ aides, date, onEditAide }: Props) {
                                     <Visibility fontSize="small" />
                                 </IconButton>
                             </Tooltip>
-
-                            <Tooltip title="Detailed Task Editor (Coming Soon)">
-                                <IconButton
-                                    size="small"
-                                    disabled
-                                    sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}
-                                >
-                                    <Book fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
                         </Box>
+
+                        {aide.is_absent && (
+                            <Chip
+                                label="Absent"
+                                color="error"
+                                size="small"
+                                sx={{ alignSelf: 'start', mt: 0.5, ml: 4 }}
+                            />
+                        )}
                     </Box>
                 ))}
                 {aides.length === 0 && (

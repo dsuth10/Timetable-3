@@ -27,6 +27,7 @@ import RequestsManagement from '../components/Management/RequestsManagement';
 import BackupManagement from '../components/Management/BackupManagement';
 import DailyAideSidebar from '../components/DailyAideSidebar';
 import AideFormModal from '../components/AideFormModal';
+import AbsenceModal from '../components/AbsenceModal';
 import { useDragDrop } from '../hooks/useDragDrop';
 import { useDailyView } from '../hooks/useDailyView';
 import { useAssignTask } from '../hooks/useAssignTask';
@@ -52,6 +53,11 @@ export default function DailyDisplayPage() {
   // Aide Modal State
   const [showAideModal, setShowAideModal] = useState(false);
   const [editingAide, setEditingAide] = useState<any>(null);
+
+  // Absence Modal State
+  const [showAbsenceModal, setShowAbsenceModal] = useState(false);
+  const [selectedAbsenceAideId, setSelectedAbsenceAideId] = useState<number | null>(null);
+  const [selectedAbsenceDate, setSelectedAbsenceDate] = useState<string | null>(null);
 
   // Sidebar State
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -207,6 +213,19 @@ export default function DailyDisplayPage() {
     handleRefresh();
   };
 
+  const handleMarkAbsence = useCallback((aideId: number) => {
+    setSelectedAbsenceAideId(aideId);
+    setSelectedAbsenceDate(dateParam);
+    setShowAbsenceModal(true);
+  }, [dateParam]);
+
+  const handleAbsenceCreated = useCallback(() => {
+    setShowAbsenceModal(false);
+    setSelectedAbsenceAideId(null);
+    setSelectedAbsenceDate(null);
+    handleRefresh();
+  }, [handleRefresh]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <AppBar
@@ -247,6 +266,7 @@ export default function DailyDisplayPage() {
               aides={data.aides}
               date={dateParam}
               onEditAide={handleEditAide}
+              onMarkAbsence={handleMarkAbsence}
             />
           )}
 
@@ -261,6 +281,8 @@ export default function DailyDisplayPage() {
                 data={data}
                 date={dateParam}
                 onTaskDoubleClick={handleTaskDoubleClick}
+                onEditAide={handleEditAide}
+                onMarkAbsence={handleMarkAbsence}
               />
             ) : null}
           </Box>
@@ -346,6 +368,19 @@ export default function DailyDisplayPage() {
           setEditingAide(null);
         }}
         onUpdated={handleAideUpdated}
+      />
+
+      <AbsenceModal
+        open={showAbsenceModal}
+        aides={data?.aides || []}
+        initialAideId={selectedAbsenceAideId || undefined}
+        initialDate={selectedAbsenceDate || undefined}
+        onClose={() => {
+          setShowAbsenceModal(false);
+          setSelectedAbsenceAideId(null);
+          setSelectedAbsenceDate(null);
+        }}
+        onCreated={handleAbsenceCreated}
       />
     </Box>
   );

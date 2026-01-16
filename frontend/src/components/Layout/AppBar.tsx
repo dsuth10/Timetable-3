@@ -75,10 +75,10 @@ export default function AppBar({
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      const dateStr = String(date.getFullYear()) + '-' + 
-                     String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                     String(date.getDate()).padStart(2, '0');
-      
+      const dateStr = String(date.getFullYear()) + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+
       if (isDailyView) {
         // If in daily view, navigate to the specific date
         navigate(`/daily?date=${dateStr}`);
@@ -103,7 +103,7 @@ export default function AppBar({
         navigate('/daily');
       } else {
         setViewMode(newView);
-        navigate('/schedule');
+        navigate(`/schedule?view=${newView}`);
       }
     }
   };
@@ -122,7 +122,7 @@ export default function AppBar({
         >
           <MenuIcon />
         </IconButton>
-        
+
         {/* Home Button */}
         <IconButton
           color="inherit"
@@ -253,7 +253,7 @@ export default function AppBar({
               }}
             />
             <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-              {isDailyView 
+              {isDailyView
                 ? format(new Date(weekLabel + 'T00:00:00'), 'EEEE, MMM d, yyyy')
                 : dateRange
               }
