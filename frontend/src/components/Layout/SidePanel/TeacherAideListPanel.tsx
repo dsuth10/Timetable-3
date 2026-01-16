@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Divider, 
-  TextField, 
+import {
+  Box,
+  Typography,
+  Divider,
+  TextField,
   InputAdornment,
   Avatar,
   Card,
@@ -37,7 +37,7 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
       if (searchQuery && !aide.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      
+
       if (selectedTimeSlot) {
         const { date, time, duration } = selectedTimeSlot;
         const endTime = addMinutesToTime(time, duration);
@@ -45,14 +45,14 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
         // Check working hours / availability
         // If availability is not set (undefined or empty), treat as available
         if (aide.availability && aide.availability.length > 0 && !isAideAvailable(aide.availability, date, time, endTime)) {
-           return false;
+          return false;
         }
 
         // Check conflicts with existing assignments
         const aideAssignments = assignmentsByAide[String(aide.id)] || [];
         const hasConflict = aideAssignments.some(assignment => {
-            if (assignment.date !== date) return false;
-            return timeIntervalsOverlap(time, endTime, assignment.start_time, assignment.end_time);
+          if (assignment.date !== date) return false;
+          return timeIntervalsOverlap(time, endTime, assignment.start_time, assignment.end_time);
         });
 
         if (hasConflict) return false;
@@ -108,7 +108,7 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
         {/* Content */}
         <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
           {loading && <LoadingState variant="skeleton" rows={5} />}
-          
+
           {!loading && filteredAides.length === 0 && (
             <EmptyState
               title="No Aides Found"
@@ -124,9 +124,9 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                 sx={{ minHeight: '100%' }}
               >
                 {filteredAides.map((aide, index) => (
-                  <Draggable 
-                    key={aide.id} 
-                    draggableId={`aide-${aide.id}`} 
+                  <Draggable
+                    key={aide.id}
+                    draggableId={`aide-${aide.id}`}
                     index={index}
                   >
                     {(dragProvided, dragSnapshot) => (
@@ -138,8 +138,8 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                           mb: 1,
                           cursor: 'grab',
                           borderLeft: `4px solid ${aide.colour_hex}`,
-                          bgcolor: dragSnapshot.isDragging 
-                            ? 'action.hover' 
+                          bgcolor: dragSnapshot.isDragging
+                            ? 'action.hover'
                             : alpha(aide.colour_hex || '#1976d2', 0.08),
                           '&:hover': {
                             bgcolor: alpha(aide.colour_hex || '#1976d2', 0.15),
@@ -150,12 +150,12 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                       >
                         <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <DragIndicator fontSize="small" color="action" />
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: aide.colour_hex, 
-                              width: 32, 
-                              height: 32, 
-                              fontSize: '0.875rem' 
+                          <Avatar
+                            sx={{
+                              bgcolor: aide.colour_hex,
+                              width: 32,
+                              height: 32,
+                              fontSize: '0.875rem'
                             }}
                           >
                             {aide.name.charAt(0)}
