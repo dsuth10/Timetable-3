@@ -279,8 +279,8 @@ export function useDragDrop(options?: UseDragDropOptions) {
           // This ensures availability validation matches the default duration that will be used
           const duration = getDefaultDuration(destTime);
 
-          // Only validate here if we have duration (Task Template or Aide)
-          if (isTaskTemplate || isTeacherAide) {
+          // Only validate here if we have duration (Teacher Aide only now - Task Templates validate after snapping)
+          if (isTeacherAide) {
             const endTime = addMinutesToTime(destTime, duration);
             const isAvailable = isAideAvailable(
               availability,
@@ -469,6 +469,35 @@ export function useDragDrop(options?: UseDragDropOptions) {
         const snapped = getSnappedTimes(destAideId, destDate, destTime, defaultDuration);
         startTime = snapped.startTime;
         endTime = snapped.endTime;
+
+        // --- VALIDATION WITH SNAPPED TIMES ---
+        const aide = aides.find(a => a.id === destAideId);
+        if (aide && aide.availability && aide.availability.length > 0) {
+          const isAvailable = isAideAvailable(
+            aide.availability,
+            destDate,
+            startTime,
+            endTime
+          );
+
+          if (!isAvailable) {
+            const availabilityInfo = getAvailabilityInfo(aide.availability, destDate);
+            const aideName = aide.name;
+            const weekday = availabilityInfo.weekday;
+
+            let errorMessage: string;
+            if (!availabilityInfo.hasAvailability) {
+              errorMessage = `Cannot assign: No availability set for ${aideName} on ${weekday}`;
+            } else if (availabilityInfo.timeWindow) {
+              errorMessage = `Cannot assign: ${aideName} is only available ${availabilityInfo.timeWindow.start.slice(0, 5)}-${availabilityInfo.timeWindow.end.slice(0, 5)} on ${weekday}`;
+            } else {
+              errorMessage = `Cannot assign: ${aideName} is not available at this time`;
+            }
+
+            window.dispatchEvent(new CustomEvent('app:error', { detail: { message: errorMessage } }));
+            return;
+          }
+        }
       } else {
         // No specific time, use current task times or defaults
         startTime = '09:00:00';
