@@ -97,14 +97,11 @@ export default function Home() {
   }, [aides, searchTerm]);
 
   const handleClassClick = (id: number) => {
-    setSelectedClassId(id);
-    setViewMode('CLASS');
-    navigate('/schedule');
+    navigate(`/schedule?view=CLASS&classId=${id}`);
   };
 
   const handleAideClick = (id: number) => {
-    setViewMode('AIDE');
-    navigate(`/schedule?aideId=${id}`);
+    navigate(`/schedule?view=AIDE&aideId=${id}`);
   };
 
   const handleRefresh = () => {
