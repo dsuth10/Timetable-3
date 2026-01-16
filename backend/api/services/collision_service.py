@@ -4,7 +4,7 @@ Detects time overlaps and scheduling conflicts
 """
 from datetime import date, time as dt_time
 from typing import List, Dict, Optional
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select, func
 from api.models import db
 from api.models.assignment import Assignment
 from api.models.availability import Availability
@@ -63,9 +63,10 @@ class CollisionService:
         Returns:
             List of conflicting Assignment objects
         """
-        query = Assignment.query.filter(
+        stmt = select(Assignment).filter(
             Assignment.aide_id == aide_id,
             Assignment.date == assignment_date,
+            # Status check first for index efficiency (if present)
             Assignment.status.in_(['ASSIGNED', 'IN_PROGRESS']),
             # Time overlap: start_time < existing.end_time AND end_time > existing.start_time
             Assignment.start_time < end_time,
@@ -74,10 +75,10 @@ class CollisionService:
         
         # Exclude current assignment (for updates)
         if exclude_assignment_id:
-            query = query.filter(Assignment.id != exclude_assignment_id)
+            stmt = stmt.filter(Assignment.id != exclude_assignment_id)
         
-        conflicts = query.all()
-        return conflicts
+        conflicts = db.session.execute(stmt).scalars().all()
+        return list(conflicts)
     
     @staticmethod
     def check_collision(
@@ -148,11 +149,14 @@ class CollisionService:
         weekday = weekday_map[weekday_num]
         
         # Fetch any availability for this aide
-        any_slots = Availability.query.filter(Availability.aide_id == aide_id).count()
-        weekday_slots = Availability.query.filter(
+        any_slots_stmt = select(func.count(Availability.id)).where(Availability.aide_id == aide_id)
+        any_slots = db.session.execute(any_slots_stmt).scalar() or 0
+        
+        weekday_stmt = select(Availability).where(
             Availability.aide_id == aide_id,
             Availability.weekday == weekday
-        ).all()
+        )
+        weekday_slots = list(db.session.execute(weekday_stmt).scalars().all())
 
         # If aide has no availability configured at all, allow by default
         if any_slots == 0:

@@ -20,15 +20,16 @@ interface AideRowProps {
 export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick }: AideRowProps) {
   const { timeToMinutes } = useTimeUtils();
 
-  const timelineStart = timeToMinutes(timelineConfig.slots[0].start_time);
-  const timelineEnd = timelineStart + timelineConfig.slots.reduce((acc, slot) => acc + slot.duration_minutes, 0);
-  const totalMinutes = timelineEnd - timelineStart;
+  const timelineStart = timelineConfig.slots.length > 0 ? timeToMinutes(timelineConfig.slots[0].start_time || "08:50:00") : 0;
+  const timelineEnd = timelineStart + timelineConfig.slots.reduce((acc, slot) => acc + (slot.duration_minutes || 0), 0);
+  const totalMinutes = timelineEnd - timelineStart || 1;
 
   // Calculate gaps for snapping
   const gridLines = useMemo(() => {
     const lines = timelineConfig.slots.map(s => s.start_time?.substring(0, 5) || "00:00");
     // Add the end time of the last slot
     const lastSlot = timelineConfig.slots[timelineConfig.slots.length - 1];
+    if (!lastSlot?.start_time) return lines;
     const [h, m] = lastSlot.start_time.split(':').map(Number);
     const lastEndMins = h * 60 + m + lastSlot.duration_minutes;
     lines.push(`${Math.floor(lastEndMins / 60).toString().padStart(2, '0')}:${(lastEndMins % 60).toString().padStart(2, '0')}`);
@@ -256,7 +257,7 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick 
                     height: '100%',
                     bgcolor: snapshot.isDraggingOver
                       ? 'action.selected'
-                      : (['11:10:00', '13:20:00'].includes(slotStartTime) ? '#e8f5e9' : 'transparent'),
+                      : (slot.duration_minutes === 40 ? '#e8f5e9' : 'transparent'),
                     transition: 'background-color 0.2s',
                     position: 'relative' // To position tasks relative to their starting slot
                   }}

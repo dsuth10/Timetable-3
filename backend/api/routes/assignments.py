@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from api.models import db
 from api.models.assignment import Assignment, ASSIGNMENT_STATUSES
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from api.models.task import Task
 from api.models.teacher_aide import TeacherAide
@@ -21,7 +22,8 @@ bp = Blueprint('assignments', __name__, url_prefix='/api')
 
 @bp.get('/assignments')
 def list_assignments():
-    items = Assignment.query.order_by(Assignment.date, Assignment.start_time).all()
+    stmt = select(Assignment).order_by(Assignment.date, Assignment.start_time)
+    items = db.session.execute(stmt).scalars().all()
     return [a.to_dict() for a in items], 200
 
 
@@ -114,17 +116,21 @@ def create_assignment():
         status=initial_status,
         version=1
     )
-    db.session.add(assignment)
-    db.session.flush()  # ensure ID assigned before serialization
-    # Build response explicitly to ensure required fields
-    # Use model serializer for full fidelity
-    result = assignment.to_dict(include_seconds=auto_shorten)
-    db.session.commit()
+    
     try:
-        print("DEBUG_CREATE_ASSIGNMENT_RES", result)
-    except Exception:
-        pass
-    return result, 201
+        db.session.add(assignment)
+        db.session.commit()
+        # Build response explicitly to ensure required fields
+        # Use model serializer for full fidelity
+        result = assignment.to_dict(include_seconds=auto_shorten)
+        try:
+            print("DEBUG_CREATE_ASSIGNMENT_RES", result)
+        except Exception:
+            pass
+        return result, 201
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to create assignment: {str(e)}'}, 500
 
 
 @bp.post('/assignments/batch')
@@ -184,13 +190,16 @@ def batch_assignments():
         db.session.add(a)
         created.append(a)
 
-    db.session.commit()
-
-    status_code = 201 if not conflicts else (207 if created else 409)
-    return {
-        'assignments': [a.to_dict() for a in created],
-        'conflicts': conflicts
-    }, status_code
+    try:
+        db.session.commit()
+        status_code = 201 if not conflicts else (207 if created else 409)
+        return {
+            'assignments': [a.to_dict() for a in created],
+            'conflicts': conflicts
+        }, status_code
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to commit batch assignments: {str(e)}'}, 500
 
 
 @bp.delete('/assignments/<int:assignment_id>')
@@ -284,9 +293,13 @@ def update_assignment(assignment_id: int):
     assignment.status = status.upper() if isinstance(status, str) else status
     assignment.version += 1
 
-    db.session.add(assignment)
-    db.session.commit()
-    return assignment.to_dict(), 200
+    try:
+        db.session.add(assignment)
+        db.session.commit()
+        return assignment.to_dict(), 200
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Failed to update assignment: {str(e)}'}, 500
 
 
 @bp.route('/assignments/<int:assignment_id>/recurring-series-for-aide', methods=['DELETE'])
@@ -340,9 +353,13 @@ def delete_assignment_series_for_aide(assignment_id: int):
 def get_unassigned_assignments():
     """Get all unassigned assignments regardless of date"""
     # Remove date filtering - show all unassigned tasks
-    query = Assignment.query.filter(Assignment.status == 'UNASSIGNED')
+    stmt = (
+        select(Assignment)
+        .filter(Assignment.status == 'UNASSIGNED')
+        .order_by(Assignment.date, Assignment.start_time)
+    )
     
-    assignments = query.order_by(Assignment.date, Assignment.start_time).all()
+    assignments = db.session.execute(stmt).scalars().all()
     return [a.to_dict() for a in assignments], 200
 
 
@@ -350,8 +367,8 @@ def get_unassigned_assignments():
 def get_assigned_assignments():
     """Get all assigned assignments from today forward"""
     today = dt_date.today()
-    query = (
-        Assignment.query
+    stmt = (
+        select(Assignment)
         .options(joinedload(Assignment.aide))
         .filter(
             Assignment.aide_id.isnot(None),
@@ -359,7 +376,7 @@ def get_assigned_assignments():
         )
         .order_by(Assignment.date, Assignment.start_time)
     )
-    assignments = query.all()
+    assignments = db.session.execute(stmt).scalars().all()
     return [a.to_dict(include_relationships=True) for a in assignments], 200
 
 
@@ -377,7 +394,8 @@ def weekly_matrix():
     days = [start_date + timedelta(days=i) for i in range(5)]
 
     # Build aides list
-    aides = TeacherAide.query.order_by(TeacherAide.id).all()
+    stmt = select(TeacherAide).order_by(TeacherAide.id)
+    aides = db.session.execute(stmt).scalars().all()
     aides_json = [a.to_dict() for a in aides]
 
     from api.config import SCHEDULE_CONFIG
@@ -400,14 +418,14 @@ def weekly_matrix():
     matrix = {str(a.id): {} for a in aides}
 
     # Load assignments for the week
-    items = (
-        Assignment.query
+    stmt = (
+        select(Assignment)
         .options(joinedload(Assignment.task))
         .options(joinedload(Assignment.task).joinedload(Task.classroom))  # Also load classroom for color info
         .filter(Assignment.date >= days[0], Assignment.date <= days[-1])
         .order_by(Assignment.aide_id, Assignment.date, Assignment.start_time)
-        .all()
     )
+    items = db.session.execute(stmt).scalars().all()
 
     # Simple aggregation: group by aide/date
     for a in aides:

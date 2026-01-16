@@ -11,6 +11,7 @@ from api.models.teacher_aide import TeacherAide
 from api.models.classroom import Classroom
 from api.services.recurrence_service import RecurrenceService
 from api.services.collision_service import CollisionService
+from sqlalchemy import select
 
 bp = Blueprint('tasks', __name__, url_prefix='/api')
 
@@ -19,17 +20,17 @@ bp = Blueprint('tasks', __name__, url_prefix='/api')
 def list_tasks():
     category = request.args.get('category')
     classroom_id = request.args.get('classroom_id')
-    q = Task.query
+    stmt = select(Task)
     if category:
         category = category.strip().upper()
-        q = q.filter(Task.category == category)
+        stmt = stmt.filter(Task.category == category)
     if classroom_id:
         try:
-            q = q.filter(Task.classroom_id == int(classroom_id))
+            stmt = stmt.filter(Task.classroom_id == int(classroom_id))
         except ValueError:
             return {'error': 'Bad request', 'message': 'Invalid classroom_id'}, 400
             
-    tasks = q.order_by(Task.id).all()
+    tasks = db.session.execute(stmt.order_by(Task.id)).scalars().all()
     return [t.to_dict() for t in tasks], 200
 
 
@@ -410,15 +411,15 @@ def update_task(task_id: int):
             db.session.flush()  # Get the series ID
             
             # Find the existing assignment for this task and date to link it to the new series
-            existing_asg_query = Assignment.query.filter(
+            stmt = select(Assignment).filter(
                 Assignment.task_id == task.id,
                 Assignment.date == base_date
             )
             # If an aide was specified, narrow it down to that aide's assignment
             if aide_id:
-                existing_asg_query = existing_asg_query.filter(Assignment.aide_id == aide_id)
+                stmt = stmt.filter(Assignment.aide_id == aide_id)
             
-            ea = existing_asg_query.first()
+            ea = db.session.execute(stmt).scalars().first()
             if ea:
                 ea.recurring_series_id = recurring_series.id
             
@@ -450,7 +451,7 @@ def update_task(task_id: int):
                 )
         elif recurrence_rule is None and 'recurrence_rule' in data:
             # Explicitly clearing recurrence
-            for series in task.recurring_series.all():
+            for series in task.recurring_series:
                 db.session.delete(series)
             db.session.flush()
         
@@ -473,12 +474,12 @@ def list_task_assignments(task_id: int):
     if not task:
         return {'error': 'Not found', 'message': 'Task not found'}, 404
 
-    items = (
-        Assignment.query
+    stmt = (
+        select(Assignment)
         .filter(Assignment.task_id == task_id)
         .order_by(Assignment.date, Assignment.start_time)
-        .all()
     )
+    items = db.session.execute(stmt).scalars().all()
     return [a.to_dict() for a in items], 200
 
 
@@ -495,7 +496,8 @@ def delete_task(task_id: int):
         
         if reset:
             # Delete all assignments
-            Assignment.query.filter(Assignment.task_id == task_id).delete()
+            from sqlalchemy import delete
+            db.session.execute(delete(Assignment).filter(Assignment.task_id == task_id))
             
             # Reset task recurrence settings
             task.recurrence_rule = None

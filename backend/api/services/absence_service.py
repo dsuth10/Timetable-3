@@ -11,6 +11,7 @@ from typing import List, Dict, Tuple
 from api.models import db
 from api.models.assignment import Assignment
 from api.services.collision_service import CollisionService
+from sqlalchemy import select
 
 
 class AbsenceService:
@@ -38,15 +39,15 @@ class AbsenceService:
         Returns:
             List of assignments moved to Relief Pool
         """
-        assignments: list[Assignment] = (
-            Assignment.query
+        stmt = (
+            select(Assignment)
             .filter(
                 Assignment.aide_id == aide_id,
                 Assignment.date == absence_date,
                 Assignment.status.in_(['ASSIGNED', 'IN_PROGRESS'])
             )
-            .all()
         )
+        assignments = db.session.execute(stmt).scalars().all()
 
         released: List[Dict] = []
         try:
@@ -85,15 +86,15 @@ class AbsenceService:
             Tuple of (restored_tasks, conflict_tasks)
         """
         # Find Relief Pool tasks for this aide/date
-        relief_tasks: list[Assignment] = (
-            Assignment.query
+        stmt = (
+            select(Assignment)
             .filter(
                 Assignment.status == 'RELIEF_POOL',
                 Assignment.original_aide_id == aide_id,
                 Assignment.date == absence_date
             )
-            .all()
         )
+        relief_tasks = db.session.execute(stmt).scalars().all()
         
         restored: List[Dict] = []
         conflicts: List[Dict] = []

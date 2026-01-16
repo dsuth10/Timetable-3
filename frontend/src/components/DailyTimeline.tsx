@@ -57,17 +57,17 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick }: DailyTi
                   <Box
                     key={slot.start_time}
                     sx={{
-                      flex: `0 0 ${(slot.duration_minutes / totalMinutes) * 100}%`,
+                      flex: `0 0 ${((slot.duration_minutes || 0) / (totalMinutes || 1)) * 100}%`,
                       p: 0.5,
                       pl: 1,
                       borderRight: 1,
                       borderColor: 'divider',
                       textAlign: 'left',
-                      bgcolor: (['11:10:00', '13:20:00'].includes(slot.start_time)) ? '#e8f5e9' : 'inherit',
+                      bgcolor: slot.duration_minutes === 40 ? '#e8f5e9' : 'inherit',
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                      {slot.start_time?.substring(0, 5) || "00:00"}
+                      {slot.start_time ? slot.start_time.substring(0, 5) : "00:00"}
                     </Typography>
                   </Box>
                 );

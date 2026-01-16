@@ -20,6 +20,7 @@ import { assignmentsApi } from '../services/assignmentsApi';
 import { calendarApi } from '../services/calendarApi';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
+import { QuickCreateTaskModal } from '../components/TimetableGrid/QuickCreateTaskModal';
 import { ClassTimetableGrid } from '../components/TimetableGrid/ClassTimetableGrid';
 import { useTimeUtils } from '../components/TimetableGrid/timeUtils';
 import { useScheduleStore } from '../store/stores/scheduleStore';
@@ -68,6 +69,7 @@ export default function Schedule() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [showEditTask, setShowEditTask] = useState(false);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [selectedAssignmentForEdit, setSelectedAssignmentForEdit] = useState<Assignment | null>(null);
@@ -309,14 +311,24 @@ export default function Schedule() {
     // Calculate actual slot duration from SCHEDULE_SEGMENTS
     const segment = getSegmentForTime(timeSlot);
     const duration = segment ? calculateDuration(segment.start, segment.end) : 30;
-    const defaultEndTime = addMinutesToTime(timeSlot, duration);
-    setTaskCreationDefaults({
-      startTime: timeSlot,
-      endTime: defaultEndTime,
-      date: date,
-      aideId: selectedAideId || undefined
-    });
-    setShowCreateTask(true);
+
+    if (selectedAideId) {
+      setTaskCreationDefaults({
+        startTime: timeSlot + (timeSlot.length === 5 ? ':00' : ''),
+        date: date,
+        aideId: selectedAideId,
+        // We pass duration to QuickCreateTaskModal which handles end_time calculation
+      });
+      setShowQuickCreate(true);
+    } else {
+      const defaultEndTime = addMinutesToTime(timeSlot, duration);
+      setTaskCreationDefaults({
+        startTime: timeSlot,
+        endTime: defaultEndTime,
+        date: date,
+      });
+      setShowCreateTask(true);
+    }
   };
 
   const refreshData = async () => {
@@ -932,6 +944,26 @@ export default function Schedule() {
           } finally {
             setLoading(false);
           }
+        }}
+      />
+      <QuickCreateTaskModal
+        open={showQuickCreate}
+        date={taskCreationDefaults?.date || ""}
+        startTime={taskCreationDefaults?.startTime || ""}
+        duration={(() => {
+          if (!taskCreationDefaults?.startTime) return 30;
+          const segment = getSegmentForTime(taskCreationDefaults.startTime.substring(0, 5));
+          return segment ? calculateDuration(segment.start, segment.end) : 30;
+        })()}
+        aideId={taskCreationDefaults?.aideId || 0}
+        onClose={() => {
+          setShowQuickCreate(false);
+          setTaskCreationDefaults(null);
+        }}
+        onSuccess={async () => {
+          setShowQuickCreate(false);
+          setTaskCreationDefaults(null);
+          await refreshData();
         }}
       />
       <TaskEditModal

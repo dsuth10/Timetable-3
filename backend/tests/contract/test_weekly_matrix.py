@@ -71,7 +71,7 @@ def test_get_weekly_matrix_time_slots(client):
     assert len(time_slots) > 0
     
     # Should include 08:50, 09:10, 14:30, etc. (based on SCHEDULE_CONFIG)
-    time_strings = [slot['time'] for slot in time_slots]
+    time_strings = [slot['start_time'] for slot in time_slots]
     assert "08:50:00" in time_strings
     assert "14:30:00" in time_strings
 
