@@ -25,6 +25,8 @@ import TasksManagement from '../components/Management/TasksManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
 import RequestsManagement from '../components/Management/RequestsManagement';
 import BackupManagement from '../components/Management/BackupManagement';
+import DailyAideSidebar from '../components/DailyAideSidebar';
+import AideFormModal from '../components/AideFormModal';
 import { useDragDrop } from '../hooks/useDragDrop';
 import { useDailyView } from '../hooks/useDailyView';
 import { useAssignTask } from '../hooks/useAssignTask';
@@ -46,6 +48,13 @@ export default function DailyDisplayPage() {
   const [showEditTask, setShowEditTask] = useState(false);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [selectedAssignmentForEdit, setSelectedAssignmentForEdit] = useState<Assignment | null>(null);
+
+  // Aide Modal State
+  const [showAideModal, setShowAideModal] = useState(false);
+  const [editingAide, setEditingAide] = useState<any>(null);
+
+  // Sidebar State
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Use the standardized drag-drop hook with Daily View specific options
   const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
@@ -187,11 +196,22 @@ export default function DailyDisplayPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleEditAide = (aide: any) => {
+    setEditingAide(aide);
+    setShowAideModal(true);
+  };
+
+  const handleAideUpdated = () => {
+    setShowAideModal(false);
+    setEditingAide(null);
+    handleRefresh();
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <AppBar
         weekLabel={dateParam}
-        onMenuClick={() => { }}
+        onMenuClick={() => setSidebarOpen(prev => !prev)}
         onPrevWeek={handlePrevDay}
         onNextWeek={handleNextDay}
         onToday={handleToday}
@@ -220,6 +240,16 @@ export default function DailyDisplayPage() {
         )}
 
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+          {/* Left Panel: Aide List */}
+          {data && sidebarOpen && (
+            <DailyAideSidebar
+              aides={data.aides}
+              date={dateParam}
+              onEditAide={handleEditAide}
+            />
+          )}
+
           {/* Timeline Area (Horizontal Scroll) */}
           <Box sx={{ flex: 1, overflow: 'hidden', p: 2 }}>
             {loading && !data ? (
@@ -306,6 +336,16 @@ export default function DailyDisplayPage() {
         }}
         onUpdated={handleTaskUpdated}
         onDeleted={handleTaskUpdated}
+      />
+
+      <AideFormModal
+        open={showAideModal}
+        aide={editingAide}
+        onClose={() => {
+          setShowAideModal(false);
+          setEditingAide(null);
+        }}
+        onUpdated={handleAideUpdated}
       />
     </Box>
   );

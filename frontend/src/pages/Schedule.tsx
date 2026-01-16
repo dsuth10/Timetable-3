@@ -150,6 +150,21 @@ export default function Schedule() {
     }
   }, [aides, visibleAideIds, searchParams, setSelectedAideId]);
 
+  // Sync state from URL parameters (week, view)
+  const { setWeekStart, setViewMode } = useUiStore();
+  useEffect(() => {
+    const weekParam = searchParams.get('week');
+    const viewParam = searchParams.get('view');
+
+    if (weekParam) {
+      setWeekStart(weekParam);
+    }
+
+    if (viewParam === 'AIDE' || viewParam === 'CLASS') {
+      setViewMode(viewParam);
+    }
+  }, [searchParams, setWeekStart, setViewMode]);
+
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
     fetchTasks().catch(() => undefined);
