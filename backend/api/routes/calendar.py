@@ -73,12 +73,12 @@ def export_calendar():
         calendar_name = "Timetable"
         
         if aide_id:
-            aide = TeacherAide.query.get(aide_id)
+            aide = db.session.get(TeacherAide, aide_id)
             if aide:
                 filename = f"timetable-{aide.name.replace(' ', '_')}.ics"
                 calendar_name = f"{aide.name}'s Timetable"
         elif classroom_id:
-            classroom = Classroom.query.get(classroom_id)
+            classroom = db.session.get(Classroom, classroom_id)
             if classroom:
                 filename = f"timetable-{classroom.name.replace(' ', '_')}.ics"
                 calendar_name = f"{classroom.name}'s Timetable"
