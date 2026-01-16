@@ -60,7 +60,7 @@ export default function DailyDisplayPage() {
   const [selectedAbsenceDate, setSelectedAbsenceDate] = useState<string | null>(null);
 
   // Sidebar State
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Use the standardized drag-drop hook with Daily View specific options
   const { onDragEnd, ConflictUI, DurationModal } = useDragDrop({
