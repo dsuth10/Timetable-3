@@ -9,6 +9,7 @@ import csv
 import io
 import random
 import re
+import charset_normalizer
 
 bp = Blueprint('classrooms', __name__, url_prefix='/api/classrooms')
 
@@ -187,8 +188,13 @@ def batch_create_classrooms():
         return {'error': 'File must be a CSV file'}, 400
     
     try:
-        # Read and parse CSV
-        stream = io.TextIOWrapper(file.stream, encoding='utf-8-sig')  # Handle BOM
+        # Read and parse CSV with robust encoding detection
+        raw_content = file.read()
+        detection = charset_normalizer.from_bytes(raw_content).best()
+        encoding = detection.encoding if detection else 'utf-8-sig'
+        
+        # Reset stream if needed, though we already have it in memory
+        stream = io.StringIO(raw_content.decode(encoding))
         reader = csv.DictReader(stream)
         
         # Normalize header names (case-insensitive)

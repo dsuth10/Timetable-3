@@ -11,6 +11,7 @@ import csv
 import io
 from datetime import time as dt_time
 import random
+import charset_normalizer
 
 bp = Blueprint('aides', __name__, url_prefix='/api/aides')
 
@@ -147,8 +148,12 @@ def batch_create_aides():
         return {'error': 'File must be a CSV file'}, 400
     
     try:
-        # Read and parse CSV
-        stream = io.TextIOWrapper(file.stream, encoding='utf-8-sig')  # Handle BOM
+        # Read and parse CSV with robust encoding detection
+        raw_content = file.read()
+        detection = charset_normalizer.from_bytes(raw_content).best()
+        encoding = detection.encoding if detection else 'utf-8-sig'
+        
+        stream = io.StringIO(raw_content.decode(encoding))
         reader = csv.DictReader(stream)
         
         # Normalize header names (case-insensitive)
