@@ -54,6 +54,7 @@ def create_app(config=None):
     origins = [
         "https://threft.pythonanywhere.com",
         "https://thunderous-moonbeam-94b722.netlify.app",
+        "https://mrsutherland.net",
         "http://localhost:3000",
         "http://127.0.0.1:3000"
     ]
