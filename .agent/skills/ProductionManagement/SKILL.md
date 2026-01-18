@@ -16,9 +16,16 @@ This skill directs the agent on how to manage the production environment and the
 
 ### 1. Backend (PythonAnywhere)
 - **Code Sync**: Pull latest changes from Git on the PythonAnywhere console.
-- **Dependencies**: If `requirements.txt` changed, run `pip install -r requirements.txt`.
+- **Dependencies**: 
+    - If `requirements.txt` changed, you **MUST** activate the virtualenv first:
+      ```bash
+      workon timetable_venv  # Use the correct venv name
+      pip install -r requirements.txt
+      ```
 - **Reloading**: You **MUST** reload the Web App via the PythonAnywhere dashboard for changes to take effect.
-- **CORS**: Ensure `backend/api/__init__.py` has the correct production URLs in the `origins` list.
+- **CORS**: 
+    - Ensure `backend/api/__init__.py` has the correct production URLs in the `origins` list (include `www` subdomains).
+    - **CRITICAL**: Use `r"/api/.*"` as the resource regex to match all endpoints. `r"/api/*"` is incorrect and will cause CORS blocks.
 
 ### 2. Frontend (Hostinger)
 - **Build**: Run `npm run build` locally in the `frontend` directory.
@@ -28,6 +35,20 @@ This skill directs the agent on how to manage the production environment and the
 - **Upload**: Transfer the contents of `frontend/dist` to the `/public_html/timetable/` folder on Hostinger.
 - **Routing**: Ensure `.htaccess` is present in the production directory to handle SPA routing.
 
+## Troubleshooting Production
+
+### The "CORS Mask"
+If the browser console shows "CORS Policy" errors (No 'Access-Control-Allow-Origin' header), it often means the **backend has crashed (500 error)**. 
+- When Flask crashes during startup or a request before reaching the CORS middleware, no headers are sent.
+- **Action**: Do not just look at CORS settings. Check the **Error Logs** immediately.
+
+### Checking Logs (PythonAnywhere)
+1. Go to the **Web tab** on PythonAnywhere.
+2. Under **Log files**, open the **Error log** (`...error.log`).
+3. Scroll to the bottom to find the traceback for the 500 error. Common causes:
+    - Missing dependencies in the virtualenv.
+    - Database schema mismatches (run migrations if needed).
+
 ## Production Verification
 - **URL**: Test the live application at `https://mrsutherland.net/timetable`.
 - **Console Check**: Monitor for CORS errors or 404s on static assets.
@@ -35,4 +56,5 @@ This skill directs the agent on how to manage the production environment and the
 
 ## Safety Rules
 - **Never Test in Production**: Always verify features locally first.
-- **Database Backups**: Use the `/api/backup` endpoints if available before making destructive changes.
+- **Database Backups**: Use the `/api/backup` endpoints or the "Tasks Management" download feature before making destructive changes.
+- **Virtualenv Discipline**: Always run `pip` commands *after* `workon`.

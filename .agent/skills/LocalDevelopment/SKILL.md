@@ -27,3 +27,9 @@ This skill directs the agent on how to correctly manage and interact with the lo
 2. **Environment Variables**: Use `frontend/.env.development` for local-only settings. Note that Vite requires variables to be prefixed with `VITE_`.
 3. **Database Management**: For manual DB edits, use the local SQLite instance. Avoid using production data locally unless specifically requested.
 4. **Testing**: Always test fixes on `http://localhost:3000/timetable/` before proceeding to production planning.
+
+## Quality & Production Readiness
+- **New Dependencies**: If you install a new python package, you **MUST** add it to `backend/requirements.txt` immediately.
+- **Error Handling**: Ensure backend errors return JSON with clear messages, as production 500 errors can mask original causes with CORS blocks.
+- **CORS Testing**: When updating `backend/api/__init__.py`, verify that the `origins` list includes all relevant development and production URLs.
+- **Encoding**: For file uploads (CSV), use the robust encoding detection logic (using `charset-normalizer`) to avoid `UnicodeDecodeError` in production.
