@@ -64,7 +64,7 @@ export const backupService = {
           // Progress endpoint now includes response data when completed
           const response: BackupResponse = {
             backup_id: progress.backup_id,
-            format: progress.format || 'sql', // Fallback
+            format: (progress as any).format || 'sql', // Fallback
             filename: (progress as any).filename || '',
             size_bytes: (progress as any).size_bytes || 0,
             created_at: new Date().toISOString(),

@@ -10,7 +10,7 @@ import { useTasksStore } from '../store/stores/tasks';
 import { useUiStore } from '../store/stores/uiStore'; // Import uiStore
 import { useReliefPoolStore } from '../store/stores/reliefPool';
 import { isAideAvailable, getAvailabilityInfo } from '../utils/availabilityUtils';
-import type { TeacherAide, Task, ReliefPoolTask, Absence, AideWithStatus, Weekday } from '../types';
+import type { TeacherAide, Task, ReliefPoolTask, Absence, AideWithStatus, Weekday, ReliefPoolReassignRequest } from '../types';
 import { useTimeUtils } from '../components/TimetableGrid/timeUtils';
 import { calculateGaps, findSmallGap } from '../utils/gapUtils';
 

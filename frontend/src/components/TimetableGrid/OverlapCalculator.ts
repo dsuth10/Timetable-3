@@ -1,5 +1,6 @@
 import { timeIntervalsOverlap, timeToMinutes } from './timeUtils';
 import { calculateOverlaps } from '../../utils/overlapUtils';
+import { Assignment } from '../../types';
 
 export interface TaskPosition {
   assignment: Assignment;

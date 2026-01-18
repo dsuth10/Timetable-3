@@ -53,6 +53,7 @@ def create_app(config=None):
     # CORS configuration
     origins = [
         "https://threft.pythonanywhere.com",
+        "https://thunderous-moonbeam-94b722.netlify.app",
         "http://localhost:3000",
         "http://127.0.0.1:3000"
     ]

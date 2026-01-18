@@ -905,7 +905,8 @@ export default function Schedule() {
             date: taskSelectionDraft.date,
             start_time: taskSelectionDraft.time,
             end_time: endTime,
-            auto_shorten: true
+            auto_shorten: true,
+            status: 'ASSIGNED' as const
           };
           try {
             setLoading(true);
@@ -952,7 +953,8 @@ export default function Schedule() {
               date: taskSelectionDraft.date,
               start_time: taskSelectionDraft.time,
               end_time: endTime,
-              auto_shorten: true
+              auto_shorten: true,
+              status: 'ASSIGNED' as const
             };
 
             try {

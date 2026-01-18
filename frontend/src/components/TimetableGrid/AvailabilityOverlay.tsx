@@ -1,7 +1,7 @@
 import { Box, Tooltip } from '@mui/material';
 import { EventBusy } from '@mui/icons-material';
 import type { Availability, Absence } from '../../types';
-import { useTimeUtils } from './timeUtils';
+import { useTimeUtils, PIXELS_PER_MINUTE } from './timeUtils';
 
 type AvailabilityOverlayProps = {
   aideId: number;
@@ -49,7 +49,7 @@ export default function AvailabilityOverlay({
     return hh * 60 + mm;
   };
 
-  const { startTimeMinutes, endTimeMinutes, PIXELS_PER_MINUTE } = useTimeUtils();
+  const { startTimeMinutes, endTimeMinutes } = useTimeUtils();
 
   // --- Calculate content variables but keep structure constant ---
 

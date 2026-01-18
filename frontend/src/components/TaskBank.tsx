@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  TextField, 
-  InputAdornment, 
-  Accordion, 
-  AccordionSummary, 
+import {
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Accordion,
+  AccordionSummary,
   AccordionDetails,
   Divider,
   Alert
@@ -13,6 +13,7 @@ import {
 import { Search, ExpandMore, Inventory } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
 import { useTasksStore } from '../store/stores/tasks';
+import { Task } from '@/types';
 import { TaskTemplateCard } from './TaskTemplateCard';
 import LoadingState from './common/LoadingState';
 import EmptyState from './common/EmptyState';
@@ -20,7 +21,7 @@ import EmptyState from './common/EmptyState';
 export default function TaskBank({ tasks: propTasks }: { tasks?: Task[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const { tasks: storeTasks, loading, error, fetchTasks } = useTasksStore();
-  
+
   const tasks = propTasks || storeTasks;
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function TaskBank({ tasks: propTasks }: { tasks?: Task[] }) {
   }, [propTasks, fetchTasks]);
 
   const groupedTasks = useMemo(() => {
-    const filtered = tasks.filter(task => 
+    const filtered = tasks.filter(task =>
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -69,7 +70,7 @@ export default function TaskBank({ tasks: propTasks }: { tasks?: Task[] }) {
         />
       </Box>
       <Divider />
-      
+
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         {tasks.length === 0 ? (
           <EmptyState
@@ -82,9 +83,9 @@ export default function TaskBank({ tasks: propTasks }: { tasks?: Task[] }) {
             {(provided) => (
               <Box ref={provided.innerRef} {...provided.droppableProps} sx={{ p: 1 }}>
                 {tasks.map((task, idx) => (
-                  <TaskTemplateCard 
-                    key={task.id} 
-                    task={task} 
+                  <TaskTemplateCard
+                    key={task.id}
+                    task={task}
                     index={idx}
                   />
                 ))}
