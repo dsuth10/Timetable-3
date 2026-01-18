@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemAvatar, 
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemAvatar,
   ListItemText,
   Avatar,
   Button,
@@ -60,6 +60,11 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Blur current focus to prevent aria-hidden/focus conflict warnings
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     // Reset state
     setUploadError(null);
     setUploadResult(null);
@@ -69,7 +74,7 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
     try {
       const result = await aidesApi.batchUpload(file);
       setUploadResult(result);
-      
+
       // Refresh aides list if any were created
       if (result.created > 0) {
         await fetchAides({ includeAvailability: true });
@@ -115,25 +120,25 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">All Aides</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button 
-            variant="outlined" 
-            startIcon={<DownloadIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
             size="small"
             onClick={() => downloadSampleCSV()}
           >
             Download Sample CSV
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<UploadIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
             size="small"
             onClick={handleUploadClick}
           >
             Upload CSV
           </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             size="small"
             onClick={() => setShowCreateModal(true)}
           >
@@ -160,8 +165,8 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
               }}
             >
               <ListItemAvatar>
-                <Avatar 
-                  sx={{ 
+                <Avatar
+                  sx={{
                     bgcolor: aide.colour_hex,
                     color: '#fff',
                     fontWeight: 600,
@@ -176,14 +181,14 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
                 secondary={
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                     {aide.details && (
-                      <Chip 
-                        label={aide.details} 
-                        size="small" 
+                      <Chip
+                        label={aide.details}
+                        size="small"
                         variant="outlined"
                       />
                     )}
-                    <Chip 
-                      label={aide.colour_hex} 
+                    <Chip
+                      label={aide.colour_hex}
                       size="small"
                       sx={{ bgcolor: aide.colour_hex, color: 'white' }}
                     />

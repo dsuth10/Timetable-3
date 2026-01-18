@@ -189,12 +189,31 @@ def batch_create_classrooms():
     
     try:
         # Read and parse CSV with robust encoding detection
+        file.seek(0)
         raw_content = file.read()
-        detection = charset_normalizer.from_bytes(raw_content).best()
-        encoding = detection.encoding if detection else 'utf-8-sig'
         
-        # Reset stream if needed, though we already have it in memory
-        stream = io.StringIO(raw_content.decode(encoding))
+        # Try charset-normalizer first
+        try:
+            detection = charset_normalizer.from_bytes(raw_content).best()
+            detected_encoding = detection.encoding if detection else None
+        except Exception:
+            detected_encoding = None
+            
+        # Try to decode with a list of common encodings
+        content = None
+        for enc in [detected_encoding, 'utf-8-sig', 'cp1252', 'latin-1', 'utf-8']:
+            if not enc:
+                continue
+            try:
+                content = raw_content.decode(enc)
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+                
+        if content is None:
+            return {'error': 'Could not decode CSV file. Please ensure it is saved as UTF-8 or standard CSV format.'}, 400
+            
+        stream = io.StringIO(content)
         reader = csv.DictReader(stream)
         
         # Normalize header names (case-insensitive)

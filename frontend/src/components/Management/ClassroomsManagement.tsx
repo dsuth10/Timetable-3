@@ -56,6 +56,11 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Blur current focus to prevent aria-hidden/focus conflict warnings
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     // Reset state
     setUploadError(null);
     setUploadResult(null);
