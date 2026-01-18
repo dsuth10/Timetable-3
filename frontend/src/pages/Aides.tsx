@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemAvatar, 
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemAvatar,
   ListItemText,
   Avatar,
   Button,
@@ -36,7 +36,7 @@ export default function Aides() {
     const today = new Date();
     const future = new Date();
     future.setDate(today.getDate() + 28); // 4 weeks
-    
+
     try {
       const blob = await calendarApi.export({
         aide_id: aide.id,
@@ -55,9 +55,9 @@ export default function Aides() {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Aides</Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />} 
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
           onClick={() => setShowCreateModal(true)}
         >
           Add Aide
@@ -66,7 +66,7 @@ export default function Aides() {
 
       {loading && <Typography>Loading…</Typography>}
       {error && <Typography color="error" role="alert">{error}</Typography>}
-      
+
       <List>
         {aides.map((aide) => (
           <Paper key={aide.id} sx={{ mb: 1 }}>
@@ -79,8 +79,8 @@ export default function Aides() {
               }}
             >
               <ListItemAvatar>
-                <Avatar 
-                  sx={{ 
+                <Avatar
+                  sx={{
                     bgcolor: aide.colour_hex,
                     color: '#fff',
                     fontWeight: 600,
@@ -95,14 +95,14 @@ export default function Aides() {
                 secondary={
                   <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                     {aide.details && (
-                      <Chip 
-                        label={aide.details} 
-                        size="small" 
+                      <Chip
+                        label={aide.details}
+                        size="small"
                         variant="outlined"
                       />
                     )}
-                    <Chip 
-                      label={aide.colour_hex} 
+                    <Chip
+                      label={aide.colour_hex}
                       size="small"
                       sx={{ bgcolor: aide.colour_hex, color: 'white' }}
                     />
@@ -111,16 +111,18 @@ export default function Aides() {
               />
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Tooltip title="Export Schedule (Next 4 Weeks)">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleExportAide(aide);
-                    }}
-                    disabled={exportingId === aide.id}
-                  >
-                    <FileDownload fontSize="small" />
-                  </IconButton>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportAide(aide);
+                      }}
+                      disabled={exportingId === aide.id}
+                    >
+                      <FileDownload fontSize="small" />
+                    </IconButton>
+                  </span>
                 </Tooltip>
                 <Tooltip title="Edit Aide">
                   <IconButton

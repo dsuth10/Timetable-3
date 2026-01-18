@@ -131,7 +131,6 @@ export function TimeSlottedColumn({
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 1,
-        overflow: 'hidden',
         backgroundColor: 'background.paper',
       }}
     >

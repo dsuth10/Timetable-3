@@ -109,6 +109,7 @@ export default function ManagementPanel({
         anchor="bottom"
         open={open}
         onClose={() => toggleDrawer(false)}
+        disableEnforceFocus
         ModalProps={{}}
         PaperProps={{
           sx: {

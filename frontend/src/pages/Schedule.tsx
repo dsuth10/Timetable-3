@@ -594,18 +594,20 @@ export default function Schedule() {
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Tooltip title="Export Schedule">
-                    <Button
-                      startIcon={<FileDownloadIcon />}
-                      onClick={handleExportClick}
-                      disabled={loading}
-                      variant="outlined"
-                      size="small"
-                      aria-controls={exportMenuOpen ? 'export-menu' : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={exportMenuOpen ? 'true' : undefined}
-                    >
-                      Export
-                    </Button>
+                    <span>
+                      <Button
+                        startIcon={<FileDownloadIcon />}
+                        onClick={handleExportClick}
+                        disabled={loading}
+                        variant="outlined"
+                        size="small"
+                        aria-controls={exportMenuOpen ? 'export-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={exportMenuOpen ? 'true' : undefined}
+                      >
+                        Export
+                      </Button>
+                    </span>
                   </Tooltip>
                   <Menu
                     id="export-menu"
@@ -661,18 +663,20 @@ export default function Schedule() {
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Tooltip title="Export Schedule">
-                    <Button
-                      startIcon={<FileDownloadIcon />}
-                      onClick={handleExportClick}
-                      disabled={loading}
-                      variant="outlined"
-                      size="small"
-                      aria-controls={exportMenuOpen ? 'export-menu' : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={exportMenuOpen ? 'true' : undefined}
-                    >
-                      Export
-                    </Button>
+                    <span>
+                      <Button
+                        startIcon={<FileDownloadIcon />}
+                        onClick={handleExportClick}
+                        disabled={loading}
+                        variant="outlined"
+                        size="small"
+                        aria-controls={exportMenuOpen ? 'export-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={exportMenuOpen ? 'true' : undefined}
+                      >
+                        Export
+                      </Button>
+                    </span>
                   </Tooltip>
                   <Menu
                     id="export-menu-class"
