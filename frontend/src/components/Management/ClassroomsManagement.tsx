@@ -87,7 +87,11 @@ export default function ClassroomsManagement({ onChanged }: { onChanged?: () => 
     }
   };
 
-  const handleUploadClick = () => {
+  const handleUploadClick = (event: React.MouseEvent) => {
+    // Blur the button immediately to avoid accessibility warnings when dialogs open
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.blur();
+    }
     fileInputRef.current?.click();
   };
 

@@ -30,3 +30,6 @@ black==24.1.1
 
 # Production WSGI Server
 waitress==3.0.0
+
+# Encoding Detection
+charset-normalizer==3.4.3
