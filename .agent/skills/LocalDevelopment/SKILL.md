@@ -12,6 +12,11 @@ This skill directs the agent on how to correctly manage and interact with the lo
 - **Frontend App**: Vite development server running on `http://localhost:3000`.
 - **Database**: Local SQLite database located at `backend/instance/timetable.db`.
 
+## Git Workflow
+- **Active Branch**: Always work on `develop`.
+- **Feature Branches**: For large features, create `feature/xyz` from `develop`.
+- **Syncing**: Pull `develop` frequently to stay up to date.
+
 ## Connection Logic
 - The frontend is configured to use a **Vite Proxy** (`vite.config.ts`) to route `/api` requests to the local backend.
 - **CRITICAL**: The `frontend/src/services/api.ts` file automatically detects `localhost` and uses the relative `/api` path. This ensures all local traffic stays local.

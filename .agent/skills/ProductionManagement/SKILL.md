@@ -12,6 +12,16 @@ This skill directs the agent on how to manage the production environment and the
 - **Frontend App**: Hosted on **Hostinger** at `https://mrsutherland.net/timetable`.
 - **Database**: Production SQLite database on PythonAnywhere.
 
+## Git & Release Strategy
+- **`main` Branch**: Production-ready code ONLY. Never push directly here.
+- **`develop` Branch**: Active development. All work happens here.
+
+### Releasing to Production
+1.  **Checkout Main**: `git checkout main`
+2.  **Merge Develop**: `git merge develop`
+3.  **Push**: `git push origin main`
+4.  **Tag (Optional)**: `git tag vX.Y.Z && git push --tags`
+
 ## Deployment Workflow
 
 ### 1. Backend (PythonAnywhere)
