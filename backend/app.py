@@ -1,14 +1,15 @@
 """
 CHARLOTTE - Flask Application Entry Point
 """
-from flask import Flask
-from flask_cors import CORS
+import os
 from api import create_app
 
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Default to production-like settings if not specified
+    debug = os.getenv('FLASK_ENV') != 'production'
+    app.run(debug=debug, host='0.0.0.0', port=5000)
 
 
 

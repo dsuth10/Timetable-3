@@ -50,8 +50,21 @@ def create_app(config=None):
     from api.models import db
     db.init_app(app)
     
-    # CORS configuration for local development
-    CORS(app)
+    # CORS configuration
+    origins = [
+        "https://threft.pythonanywhere.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ]
+    
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": origins,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    })
     
     # instance folder already ensured above
     
