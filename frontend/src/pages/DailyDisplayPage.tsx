@@ -4,11 +4,9 @@ import {
   Box,
   Paper,
   CircularProgress,
-  Alert,
-  Button
+  Alert
 } from '@mui/material';
 import { addDays, subDays, format, isWeekend, nextMonday } from 'date-fns';
-import { Add as AddIcon } from '@mui/icons-material';
 import AppBar from '../components/Layout/AppBar';
 import { useTasksStore } from '../store/stores/tasks';
 import DailyTimeline from '../components/DailyTimeline';
@@ -235,17 +233,6 @@ export default function DailyDisplayPage() {
       />
 
       <AppDragDropContext onDragEnd={handleDragEnd}>
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={() => setShowCreateTaskModal(true)}
-          >
-            Create Task
-          </Button>
-        </Box>
-
         {(error || assignTaskMutation.error) && (
           <Alert severity="error" sx={{ m: 2 }}>
             {(error as any)?.message || assignTaskMutation.error?.message || 'An error occurred'}
@@ -299,6 +286,7 @@ export default function DailyDisplayPage() {
               dateISO={dateParam}
               tasks={data?.task_bank}
               refreshTrigger={refreshTrigger}
+              onCreateTask={() => setShowCreateTaskModal(true)}
             />
           </Paper>
         </Box>

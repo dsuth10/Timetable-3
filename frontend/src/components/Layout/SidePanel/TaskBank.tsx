@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Drawer,
   Box,
+  Button,
   Typography,
   Divider,
   TextField,
@@ -14,7 +15,7 @@ import {
   Badge,
   alpha,
 } from '@mui/material';
-import { Search, ExpandMore, AssignmentLate, Inventory, PersonOff, School } from '@mui/icons-material';
+import { Search, ExpandMore, AssignmentLate, Inventory, PersonOff, School, Add as AddIcon } from '@mui/icons-material';
 import { Droppable } from '@hello-pangea/dnd';
 import { useTasksStore } from '../../../store/stores/tasks';
 import { useAidesStore } from '../../../store/stores/aides';
@@ -32,6 +33,7 @@ type Props = {
   onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
   noDrawer?: boolean;
   tasks?: Task[];
+  onCreateTask?: () => void;
 };
 
 const DRAWER_WIDTH = 320;
@@ -49,7 +51,7 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
       hidden={value !== index}
       id={`task-bank-tabpanel-${index}`}
       aria-labelledby={`task-bank-tab-${index}`}
-      style={{ height: '100%', display: value === index ? 'flex' : 'none', flexDirection: 'column' }}
+      style={{ flex: 1, minHeight: 0, display: value === index ? 'flex' : 'none', flexDirection: 'column' }}
       {...other}
     >
       {value === index && children}
@@ -64,7 +66,7 @@ function a11yProps(index: number) {
   };
 }
 
-export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, noDrawer, tasks: propTasks }: Props) {
+export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, noDrawer, tasks: propTasks, onCreateTask }: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const { tasks: storeTasks, loading, error, fetchTasks } = useTasksStore();
@@ -510,6 +512,20 @@ export default function TaskBank({ dateISO, refreshTrigger, onTaskDoubleClick, n
           <ReliefPoolTab onDismiss={handleDismiss} refreshTrigger={refreshTrigger} />
         </Box>
       </TabPanel>
+
+      {onCreateTask && (
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            startIcon={<AddIcon />}
+            onClick={onCreateTask}
+          >
+            Create Task
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 
