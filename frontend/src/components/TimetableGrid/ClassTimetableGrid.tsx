@@ -10,19 +10,21 @@ type ClassTimetableGridProps = {
   aides: TeacherAide[];
   onTaskDoubleClick?: (assignment: Assignment, task?: Task) => void;
   onSlotClick?: (date: string, time: string) => void;
+  absences?: Absence[];
 };
 
-export function ClassTimetableGrid({ 
-  selectedClass, 
-  assignmentsByDay, 
-  weekDates, 
-  tasks, 
+export function ClassTimetableGrid({
+  selectedClass,
+  assignmentsByDay,
+  weekDates,
+  tasks,
   aides,
   onTaskDoubleClick,
   onSlotClick,
+  absences = [],
 }: ClassTimetableGridProps) {
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -30,9 +32,9 @@ export function ClassTimetableGrid({
 
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
-      <Box 
-        sx={{ 
-          display: 'grid', 
+      <Box
+        sx={{
+          display: 'grid',
           gridTemplateColumns: `repeat(5, minmax(200px, 1fr))`,
           gap: 1,
           flex: 1,
@@ -49,7 +51,7 @@ export function ClassTimetableGrid({
           const dayName = dayNames[dayIndex];
           const formattedDate = formatDate(date);
           const assignments = assignmentsByDay[date] || [];
-          
+
           return (
             <Box key={date} sx={{ display: 'flex', flexDirection: 'column' }}>
               {/* Day Header */}
@@ -84,6 +86,7 @@ export function ClassTimetableGrid({
                 showAideName={true}
                 aides={aides}
                 onSlotClick={onSlotClick}
+                absences={absences}
               />
             </Box>
           );

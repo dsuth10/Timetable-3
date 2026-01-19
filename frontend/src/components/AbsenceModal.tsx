@@ -19,6 +19,7 @@ import {
 import { EventBusy, Save } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { absencesApi } from '../services/absencesApi';
+import { useAbsencesStore } from '../store/stores/absences';
 import type { TeacherAide } from '../types';
 
 type Props = {
@@ -36,6 +37,7 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
   const [reason, setReason] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const createAbsence = useAbsencesStore(state => state.create);
 
   useEffect(() => {
     if (open) {
@@ -59,7 +61,8 @@ export default function AbsenceModal({ open, aides, onClose, onCreated, initialA
       const month = String(dateValue.getMonth() + 1).padStart(2, '0');
       const day = String(dateValue.getDate()).padStart(2, '0');
       const dateISO = `${year}-${month}-${day}`;
-      await absencesApi.create({
+
+      await createAbsence({
         aide_id: Number(aideId),
         date: dateISO,
         reason: reason || null

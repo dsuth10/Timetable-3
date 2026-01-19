@@ -18,6 +18,7 @@ type TaskCardProps = {
   aideName?: string;
   compact?: boolean;
   viewMode?: 'aide' | 'class';
+  isAbsent?: boolean;
 };
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -27,14 +28,14 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'INDIVIDUAL_SUPPORT': <Person fontSize="inherit" />,
 };
 
-function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName, compact = false, viewMode = 'aide' }: TaskCardProps) {
+function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDoubleClick, isPositioned = false, showAideName, aideName, compact = false, viewMode = 'aide', isAbsent = false }: TaskCardProps) {
   const categoryColor = task ? categoryColors[task.category] : '#9E9E9E';
   const statusColor = statusColors[assignment.status];
 
   // Determine which color to use based on viewMode
   // In 'aide' view (Aide Schedule), color by classroom/teacher
   // In 'class' view (Class Schedule), color by teacher aide
-  const displayColor = viewMode === 'aide' 
+  const displayColor = viewMode === 'aide'
     ? (task?.classroom?.colour_hex || categoryColor)
     : (aideColor || categoryColor);
 
@@ -57,7 +58,14 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
               borderLeft: `${compact ? '2px' : '4px'} solid ${displayColor}`,
               borderRadius: compact ? 0 : 1,
               cursor: dragSnapshot.isDragging ? 'grabbing' : 'grab',
-              bgcolor: displayColor ? alpha(displayColor, 0.08) : (dragSnapshot.isDragging ? 'action.hover' : 'background.paper'),
+              ...(isAbsent ? {
+                borderTop: '2px dashed #ef5350',
+                borderRight: '2px dashed #ef5350',
+                borderBottom: '2px dashed #ef5350',
+                bgcolor: alpha('#ef5350', 0.15),
+              } : {
+                bgcolor: displayColor ? alpha(displayColor, 0.08) : (dragSnapshot.isDragging ? 'action.hover' : 'background.paper'),
+              }),
               opacity: dragSnapshot.isDragging ? 0.9 : 1,
               transform: dragSnapshot.isDragging ? 'rotate(2deg) scale(0.95)' : 'none',
               transition: 'all 0.2s ease',
@@ -82,7 +90,7 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
               '&:hover': {
                 boxShadow: 3,
                 transform: 'translateY(-2px)',
-                bgcolor: displayColor ? alpha(displayColor, 0.15) : 'action.hover',
+                bgcolor: isAbsent ? alpha('#ef5350', 0.25) : (displayColor ? alpha(displayColor, 0.15) : 'action.hover'),
                 '& .action-buttons': {
                   opacity: 1,
                 },
@@ -96,11 +104,11 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                 '&:last-child': { pb: compact ? 0.5 : 1.25 },
                 ...(isPositioned
                   ? {
-                      flexGrow: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                    }
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }
                   : {}),
               }}
             >
@@ -115,12 +123,12 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                     <DragIndicator fontSize="small" />
                   </IconButton>
                 )}
-                
+
                 <Box sx={{ display: 'flex', flex: 1, minWidth: 0, height: '100%' }}>
                   <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }} {...(compact ? dragProvided.dragHandleProps : {})}>
-                    <Typography 
-                      variant={compact ? 'caption' : 'body2'} 
-                      sx={{ 
+                    <Typography
+                      variant={compact ? 'caption' : 'body2'}
+                      sx={{
                         fontWeight: 600,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -132,10 +140,25 @@ function TaskCardBase({ assignment, index, task, aideColor, onContextMenu, onDou
                       {task?.title || `Missing Task #${assignment.task_id}`}
                     </Typography>
 
+                    {isAbsent && (
+                      <Chip
+                        label="ABSENT"
+                        color="error"
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          fontWeight: 'bold',
+                          mb: 0.5,
+                          maxWidth: 'fit-content'
+                        }}
+                      />
+                    )}
+
                     {viewMode === 'class' && (
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
+                      <Typography
+                        variant="caption"
+                        sx={{
                           fontStyle: 'italic',
                           color: 'text.secondary',
                           overflow: 'hidden',
@@ -222,7 +245,9 @@ export const TaskCard = memo(TaskCardBase, (prev, next) => {
     prev.showAideName === next.showAideName &&
     prev.aideName === next.aideName &&
     prev.compact === next.compact &&
-    prev.viewMode === next.viewMode
+    prev.compact === next.compact &&
+    prev.viewMode === next.viewMode &&
+    prev.isAbsent === next.isAbsent
   );
 });
 

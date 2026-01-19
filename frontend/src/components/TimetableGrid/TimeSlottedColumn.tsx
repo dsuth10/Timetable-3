@@ -200,6 +200,8 @@ export function TimeSlottedColumn({
             {slotTasks.map((position, taskIndex) => {
               const task = taskMap.get(position.assignment.task_id);
               const aide = aides.find(a => a.id === position.assignment.aide_id);
+              const isAbsent = absences.some(a => a.aide_id === position.assignment.aide_id && a.date === date);
+
               return (
                 <Box
                   key={position.assignment.id}
@@ -222,6 +224,7 @@ export function TimeSlottedColumn({
                     showAideName={showAideName}
                     aideName={(position.assignment as any)._aideNames || aide?.name}
                     viewMode={showAideName ? 'class' : 'aide'}
+                    isAbsent={isAbsent}
                   />
                 </Box>
               );

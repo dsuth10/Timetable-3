@@ -234,15 +234,20 @@ export default function Schedule() {
   }, [selectedWeekStartISO]);
 
   // Preload absences for all visible aides to enable fast switching
+  // Preload absences: for CLASS view load all, for AIDE view load visible
   useEffect(() => {
-    if (!aides.length || visibleAideIds.size === 0) return;
-    const visible = aides.filter(a => visibleAideIds.has(a.id));
-    visible.forEach(aide => {
+    if (!aides.length) return;
+
+    const targets = viewMode === 'CLASS' ? aides : aides.filter(a => visibleAideIds.has(a.id));
+
+    targets.forEach(aide => {
       if (!absencesByAide[aide.id]) {
         listForAide(aide.id).catch(() => undefined);
       }
     });
-  }, [aides, visibleAideIds, listForAide, absencesByAide]);
+  }, [aides, visibleAideIds, listForAide, absencesByAide, viewMode]);
+
+  const allAbsences = useMemo(() => Object.values(absencesByAide).flat(), [absencesByAide]);
 
   const weekLabel = useMemo(() => selectedWeekStartISO, [selectedWeekStartISO]);
 
@@ -732,6 +737,7 @@ export default function Schedule() {
                 aides={aides}
                 onTaskDoubleClick={handleTaskDoubleClick}
                 onSlotClick={handleSlotClick}
+                absences={allAbsences}
               />
             )}
 
