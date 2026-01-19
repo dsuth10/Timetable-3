@@ -1,5 +1,5 @@
 import { Box, Paper, Typography } from '@mui/material';
-import type { Classroom, Assignment, Task, TeacherAide } from '../../types';
+import type { Classroom, Assignment, Task, TeacherAide, Absence } from '../../types';
 import { TimeSlottedColumn } from './TimeSlottedColumn';
 
 type ClassTimetableGridProps = {
