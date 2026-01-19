@@ -159,7 +159,7 @@ export const TaskSelectionModal: React.FC<TaskSelectionModalProps> = ({
                     <ListItemButton onClick={() => handleSelectTask(task.id)}>
                       <ListItemText
                         primary={task.title}
-                        secondary={task.description || task.notes}
+                        secondary={task.notes}
                       />
                     </ListItemButton>
                   </ListItem>
