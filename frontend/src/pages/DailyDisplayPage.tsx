@@ -230,6 +230,7 @@ export default function DailyDisplayPage() {
         onPrevWeek={handlePrevDay}
         onNextWeek={handleNextDay}
         onToday={handleToday}
+        termInfo={data?.term_info}
       />
 
       <AppDragDropContext onDragEnd={handleDragEnd}>

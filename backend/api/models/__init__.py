@@ -14,6 +14,7 @@ from .recurring_series import RecurringSeries
 from .assignment import Assignment
 from .absence import Absence
 from .request import Request
+from .term_week import TermWeek
 
 # Base class for Alembic
 Base = db.Model
@@ -28,5 +29,6 @@ __all__ = [
     'RecurringSeries',
     'Assignment',
     'Absence',
-    'Request'
+    'Request',
+    'TermWeek'
 ]

@@ -38,6 +38,12 @@ type AppBarProps = {
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
+  termInfo?: {
+    date: string;
+    term_number?: number | null;
+    week_number?: number | null;
+    display_label?: string | null;
+  };
 };
 
 // Helper to get Monday of any given date
@@ -55,6 +61,7 @@ export default function AppBar({
   onPrevWeek,
   onNextWeek,
   onToday,
+  termInfo,
 }: AppBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -243,21 +250,54 @@ export default function AppBar({
           </Button>
 
           <Stack direction="row" spacing={1} alignItems="center">
-            <Chip
-              label={`Week ${weekNumber}`}
-              size="small"
-              sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontWeight: 600,
-              }}
-            />
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-              {isDailyView
-                ? format(new Date(weekLabel + 'T00:00:00'), 'EEEE, MMM d, yyyy')
-                : dateRange
-              }
-            </Typography>
+            {termInfo ? (
+              // Use Term/Week info if available
+              <>
+                <Chip
+                  label={termInfo.display_label || `Week ${termInfo.week_number || weekNumber}`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    fontWeight: 600,
+                  }}
+                />
+                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                  {isDailyView
+                    ? format(new Date(weekLabel + 'T00:00:00'), 'EEEE, MMM d, yyyy')
+                    : dateRange
+                  }
+                </Typography>
+                {/* Optional: Show explicitly if it's a Term (e.g. Term 1) if not in label */}
+                {termInfo.term_number && !termInfo.display_label?.toLowerCase().includes('term') && (
+                  <Chip
+                    label={`Term ${termInfo.term_number}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{ color: 'rgba(255,255,255,0.8)', borderColor: 'rgba(255,255,255,0.3)', height: 24 }}
+                  />
+                )}
+              </>
+            ) : (
+              // Fallback to original
+              <>
+                <Chip
+                  label={`Week ${weekNumber}`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    fontWeight: 600,
+                  }}
+                />
+                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                  {isDailyView
+                    ? format(new Date(weekLabel + 'T00:00:00'), 'EEEE, MMM d, yyyy')
+                    : dateRange
+                  }
+                </Typography>
+              </>
+            )}
           </Stack>
         </Box>
 

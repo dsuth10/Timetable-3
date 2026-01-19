@@ -5,6 +5,7 @@ from api.models.teacher_aide import TeacherAide
 from api.models.assignment import Assignment
 from api.models.task import Task
 from api.models.absence import Absence
+from api.models.term_week import TermWeek
 from api.services.collision_service import CollisionService
 from api.config import SCHEDULE_CONFIG
 
@@ -56,9 +57,25 @@ class DailyViewService:
         # Use centralized schedule segments from config
         schedule_segments = SCHEDULE_CONFIG["SEGMENTS"]
         
+        # 7. Define timeline configuration
+        # Use centralized schedule segments from config
+        schedule_segments = SCHEDULE_CONFIG["SEGMENTS"]
+        
         slots = []
         for start_time, duration in schedule_segments:
             slots.append({"start_time": start_time, "duration_minutes": duration})
+
+        # 8. Fetch Term Information
+        term_info = TermWeek.query.filter_by(date=view_date).first()
+        term_data = term_info.to_dict() if term_info else None
+        # Fallback if no data (optional, but good for UI safety)
+        if not term_data:
+            term_data = {
+                "date": view_date.isoformat(),
+                "term_number": None,
+                "week_number": None,
+                "display_label": None
+            }
         
         return {
             "aides": aides_data,
@@ -68,7 +85,8 @@ class DailyViewService:
                 "slots": slots,
                 "start_time": SCHEDULE_CONFIG["START_TIME"],
                 "end_time": SCHEDULE_CONFIG["END_TIME"]
-            }
+            },
+            "term_info": term_data
         }
 
     def assign_task(self, data: Dict[str, Any]) -> Dict[str, Any]:

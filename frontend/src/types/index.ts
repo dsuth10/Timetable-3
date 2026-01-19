@@ -184,11 +184,19 @@ export interface TimelineConfig {
   end_time: string;   // HH:MM:SS
 }
 
+export interface TermInfo {
+  date: string;
+  term_number?: number | null;
+  week_number?: number | null;
+  display_label?: string | null;
+}
+
 export interface DailyViewData {
   aides: AideWithStatus[];
   relief_pool: Assignment[];
   task_bank: Task[];
   timeline_config: TimelineConfig;
+  term_info?: TermInfo;
 }
 
 export type AssignmentSourceType = 'FROM_BANK' | 'FROM_RELIEF';
