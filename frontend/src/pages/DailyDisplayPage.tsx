@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
-  Typography,
   CircularProgress,
   Alert,
   Button
@@ -15,7 +14,6 @@ import { useTasksStore } from '../store/stores/tasks';
 import DailyTimeline from '../components/DailyTimeline';
 import TaskBank from '../components/Layout/SidePanel/TaskBank';
 import AppDragDropContext from '../components/DragDropContext';
-import DailyDatePicker from '../components/DailyDatePicker';
 import AssignmentConfirmationDialog from '../components/AssignmentConfirmationDialog';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
@@ -237,11 +235,7 @@ export default function DailyDisplayPage() {
       />
 
       <AppDragDropContext onDragEnd={handleDragEnd}>
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h5">Daily Display</Typography>
-            <DailyDatePicker value={dateParam} onChange={handleDateChange} />
-          </Box>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
