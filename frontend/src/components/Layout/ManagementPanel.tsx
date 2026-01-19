@@ -38,6 +38,7 @@ type ManagementPanelProps = {
   tasksContent?: React.ReactNode;
   requestsContent?: React.ReactNode;
   backupContent?: React.ReactNode;
+  adminContent?: React.ReactNode;
 };
 
 export default function ManagementPanel({
@@ -46,6 +47,7 @@ export default function ManagementPanel({
   tasksContent,
   requestsContent,
   backupContent,
+  adminContent,
 }: ManagementPanelProps) {
   const [open, setOpen] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
@@ -56,6 +58,7 @@ export default function ManagementPanel({
     { label: 'Tasks', content: tasksContent },
     { label: 'Requests', content: requestsContent },
     { label: 'Backup', content: backupContent },
+    { label: 'Admin', content: adminContent },
   ].filter(tab => tab.content !== undefined);
 
   const toggleDrawer = (newOpen: boolean) => {

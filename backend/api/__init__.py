@@ -86,6 +86,9 @@ def create_app(config=None):
     app.register_blueprint(backup.bp)
     app.register_blueprint(daily_view.daily_view_bp, url_prefix='/api/daily-view')
     
+    from api.routes import admin
+    app.register_blueprint(admin.bp)
+    
     # Error handlers (T052)
     @app.errorhandler(400)
     def bad_request(error):

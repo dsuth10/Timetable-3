@@ -46,6 +46,7 @@ import TasksManagement from '../components/Management/TasksManagement';
 import ClassroomsManagement from '../components/Management/ClassroomsManagement';
 import RequestsManagement from '../components/Management/RequestsManagement';
 import BackupManagement from '../components/Management/BackupManagement';
+import AdminPanel from '../components/Management/AdminPanel';
 import UndoRedoControls from '../components/UndoRedoControls';
 import LoadingState from '../components/common/LoadingState';
 import AbsenceModal from '../components/AbsenceModal';
@@ -793,6 +794,7 @@ export default function Schedule() {
         tasksContent={<TasksManagement refreshTrigger={refreshTrigger} onChanged={handleManagementChange} />}
         requestsContent={<RequestsManagement />}
         backupContent={<BackupManagement />}
+        adminContent={<AdminPanel />}
       />
 
       {/* Modals */}
