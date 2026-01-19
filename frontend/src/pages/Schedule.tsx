@@ -35,7 +35,7 @@ import { useReliefPoolStore } from '../store/stores/reliefPool';
 import TaskCreationModal from '../components/TaskModals/TaskCreationModal';
 import TaskEditModal from '../components/TaskModals/TaskEditModal';
 import { TaskSelectionModal } from '../components/Modals/TaskSelectionModal';
-import { taskService } from '../services/taskService';
+import { tasksApi } from '../services/tasksApi';
 import MultiDayDialog from '../components/MultiDayDialog';
 import AppBar from '../components/Layout/AppBar';
 import AideDrawer from '../components/Layout/AideDrawer';
@@ -918,6 +918,7 @@ export default function Schedule() {
             setLoading(true);
             await assignmentsApi.create(payload);
             await refreshData();
+            await fetchTasks();
             setShowTaskSelection(false);
             setTaskSelectionDraft(null);
           } catch (e: any) {
@@ -947,10 +948,13 @@ export default function Schedule() {
           const endTime = addMinutesToTime(taskSelectionDraft.time, taskSelectionDraft.duration);
           try {
             setLoading(true);
-            const newTask = await taskService.createTask({
+            const newTask = await tasksApi.createOneOff({
               title: taskData.title,
-              description: taskData.description,
-              classroom_id: taskSelectionDraft.classroomId
+              notes: taskData.description,
+              classroom_id: taskSelectionDraft.classroomId,
+              category: 'CLASS_SUPPORT',
+              start_time: taskSelectionDraft.time,
+              end_time: endTime,
             });
 
             const payload = {
@@ -982,7 +986,7 @@ export default function Schedule() {
                 setShowTaskSelection(false);
                 setTaskSelectionDraft(null);
                 await refreshData();
-                fetchTasks();
+                await fetchTasks();
                 return;
               }
               throw e;
@@ -990,7 +994,7 @@ export default function Schedule() {
 
             await refreshData();
             // Also refresh tasks list
-            fetchTasks();
+            await fetchTasks();
             setShowTaskSelection(false);
             setTaskSelectionDraft(null);
           } catch (e: any) {

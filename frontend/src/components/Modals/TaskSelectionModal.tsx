@@ -17,8 +17,8 @@ import {
   Divider,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { Task } from '../../types/contracts';
-import { taskService } from '../../services/taskService';
+import { Task } from '../../types';
+import { tasksApi } from '../../services/tasksApi';
 
 interface TaskSelectionModalProps {
   open: boolean;
@@ -49,8 +49,8 @@ export const TaskSelectionModal: React.FC<TaskSelectionModalProps> = ({
     if (open && classroomId) {
       setFetchingTasks(true);
       setError(null);
-      taskService
-        .fetchTasksByClassroom(classroomId)
+      tasksApi
+        .list({ classroom_id: classroomId })
         .then((fetchedTasks) => {
           setTasks(fetchedTasks);
           setFetchingTasks(false);

@@ -18,8 +18,11 @@ export interface QuickCreateTaskResponse {
 }
 
 export const tasksApi = {
-  list(opts?: { category?: Task['category'] }): Promise<Task[]> {
-    const q = opts?.category ? `?category=${opts.category}` : '';
+  list(opts?: { category?: Task['category']; classroom_id?: number | null }): Promise<Task[]> {
+    const params = new URLSearchParams();
+    if (opts?.category) params.append('category', opts.category);
+    if (opts?.classroom_id) params.append('classroom_id', opts.classroom_id.toString());
+    const q = params.toString() ? `?${params.toString()}` : '';
     return api.get(`/tasks${q}`).then((r) => r.data as Task[]);
   },
   get(id: ID): Promise<Task> {

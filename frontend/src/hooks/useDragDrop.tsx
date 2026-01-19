@@ -189,17 +189,25 @@ export function useDragDrop(options?: UseDragDropOptions) {
     if (destDroppableId === 'unassigned') {
       destAideId = null;
     } else if (destDroppableId.startsWith('aide-') && destDroppableId.includes('-date-')) {
-      const parts = destDroppableId.split('-');
-      if (parts.length >= 4) {
+      // Robust parsing using Regex to handle date hyphens correctly
+      const match = destDroppableId.match(/^aide-(\d+)-date-([\d-]+)-time-(.+)$/);
+      if (match) {
+        destAideId = Number(match[1]);
+        destDate = match[2];
+        destTime = match[3];
+      } else {
+        // Fallback for cases where regex might fail but starts with aide-
+        const parts = destDroppableId.split('-');
         destAideId = Number(parts[1]);
         const dateIndex = parts.indexOf('date');
         const timeIndex = parts.indexOf('time');
-
-        if (timeIndex !== -1 && timeIndex > dateIndex) {
-          destDate = parts.slice(dateIndex + 1, timeIndex).join('-');
-          destTime = parts[timeIndex + 1];
-        } else {
-          destDate = parts.slice(dateIndex + 1).join('-');
+        if (dateIndex !== -1) {
+          if (timeIndex !== -1) {
+            destDate = parts.slice(dateIndex + 1, timeIndex).join('-');
+            destTime = parts[timeIndex + 1];
+          } else {
+            destDate = parts.slice(dateIndex + 1).join('-');
+          }
         }
       }
     } else if (destDroppableId.startsWith('aide-') && destDroppableId.includes('-slot-')) {
@@ -213,8 +221,14 @@ export function useDragDrop(options?: UseDragDropOptions) {
           destDate = options?.defaultDate || null;
         }
       }
+    } else if (destDroppableId.startsWith('aide-')) {
+      // Handle simple "aide-{id}" format
+      const idPart = destDroppableId.replace('aide-', '');
+      destAideId = idPart ? Number(idPart) : null;
     } else {
-      destAideId = Number(destDroppableId);
+      // Fallback for numeric IDs or other formats
+      const parsedNum = Number(destDroppableId);
+      destAideId = Number.isFinite(parsedNum) ? parsedNum : null;
     }
 
     console.log('[useDragDrop] Parsed destination', { destAideId, destDate, destTime });
