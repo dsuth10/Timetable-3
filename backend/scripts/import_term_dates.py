@@ -106,13 +106,13 @@ def import_dates(directory):
         print(f"Import complete. Total records processed: {total_records}")
 
 if __name__ == '__main__':
-    # Adjust path to where the user said the files are: rough-ideas/Date_Information
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Script is in backend/scripts/import_term_dates.py
+    # We need to go up 3 levels to reach the project root: scripts -> backend -> project_root
+    scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(scripts_dir)
+    project_root = os.path.dirname(backend_dir)
+    
     target_dir = os.path.join(project_root, 'rough-ideas', 'Date_Information')
     
-    if not os.path.exists(target_dir):
-        # Fallback to the known path from user request
-        target_dir = r'c:\Users\dsuth\Documents\Code Projects\Timetable-3\rough-ideas\Date_Information'
-        
     import_dates(target_dir)
 
