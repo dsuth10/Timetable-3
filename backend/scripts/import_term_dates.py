@@ -11,7 +11,8 @@ backend_dir = os.path.dirname(current_dir)
 if backend_dir not in sys.path:
     sys.path.append(backend_dir)
 
-from api import create_app, db
+from api import create_app
+from api.models import db
 from api.models.term_week import TermWeek
 
 def parse_term_week(week_term_str):
