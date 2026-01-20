@@ -239,21 +239,22 @@ export default function Schedule() {
   const refreshData = useCallback(() => {
     setLoading(true);
     setError(undefined);
-    assignmentsApi.weeklyMatrix(selectedWeekStartISO)
-      .then(processMatrixResponse)
-      .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
-      .finally(() => {
-        setLoading(false);
-        setRefreshTrigger(prev => prev + 1);
-      });
 
-    // Force refresh absences for all visible/relevant aides
+    // Refresh absences
     if (aides.length) {
       const targets = viewMode === 'CLASS' ? aides : aides.filter(a => visibleAideIds.has(a.id));
       targets.forEach(aide => {
         listForAide(aide.id).catch(() => undefined);
       });
     }
+
+    return assignmentsApi.weeklyMatrix(selectedWeekStartISO)
+      .then(processMatrixResponse)
+      .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
+      .finally(() => {
+        setLoading(false);
+        setRefreshTrigger(prev => prev + 1);
+      });
   }, [selectedWeekStartISO, processMatrixResponse, aides, viewMode, visibleAideIds, listForAide]);
 
   // Initial load and week change
@@ -826,16 +827,16 @@ export default function Schedule() {
           // Refresh data in parallel, but handle errors gracefully
           try {
             await Promise.all([
-              refreshData().catch(err => {
+              refreshData().catch((err: any) => {
                 console.error('Failed to refresh assignments:', err);
                 // Don't throw - allow tasks refresh to continue
               }),
-              fetchTasks().catch(err => {
+              fetchTasks().catch((err: any) => {
                 console.error('Failed to refresh tasks:', err);
                 // Don't throw - allow assignments refresh to continue
               })
             ]);
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error refreshing data after task creation:', err);
             // Still set error state so user knows something went wrong
             setError('Task created but failed to refresh data. Please refresh the page.');
