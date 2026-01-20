@@ -2,6 +2,7 @@
 Absences routes: create/delete with Relief Pool cascade
 """
 from flask import Blueprint, request
+from sqlalchemy import select
 from datetime import date as dt_date
 from api.models import db
 from api.models.teacher_aide import TeacherAide
