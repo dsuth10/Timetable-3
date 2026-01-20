@@ -9,9 +9,10 @@ type Props = {
     date: string;
     onEditAide: (aide: TeacherAide) => void;
     onMarkAbsence?: (aideId: number) => void;
+    onRemoveAbsence?: (aideId: number) => void;
 };
 
-export default function DailyAideSidebar({ aides, date, onEditAide, onMarkAbsence }: Props) {
+export default function DailyAideSidebar({ aides, date, onEditAide, onMarkAbsence, onRemoveAbsence }: Props) {
     const navigate = useNavigate();
 
     const handleViewSchedule = (aideId: number) => {
@@ -122,6 +123,7 @@ export default function DailyAideSidebar({ aides, date, onEditAide, onMarkAbsenc
                                 label="Absent"
                                 color="error"
                                 size="small"
+                                onDelete={onRemoveAbsence ? () => onRemoveAbsence(aide.id) : undefined}
                                 sx={{ alignSelf: 'start', mt: 0.5, ml: 4 }}
                             />
                         )}

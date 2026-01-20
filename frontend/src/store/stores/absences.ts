@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
+import { useSyncStore } from './syncStore';
 import type { Absence, ID } from '../../types';
 
 type AbsencesState = {
@@ -19,6 +20,7 @@ export const useAbsencesStore = create<AbsencesState>((set, get) => ({
     const created = { id: res.data.id, aide_id: res.data.aide_id, date: res.data.date, reason: res.data.reason } as Absence;
     const current = get().byAide[payload.aide_id] || [];
     set({ byAide: { ...get().byAide, [payload.aide_id]: [...current, created] } });
+    useSyncStore.getState().triggerGlobalRefresh();
     return created;
   },
   async listForAide(aideId) {
@@ -37,6 +39,7 @@ export const useAbsencesStore = create<AbsencesState>((set, get) => ({
       next[key] = curr[key].filter((a) => a.id !== id);
     }
     set({ byAide: next });
+    useSyncStore.getState().triggerGlobalRefresh();
   },
 }));
 

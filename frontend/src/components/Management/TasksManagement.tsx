@@ -27,6 +27,7 @@ import {
   Sort,
 } from '@mui/icons-material';
 import { useTasksStore } from '../../store/stores/tasks';
+import { useSyncStore } from '../../store/stores/syncStore';
 import { assignmentsApi } from '../../services/assignmentsApi';
 import { categoryColors } from '../../theme/theme';
 import LoadingState from '../common/LoadingState';
@@ -60,6 +61,19 @@ export default function TasksManagement({ refreshTrigger, onChanged }: Props) {
     assignmentsApi.assigned()
       .then(setAssignments)
       .catch(() => undefined);
+  }, [fetchTasks]);
+
+  // Global Sync Subscription
+  useEffect(() => {
+    const unsub = useSyncStore.subscribe((state, prevState) => {
+      if (state.version !== prevState.version) {
+        fetchTasks().catch(() => undefined);
+        assignmentsApi.assigned()
+          .then(setAssignments)
+          .catch(() => undefined);
+      }
+    });
+    return unsub;
   }, [fetchTasks]);
 
   // Refetch assigned list whenever the schedule refresh trigger changes

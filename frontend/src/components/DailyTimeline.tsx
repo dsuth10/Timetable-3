@@ -8,9 +8,10 @@ interface DailyTimelineProps {
   onTaskDoubleClick?: (assignment: Assignment) => void;
   onEditAide?: (aide: any) => void;
   onMarkAbsence?: (aideId: number) => void;
+  onRemoveAbsence?: (aideId: number) => void;
 }
 
-export default function DailyTimeline({ data, date, onTaskDoubleClick, onEditAide, onMarkAbsence }: DailyTimelineProps) {
+export default function DailyTimeline({ data, date, onTaskDoubleClick, onEditAide, onMarkAbsence, onRemoveAbsence }: DailyTimelineProps) {
   const { aides, timeline_config } = data;
 
   return (
@@ -88,6 +89,7 @@ export default function DailyTimeline({ data, date, onTaskDoubleClick, onEditAid
                 onTaskDoubleClick={onTaskDoubleClick}
                 onEditAide={onEditAide}
                 onMarkAbsence={onMarkAbsence}
+                onRemoveAbsence={onRemoveAbsence}
               />
             ))}
           </Box>

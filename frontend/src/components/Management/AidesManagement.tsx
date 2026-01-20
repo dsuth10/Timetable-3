@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Edit, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { useAidesStore } from '../../store/stores/aides';
+import { useSyncStore } from '../../store/stores/syncStore';
 import LoadingState from '../common/LoadingState';
 import AideFormModal from '../AideFormModal';
 import { aidesApi } from '../../services/aidesApi';
@@ -54,6 +55,16 @@ export default function AidesManagement({ onAddAide: _onAddAide, onChanged }: Ai
 
   useEffect(() => {
     fetchAides({ includeAvailability: true }).catch(() => undefined);
+  }, [fetchAides]);
+
+  // Global Sync Subscription
+  useEffect(() => {
+    const unsub = useSyncStore.subscribe((state, prevState) => {
+      if (state.version !== prevState.version) {
+        fetchAides({ includeAvailability: true }).catch(() => undefined);
+      }
+    });
+    return unsub;
   }, [fetchAides]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {

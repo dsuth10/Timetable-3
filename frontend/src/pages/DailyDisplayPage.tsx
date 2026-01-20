@@ -24,7 +24,9 @@ import BackupManagement from '../components/Management/BackupManagement';
 import DailyAideSidebar from '../components/DailyAideSidebar';
 import AideFormModal from '../components/AideFormModal';
 import AbsenceModal from '../components/AbsenceModal';
+import { useAbsencesStore } from '../store/stores/absences';
 import { useDragDrop } from '../hooks/useDragDrop';
+import { useSyncStore } from '../store/stores/syncStore';
 import { useDailyView } from '../hooks/useDailyView';
 import { useAssignTask } from '../hooks/useAssignTask';
 import type { Task, Assignment } from '../types';
@@ -36,6 +38,7 @@ export default function DailyDisplayPage() {
   const { data, isLoading: loading, error, refetch: fetchDailyData } = useDailyView(dateParam);
   const assignTaskMutation = useAssignTask();
   const { fetchTasks } = useTasksStore();
+  const absencesStore = useAbsencesStore();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAssignment, setPendingAssignment] = useState<any>(null);
@@ -192,11 +195,21 @@ export default function DailyDisplayPage() {
     fetchTasks();
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     fetchDailyData();
     fetchTasks();
     setRefreshTrigger(prev => prev + 1);
-  };
+  }, [fetchDailyData, fetchTasks]);
+
+  // Sync with global changes (tasks, absences, assignments etc)
+  useEffect(() => {
+    const unsub = useSyncStore.subscribe((state, prevState) => {
+      if (state.version !== prevState.version) {
+        handleRefresh();
+      }
+    });
+    return unsub;
+  }, [handleRefresh]);
 
   const handleEditAide = (aide: any) => {
     setEditingAide(aide);
@@ -221,6 +234,32 @@ export default function DailyDisplayPage() {
     setSelectedAbsenceDate(null);
     handleRefresh();
   }, [handleRefresh]);
+
+  const handleRemoveAbsence = useCallback(async (aideId: number) => {
+    // We need to find the absence ID for this aide and date
+    // DailyView returns aide status but might not return the absence ID directly in the 'aides' array.
+    // However, the absencesStore has byAide which we can use.
+    const aideAbsences = absencesStore.byAide[aideId] || [];
+    const absence = aideAbsences.find(a => a.date === dateParam);
+
+    if (absence) {
+      try {
+        await absencesStore.delete(absence.id);
+        // handleRefresh will be triggered by the store subscription effect above
+      } catch (e) {
+        console.error('Failed to remove absence', e);
+      }
+    } else {
+      // Fallback: if not in store, maybe it's only in the data object
+      // We might need to fetch absences if they aren't loaded
+      await absencesStore.listForAide(aideId);
+      const reFetched = useAbsencesStore.getState().byAide[aideId] || [];
+      const found = reFetched.find(a => a.date === dateParam);
+      if (found) {
+        await absencesStore.delete(found.id);
+      }
+    }
+  }, [absencesStore, dateParam]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
@@ -249,6 +288,7 @@ export default function DailyDisplayPage() {
               date={dateParam}
               onEditAide={handleEditAide}
               onMarkAbsence={handleMarkAbsence}
+              onRemoveAbsence={handleRemoveAbsence}
             />
           )}
 
@@ -265,6 +305,7 @@ export default function DailyDisplayPage() {
                 onTaskDoubleClick={handleTaskDoubleClick}
                 onEditAide={handleEditAide}
                 onMarkAbsence={handleMarkAbsence}
+                onRemoveAbsence={handleRemoveAbsence}
               />
             ) : null}
           </Box>

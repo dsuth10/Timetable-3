@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
 import { tasksApi, type QuickCreateTaskResponse } from '../../services/tasksApi';
+import { useSyncStore } from './syncStore';
 import type { Task, ID } from '../../types';
 
 type TasksState = {
@@ -61,11 +62,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
       const updatedTask = await tasksApi.update(id, payload);
 
-      // Sync with server response
       const tasksFinal = get().tasks.map(task =>
         task.id === id ? updatedTask : task
       );
       set({ tasks: tasksFinal });
+      useSyncStore.getState().triggerGlobalRefresh();
 
       return updatedTask;
     } catch (e: any) {
@@ -92,6 +93,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
         await tasksApi.delete(id, reset);
         // No need to re-fetch on success!
+        useSyncStore.getState().triggerGlobalRefresh();
       }
     } catch (e: any) {
       // Rollback on error

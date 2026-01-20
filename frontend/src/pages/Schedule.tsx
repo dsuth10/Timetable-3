@@ -18,6 +18,7 @@ import { useTasksStore } from '../store/stores/tasks';
 import { useAssignmentsStore } from '../store/stores/assignments';
 import { assignmentsApi } from '../services/assignmentsApi';
 import { calendarApi } from '../services/calendarApi';
+import { useSyncStore } from '../store/stores/syncStore';
 import { downloadBlob } from '../utils/download';
 import { TimetableGrid } from '../components/TimetableGrid/TimetableGrid';
 import { QuickCreateTaskModal } from '../components/TimetableGrid/QuickCreateTaskModal';
@@ -199,56 +200,91 @@ export default function Schedule() {
     }
   }, [searchParams, setWeekStart, setViewMode, setSelectedClassId]);
 
+  // Fetch tasks and aides on mount
   useEffect(() => {
-    fetchAides({ includeAvailability: true }).catch(() => undefined);
     fetchTasks().catch(() => undefined);
+    fetchAides({ includeAvailability: true }).catch(() => undefined);
     fetchClassrooms().catch(() => undefined);
-  }, [fetchAides, fetchTasks, fetchClassrooms]);
+  }, [fetchTasks, fetchAides, fetchClassrooms]);
 
-  useEffect(() => {
+  const processMatrixResponse = useCallback((matrix: any) => {
+    const byAide: Record<string, Assignment[]> = {};
+
+    if (matrix?.matrix) {
+      // Update global time config
+      if (matrix.timeline_config) {
+        setScheduleConfig(matrix.timeline_config);
+      }
+
+      Object.entries(matrix.matrix).forEach(([aideId, days]) => {
+        const aideAssignments: Assignment[] = [];
+        Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
+          if (Array.isArray(assignments)) {
+            aideAssignments.push(...assignments);
+          }
+        });
+        byAide[aideId] = aideAssignments;
+      });
+    }
+
+    if (matrix?.term_info) {
+      setTermInfo(matrix.term_info);
+    } else {
+      setTermInfo(null);
+    }
+
+    setAssignmentsByAide(byAide);
+  }, [setScheduleConfig]);
+
+  const refreshData = useCallback(() => {
     setLoading(true);
     setError(undefined);
     assignmentsApi.weeklyMatrix(selectedWeekStartISO)
-      .then((matrix: any) => {
-        const byAide: Record<string, Assignment[]> = {};
-
-        if (matrix?.matrix) {
-          // Update global time config
-          if (matrix.timeline_config) {
-            setScheduleConfig(matrix.timeline_config);
-          }
-
-          Object.entries(matrix.matrix).forEach(([aideId, days]) => {
-            const aideAssignments: Assignment[] = [];
-            Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
-              if (Array.isArray(assignments)) {
-                aideAssignments.push(...assignments);
-              }
-            });
-            byAide[aideId] = aideAssignments;
-          });
-        }
-
-        if (matrix?.term_info) {
-          setTermInfo(matrix.term_info);
-        } else {
-          setTermInfo(null);
-        }
-
-        setAssignmentsByAide(byAide);
-      })
+      .then(processMatrixResponse)
       .catch((e: any) => setError(e.message || 'Failed to load weekly matrix'))
-      .finally(() => setLoading(false));
-  }, [selectedWeekStartISO]);
+      .finally(() => {
+        setLoading(false);
+        setRefreshTrigger(prev => prev + 1);
+      });
+
+    // Force refresh absences for all visible/relevant aides
+    if (aides.length) {
+      const targets = viewMode === 'CLASS' ? aides : aides.filter(a => visibleAideIds.has(a.id));
+      targets.forEach(aide => {
+        listForAide(aide.id).catch(() => undefined);
+      });
+    }
+  }, [selectedWeekStartISO, processMatrixResponse, aides, viewMode, visibleAideIds, listForAide]);
+
+  // Initial load and week change
+  useEffect(() => {
+    refreshData();
+  }, [selectedWeekStartISO, refreshData]);
+
+  // Global Sync Subscription
+  useEffect(() => {
+    const unsub = useSyncStore.subscribe((state, prevState) => {
+      if (state.version !== prevState.version) {
+        // Refresh all data
+        refreshData();
+        fetchTasks().catch(() => undefined);
+        fetchAides({ includeAvailability: true }).catch(() => undefined);
+      }
+    });
+    return unsub;
+  }, [refreshData, fetchTasks, fetchAides]);
 
   // Preload absences for all visible aides to enable fast switching
   // Preload absences: for CLASS view load all, for AIDE view load visible
+  // Preload absences effect - still useful for initial loads as sidebar toggles
   useEffect(() => {
     if (!aides.length) return;
 
     const targets = viewMode === 'CLASS' ? aides : aides.filter(a => visibleAideIds.has(a.id));
 
     targets.forEach(aide => {
+      // Only fetch if not already loaded to avoid double-fetching on mount,
+      // but Global Sync will force re-fetch via refreshData above.
       if (!absencesByAide[aide.id]) {
         listForAide(aide.id).catch(() => undefined);
       }
@@ -391,44 +427,7 @@ export default function Schedule() {
     }
   };
 
-  const refreshData = async () => {
-    setLoading(true);
-    try {
-      const matrix = await assignmentsApi.weeklyMatrix(selectedWeekStartISO);
-      const byAide: Record<string, Assignment[]> = {};
 
-      if (matrix?.matrix) {
-        // Update global time config
-        if (matrix.timeline_config) {
-          setScheduleConfig(matrix.timeline_config);
-        }
-        Object.entries(matrix.matrix).forEach(([aideId, days]) => {
-          const aideAssignments: Assignment[] = [];
-          Object.entries(days as Record<string, any>).forEach(([, assignments]) => {
-            if (Array.isArray(assignments)) {
-              aideAssignments.push(...assignments);
-            }
-          });
-          byAide[aideId] = aideAssignments;
-        });
-      }
-
-      if (matrix?.term_info) {
-        setTermInfo(matrix.term_info);
-      } else {
-        setTermInfo(null);
-      }
-
-      setAssignmentsByAide(byAide);
-      // Trigger refresh of unassigned panel
-      setRefreshTrigger(prev => prev + 1);
-    } catch (e: any) {
-      console.error('Failed to refresh schedule data:', e);
-      setError(e.message || 'Failed to refresh data');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleExportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setExportAnchorEl(event.currentTarget);

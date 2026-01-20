@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
+import { useSyncStore } from './syncStore';
 import type { TeacherAide, Availability } from '../../types';
 
 type AidesState = {
@@ -31,14 +32,16 @@ export const useAidesStore = create<AidesState>((set, get) => ({
     const res = await api.post('/aides', payload);
     const aide = res.data as TeacherAide;
     set({ aides: [...get().aides, aide] });
+    useSyncStore.getState().triggerGlobalRefresh();
     return aide;
   },
   async updateAide(id, payload) {
     const res = await api.put(`/aides/${id}`, payload);
     const updatedAide = res.data as TeacherAide;
-    set({ 
+    set({
       aides: get().aides.map(aide => aide.id === id ? updatedAide : aide)
     });
+    useSyncStore.getState().triggerGlobalRefresh();
     return updatedAide;
   },
   async getAvailability(aideId: number) {

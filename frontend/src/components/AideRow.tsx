@@ -17,9 +17,10 @@ interface AideRowProps {
   onTaskDoubleClick?: (assignment: Assignment) => void;
   onEditAide?: (aide: any) => void;
   onMarkAbsence?: (aideId: number) => void;
+  onRemoveAbsence?: (aideId: number) => void;
 }
 
-export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick, onEditAide, onMarkAbsence }: AideRowProps) {
+export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick, onEditAide, onMarkAbsence, onRemoveAbsence }: AideRowProps) {
   const { timeToMinutes } = useTimeUtils();
 
   const timelineStart = timelineConfig.slots.length > 0 ? timeToMinutes(timelineConfig.slots[0].start_time || "08:50:00") : 0;
@@ -270,6 +271,24 @@ export default function AideRow({ aide, date, timelineConfig, onTaskDoubleClick,
             }}
           >
             <EventBusy sx={{ fontSize: 40, color: 'error.light', opacity: 0.5 }} />
+            {onRemoveAbsence && (
+              <Box sx={{ position: 'absolute', top: 8, right: 8, pointerEvents: 'auto' }}>
+                <Tooltip title="Undo Absence">
+                  <IconButton
+                    size="small"
+                    onClick={() => onRemoveAbsence(aide.id)}
+                    sx={{
+                      bgcolor: 'error.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'error.dark' },
+                      boxShadow: 2
+                    }}
+                  >
+                    <EventBusy sx={{ fontSize: '1rem' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
           </Box>
         )}
 

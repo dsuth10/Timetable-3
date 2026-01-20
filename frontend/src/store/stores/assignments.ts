@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../../services/api';
+import { useSyncStore } from './syncStore';
 import type { Assignment, ID } from '../../types';
 import type { QuickCreateTaskResponse } from '../../services/tasksApi';
 
@@ -34,16 +35,19 @@ export const useAssignmentsStore = create<AssignmentsState>((set, get) => ({
     const res = await api.post('/assignments', payload);
     const created = res.data as Assignment;
     set({ items: [...get().items, created] });
+    useSyncStore.getState().triggerGlobalRefresh();
     return created;
   },
   async update(id, payload) {
     const res = await api.put(`/assignments/${id}`, payload);
     const updated = res.data as Assignment;
     set({ items: get().items.map((a) => (a.id === id ? updated : a)) });
+    useSyncStore.getState().triggerGlobalRefresh();
     return updated;
   },
   async batch(payload) {
     const res = await api.post('/assignments/batch', payload);
+    useSyncStore.getState().triggerGlobalRefresh();
     return res.data as { assignments: Assignment[]; conflicts: any[] };
   },
   handleQuickCreate(response) {
