@@ -1,0 +1,497 @@
+Requirement already satisfied: charset-normalizer==3.4.3 in /home/threft/.local/lib/python3.13/site-packages (from -r backend/requirements.txt (line 35)) (3.4.3)
+Collecting openpyxl==3.1.2 (from -r backend/requirements.txt (line 36))
+  Downloading openpyxl-3.1.2-py2.py3-none-any.whl.metadata (2.5 kB)
+Collecting pandas==2.2.0 (from -r backend/requirements.txt (line 37))
+  Downloading pandas-2.2.0.tar.gz (4.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 9.3 MB/s eta 0:00:00
+  Installing build dependencies ... error
+  error: subprocess-exited-with-error
+  
+  × pip subprocess to install build dependencies did not run successfully.
+  │ exit code: 1
+  ╰─> [473 lines of output]
+      Looking in links: /usr/share/pip-wheels, /usr/share/pip-wheels
+      Collecting meson-python==0.13.1
+        Downloading meson_python-0.13.1-py3-none-any.whl.metadata (4.1 kB)
+      Collecting meson==1.2.1
+        Downloading meson-1.2.1-py3-none-any.whl.metadata (1.7 kB)
+      Collecting wheel
+        Downloading wheel-0.45.1-py3-none-any.whl.metadata (2.3 kB)
+      Collecting Cython==3.0.5
+        Downloading Cython-3.0.5-py2.py3-none-any.whl.metadata (3.2 kB)
+      Collecting numpy<=2.0.0.dev0,>1.22.4
+        Downloading numpy-1.26.4.tar.gz (15.8 MB)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.8/15.8 MB 11.1 MB/s eta 0:00:00
+        Installing build dependencies: started
+        Installing build dependencies: finished with status 'done'
+        Getting requirements to build wheel: started
+        Getting requirements to build wheel: finished with status 'done'
+        Installing backend dependencies: started
+        Installing backend dependencies: finished with status 'done'
+        Preparing metadata (pyproject.toml): started
+        Preparing metadata (pyproject.toml): finished with status 'error'
+        error: subprocess-exited-with-error
+      
+        × Preparing metadata (pyproject.toml) did not run successfully.
+        │ exit code: 1
+        ╰─> [438 lines of output]
+            + /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/vendored-meson/meson/meson.py setup /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/.mesonpy-
+4splat3f -Dbuildtype=release -Db_ndebug=if-release -Db_vscrt=md --native-file=/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/.mesonpy-4splat3f/meson-python-native-file.ini
+            The Meson build system
+            Version: 1.2.99
+            Source dir: /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca
+            Build dir: /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/.mesonpy-4splat3f
+            Build type: native build
+            Project name: NumPy
+            Project version: 1.26.4
+            C compiler for the host machine: cc (gcc 11.4.0 "cc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0")
+            C linker for the host machine: cc ld.bfd 2.38
+            C++ compiler for the host machine: c++ (gcc 11.4.0 "c++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0")
+            C++ linker for the host machine: c++ ld.bfd 2.38
+            Cython compiler for the host machine: cython (cython 3.0.12)
+            Host machine cpu family: x86_64
+            Host machine cpu: x86_64
+            Program python found: YES (/usr/local/bin/python3.13)
+            Found pkg-config: /usr/bin/pkg-config (0.29.2)
+            Run-time dependency python found: YES 3.13
+            Has header "Python.h" with dependency python-3.13: YES
+            Compiler for C supports arguments -fno-strict-aliasing: YES
+            Test features "SSE SSE2 SSE3" : Supported
+            Test features "SSSE3" : Supported
+            Test features "SSE41" : Supported
+            Test features "POPCNT" : Supported
+            Test features "SSE42" : Supported
+            Test features "AVX" : Supported
+            Test features "F16C" : Supported
+            Test features "FMA3" : Supported
+            Test features "AVX2" : Supported
+            Test features "AVX512F" : Supported
+            Test features "AVX512CD" : Supported
+            Test features "AVX512_KNL" : Supported
+            Test features "AVX512_KNM" : Supported
+            Test features "AVX512_SKX" : Supported
+            Test features "AVX512_CLX" : Supported
+            Test features "AVX512_CNL" : Supported
+            Test features "AVX512_ICL" : Supported
+            Test features "AVX512_SPR" : Unsupported due to Arguments "-msse, -msse2, -msse3, -mssse3, -msse4.1, -mpopcnt, -msse4.2, -mavx, -mf16c, -mfma, -mavx2, -mno-mmx, -mavx512f, -mavx512cd, -mavx512vl, -mavx512bw, -mavx512dq, -mavx512vnni, -mavx512ifma, -mavx512vbmi, -mavx512vbmi2, -mavx512bitalg, -mavx512vpopcntdq, -mavx512fp16" are not supported
+            Configuring npy_cpu_dispatch_config.h using configuration
+            Message:
+            CPU Optimization Options
+              baseline:
+                Requested : min
+                Enabled   : SSE SSE2 SSE3
+              dispatch:
+                Requested : max -xop -fma4
+                Enabled   : SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+      
+            Library m found: YES
+            Run-time dependency scipy-openblas found: NO (tried pkgconfig)
+            Run-time dependency mkl found: NO (tried pkgconfig and system)
+            Run-time dependency mkl found: NO (tried pkgconfig and system)
+            Run-time dependency accelerate found: NO (tried system)
+            Found CMake: /usr/bin/cmake (3.22.1)
+            WARNING: CMake Toolchain: Failed to determine CMake compilers state
+            Run-time dependency openblas found: NO (tried pkgconfig, pkgconfig, pkgconfig, system and cmake)
+            Run-time dependency flexiblas found: NO (tried pkgconfig and cmake)
+            Run-time dependency blis found: NO (tried pkgconfig and cmake)
+            Run-time dependency blas found: YES 3.10.3
+            ../numpy/meson.build:124: WARNING: Project targets '>=1.2.99' but uses feature introduced in '1.3.0': dep 'blas' custom lookup.
+            Message: BLAS symbol suffix:
+            Run-time dependency mkl found: NO (tried pkgconfig and system)
+            Run-time dependency accelerate found: NO (tried system)
+            Run-time dependency openblas found: NO (tried pkgconfig, pkgconfig, pkgconfig, system and cmake)
+            Run-time dependency flexiblas found: NO (tried pkgconfig and cmake)
+            Run-time dependency lapack found: YES 3.10.3
+            ../numpy/meson.build:187: WARNING: Project targets '>=1.2.99' but uses feature introduced in '1.3.0': dep 'lapack' custom lookup.
+            Program _build_utils/process_src_template.py found: YES (/usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py)
+            Program _build_utils/tempita.py found: YES (/usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/tempita.py)
+            Configuring __config__.py using configuration
+            Checking for size of "short" : 2
+            Checking for size of "int" : 4
+            Checking for size of "long" : 8
+            Checking for size of "long long" : 8
+            Checking for size of "float" : 4
+            Checking for size of "double" : 8
+            Checking for size of "long double" : 16
+            Checking for size of "off_t" : 8
+            Checking for size of "Py_intptr_t" with dependency python-3.13: 8
+            Checking for size of "PY_LONG_LONG" with dependency python-3.13: 8
+            Has header "complex.h" : YES
+            Checking for type "complex float" : YES
+            Checking for size of "struct {float __x; float __y;}" : 8
+            Checking for type "complex double" : YES
+            Checking for size of "struct {double __x; double __y;}" : 16
+            Checking for type "complex long double" : YES
+            Checking for size of "struct {long double __x; long double __y;}" : 32
+            Checking for function "sin" with dependency -lm: YES
+            Checking for function "cos" with dependency -lm: YES
+            Checking for function "tan" with dependency -lm: YES
+            Checking for function "sinh" with dependency -lm: YES
+            Checking for function "cosh" with dependency -lm: YES
+            Checking for function "tanh" with dependency -lm: YES
+            Checking for function "fabs" with dependency -lm: YES
+            Checking for function "floor" with dependency -lm: YES
+            Checking for function "ceil" with dependency -lm: YES
+            Checking for function "sqrt" with dependency -lm: YES
+            Checking for function "log10" with dependency -lm: YES
+            Checking for function "log" with dependency -lm: YES
+            Checking for function "exp" with dependency -lm: YES
+            Checking for function "asin" with dependency -lm: YES
+            Checking for function "acos" with dependency -lm: YES
+            Checking for function "atan" with dependency -lm: YES
+            Checking for function "fmod" with dependency -lm: YES
+            Checking for function "modf" with dependency -lm: YES
+            Checking for function "frexp" with dependency -lm: YES
+            Checking for function "ldexp" with dependency -lm: YES
+            Checking for function "expm1" with dependency -lm: YES
+            Checking for function "log1p" with dependency -lm: YES
+            Checking for function "acosh" with dependency -lm: YES
+            Checking for function "asinh" with dependency -lm: YES
+            Checking for function "atanh" with dependency -lm: YES
+            Checking for function "rint" with dependency -lm: YES
+            Checking for function "trunc" with dependency -lm: YES
+            Checking for function "exp2" with dependency -lm: YES
+            Checking for function "copysign" with dependency -lm: YES
+            Checking for function "nextafter" with dependency -lm: YES
+            Checking for function "cbrt" with dependency -lm: YES
+            Checking for function "log2" with dependency -lm: YES
+            Checking for function "pow" with dependency -lm: YES
+            Checking for function "hypot" with dependency -lm: YES
+            Checking for function "atan2" with dependency -lm: YES
+            Checking for function "csin" with dependency -lm: YES
+            Checking for function "csinh" with dependency -lm: YES
+            Checking for function "ccos" with dependency -lm: YES
+            Checking for function "ccosh" with dependency -lm: YES
+            Checking for function "ctan" with dependency -lm: YES
+            Checking for function "ctanh" with dependency -lm: YES
+            Checking for function "creal" with dependency -lm: YES
+            Checking for function "cimag" with dependency -lm: YES
+            Checking for function "conj" with dependency -lm: YES
+            Checking for function "strtoll" : YES
+            Checking for function "strtoull" : YES
+            Checking for function "cabs" with dependency -lm: YES
+            Checking for function "cabsf" with dependency -lm: YES
+            Checking for function "cabsl" with dependency -lm: YES
+            Checking for function "cacos" with dependency -lm: YES
+            Checking for function "cacosf" with dependency -lm: YES
+            Checking for function "cacosl" with dependency -lm: YES
+            Checking for function "cacosh" with dependency -lm: YES
+            Checking for function "cacoshf" with dependency -lm: YES
+            Checking for function "cacoshl" with dependency -lm: YES
+            Checking for function "carg" with dependency -lm: YES
+            Checking for function "cargf" with dependency -lm: YES
+            Checking for function "cargl" with dependency -lm: YES
+            Checking for function "casin" with dependency -lm: YES
+            Checking for function "casinf" with dependency -lm: YES
+            Checking for function "casinl" with dependency -lm: YES
+            Checking for function "casinh" with dependency -lm: YES
+            Checking for function "casinhf" with dependency -lm: YES
+            Checking for function "casinhl" with dependency -lm: YES
+            Checking for function "catan" with dependency -lm: YES
+            Checking for function "catanf" with dependency -lm: YES
+            Checking for function "catanl" with dependency -lm: YES
+            Checking for function "catanh" with dependency -lm: YES
+            Checking for function "catanhf" with dependency -lm: YES
+            Checking for function "catanhl" with dependency -lm: YES
+            Checking for function "cexp" with dependency -lm: YES
+            Checking for function "cexpf" with dependency -lm: YES
+            Checking for function "cexpl" with dependency -lm: YES
+            Checking for function "clog" with dependency -lm: YES
+            Checking for function "clogf" with dependency -lm: YES
+            Checking for function "clogl" with dependency -lm: YES
+            Checking for function "cpow" with dependency -lm: YES
+            Checking for function "cpowf" with dependency -lm: YES
+            Checking for function "cpowl" with dependency -lm: YES
+            Checking for function "csqrt" with dependency -lm: YES
+            Checking for function "csqrtf" with dependency -lm: YES
+            Checking for function "csqrtl" with dependency -lm: YES
+            Checking for function "csin" with dependency -lm: YES (cached)
+            Checking for function "csinf" with dependency -lm: YES
+            Checking for function "csinl" with dependency -lm: YES
+            Checking for function "csinh" with dependency -lm: YES (cached)
+            Checking for function "csinhf" with dependency -lm: YES
+            Checking for function "csinhl" with dependency -lm: YES
+            Checking for function "ccos" with dependency -lm: YES (cached)
+            Checking for function "ccosf" with dependency -lm: YES
+            Checking for function "ccosl" with dependency -lm: YES
+            Checking for function "ccosh" with dependency -lm: YES (cached)
+            Checking for function "ccoshf" with dependency -lm: YES
+            Checking for function "ccoshl" with dependency -lm: YES
+            Checking for function "ctan" with dependency -lm: YES (cached)
+            Checking for function "ctanf" with dependency -lm: YES
+            Checking for function "ctanl" with dependency -lm: YES
+            Checking for function "ctanh" with dependency -lm: YES (cached)
+            Checking for function "ctanhf" with dependency -lm: YES
+            Checking for function "ctanhl" with dependency -lm: YES
+            Checking for function "isfinite" with dependency -lm: YES
+            Header "Python.h" has symbol "isfinite" with dependency python-3.13: YES
+            Checking for function "isinf" with dependency -lm: YES
+            Header "Python.h" has symbol "isinf" with dependency python-3.13: YES
+            Checking for function "isnan" with dependency -lm: YES
+            Header "Python.h" has symbol "isnan" with dependency python-3.13: YES
+            Checking for function "signbit" with dependency -lm: YES
+            Header "Python.h" has symbol "signbit" with dependency python-3.13: YES
+            Checking for function "fallocate" : YES
+            Header "Python.h" has symbol "HAVE_FTELLO" with dependency python-3.13: YES
+            Header "Python.h" has symbol "HAVE_FSEEKO" with dependency python-3.13: YES
+            Checking for function "backtrace" : YES
+            Checking for function "madvise" : YES
+            Has header "features.h" : YES
+            Has header "xlocale.h" : NO
+            Has header "dlfcn.h" : YES
+            Has header "execinfo.h" : YES
+            Has header "libunwind.h" : YES
+            Has header "sys/mman.h" : YES
+            Checking for function "strtold_l" : YES
+            Compiler for C supports arguments -O3: YES
+            Has header "endian.h" : YES
+            Has header "sys/endian.h" : NO
+            Header "inttypes.h" has symbol "PRIdPTR" : YES
+            Compiler for C supports function attribute visibility:hidden: YES
+            Configuring config.h using configuration
+            Configuring _numpyconfig.h using configuration
+            Configuring npymath.ini using configuration
+            Configuring mlib.ini using configuration
+            Generating multi-targets for "_umath_tests.dispatch.h"
+              Enabled targets: AVX2, SSE41, baseline
+            Generating multi-targets for "argfunc.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX2, SSE42, baseline
+            Generating multi-targets for "simd_qsort.dispatch.h"
+              Enabled targets: AVX512_SKX
+            Generating multi-targets for "simd_qsort_16bit.dispatch.h"
+              Enabled targets: AVX512_ICL
+            Generating multi-targets for "loops_arithm_fp.dispatch.h"
+              Enabled targets: FMA3__AVX2, baseline
+            Generating multi-targets for "loops_arithmetic.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX512F, AVX2, SSE41, baseline
+            Generating multi-targets for "loops_comparison.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX512F, AVX2, SSE42, baseline
+            Generating multi-targets for "loops_exponent_log.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX512F, FMA3__AVX2, baseline
+            Generating multi-targets for "loops_hyperbolic.dispatch.h"
+              Enabled targets: AVX512_SKX, FMA3__AVX2, baseline
+            Generating multi-targets for "loops_logical.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX2, baseline
+            Generating multi-targets for "loops_minmax.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX2, baseline
+            Generating multi-targets for "loops_modulo.dispatch.h"
+              Enabled targets: baseline
+            Generating multi-targets for "loops_trigonometric.dispatch.h"
+              Enabled targets: AVX512F, FMA3__AVX2, baseline
+            Generating multi-targets for "loops_umath_fp.dispatch.h"
+              Enabled targets: AVX512_SKX, baseline
+            Generating multi-targets for "loops_unary.dispatch.h"
+              Enabled targets: AVX512_SKX, AVX2, baseline
+            Generating multi-targets for "loops_unary_fp.dispatch.h"
+              Enabled targets: SSE41, baseline
+            Generating multi-targets for "loops_unary_fp_le.dispatch.h"
+              Enabled targets: SSE41, baseline
+            Generating multi-targets for "loops_unary_complex.dispatch.h"
+              Enabled targets: AVX512F, FMA3__AVX2, baseline
+            Generating multi-targets for "loops_autovec.dispatch.h"
+              Enabled targets: AVX2, baseline
+            Generating multi-targets for "_simd.dispatch.h"
+              Enabled targets: SSE42, AVX2, FMA3, FMA3__AVX2, AVX512F, AVX512_SKX, baseline
+            Build targets in project: 100
+            WARNING: Project specifies a minimum meson_version '>=1.2.99' but uses features which were added in newer versions:
+             * 1.3.0: {'dep 'blas' custom lookup', 'dep 'lapack' custom lookup'}
+      
+            NumPy 1.26.4
+      
+              User defined options
+                Native files: /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/.mesonpy-4splat3f/meson-python-native-file.ini
+                buildtype   : release
+                b_ndebug    : if-release
+                b_vscrt     : md
+      
+            Found ninja-1.13.0.git.kitware.jobserver-pipe-1 at /tmp/pip-build-env-l35ukbuf/normal/bin/ninja
+            + /tmp/pip-build-env-l35ukbuf/normal/bin/ninja
+            [1/494] Generating numpy/core/npy_math_internal.h with a custom command
+            [2/494] Generating 'numpy/core/libnpymath.a.p/ieee754.c'
+            [3/494] Generating numpy/core/__umath_generated with a custom command
+            [4/494] Generating numpy/__init__.cython-30.pxd with a custom command
+            [5/494] Generating numpy/__init__.pxd with a custom command
+            [6/494] Generating numpy/__init__.py with a custom command
+            [7/494] Generating 'numpy/core/libnpymath.a.p/npy_math_complex.c'
+            [8/494] Generating 'numpy/core/libargfunc.dispatch.h_baseline.a.p/arraytypes.h'
+            [9/494] Generating 'numpy/core/libargfunc.dispatch.h_baseline.a.p/npy_sort.h'
+            [10/494] Generating 'numpy/core/libargfunc.dispatch.h_baseline.a.p/argfunc.dispatch.c'
+            [11/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX512_SKX.a.p/arraytypes.h'
+            [12/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX512_SKX.a.p/npy_sort.h'
+            [13/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX512_SKX.a.p/argfunc.dispatch.c'
+            [14/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX2.a.p/arraytypes.h'
+            [15/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX2.a.p/npy_sort.h'
+            [16/494] Generating numpy/core/__ufunc_api with a custom command
+            [17/494] Generating 'numpy/core/libargfunc.dispatch.h_AVX2.a.p/argfunc.dispatch.c'
+            [18/494] Generating numpy/core/__multiarray_api with a custom command
+            [19/494] Generating 'numpy/core/libargfunc.dispatch.h_SSE42.a.p/arraytypes.h'
+            [20/494] Generating 'numpy/core/libargfunc.dispatch.h_SSE42.a.p/npy_sort.h'
+            [21/494] Generating 'numpy/core/libargfunc.dispatch.h_SSE42.a.p/argfunc.dispatch.c'
+            [22/494] Generating 'numpy/core/libsimd_qsort.dispatch.h_AVX512_SKX.a.p/arraytypes.h'
+            [23/494] Generating 'numpy/core/libsimd_qsort_16bit.dispatch.h_AVX512_ICL.a.p/arraytypes.h'
+            [24/494] Generating 'numpy/core/libsimd_qsort.dispatch.h_AVX512_SKX.a.p/npy_sort.h'
+            [25/494] Generating 'numpy/core/libsimd_qsort_16bit.dispatch.h_AVX512_ICL.a.p/npy_sort.h'
+            [26/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_baseline.a.p/loops.h'
+            [27/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_baseline.a.p/loops_utils.h'
+            [28/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_baseline.a.p/loops_arithm_fp.dispatch.c'
+            [29/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_FMA3__AVX2.a.p/loops.h'
+            [30/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_FMA3__AVX2.a.p/loops_utils.h'
+            [31/494] Generating 'numpy/core/libloops_arithm_fp.dispatch.h_FMA3__AVX2.a.p/loops_arithm_fp.dispatch.c'
+            [32/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_baseline.a.p/loops_utils.h'
+            [33/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_baseline.a.p/loops.h'
+            [34/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_baseline.a.p/loops_arithmetic.dispatch.c'
+            [35/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512_SKX.a.p/loops.h'
+            [36/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512_SKX.a.p/loops_utils.h'
+            [37/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512_SKX.a.p/loops_arithmetic.dispatch.c'
+            [38/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512F.a.p/loops_utils.h'
+            [39/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512F.a.p/loops.h'
+            [40/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX2.a.p/loops.h'
+            [41/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX2.a.p/loops_utils.h'
+            [42/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX512F.a.p/loops_arithmetic.dispatch.c'
+            [43/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_AVX2.a.p/loops_arithmetic.dispatch.c'
+            [44/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_SSE41.a.p/loops_utils.h'
+            [45/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_SSE41.a.p/loops.h'
+            [46/494] Generating 'numpy/core/libloops_arithmetic.dispatch.h_SSE41.a.p/loops_arithmetic.dispatch.c'
+            [47/494] Generating 'numpy/core/libloops_comparison.dispatch.h_baseline.a.p/loops.h'
+            [48/494] Generating 'numpy/core/libloops_comparison.dispatch.h_baseline.a.p/loops_utils.h'
+            [49/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512_SKX.a.p/loops_utils.h'
+            [50/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512_SKX.a.p/loops.h'
+            [51/494] Generating 'numpy/core/libloops_comparison.dispatch.h_baseline.a.p/loops_comparison.dispatch.c'
+            [52/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512F.a.p/loops_utils.h'
+            [53/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512F.a.p/loops.h'
+            [54/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512_SKX.a.p/loops_comparison.dispatch.c'
+            [55/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX512F.a.p/loops_comparison.dispatch.c'
+            [56/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX2.a.p/loops.h'
+            [57/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX2.a.p/loops_utils.h'
+            [58/494] Generating 'numpy/core/libloops_comparison.dispatch.h_AVX2.a.p/loops_comparison.dispatch.c'
+            [59/494] Generating 'numpy/core/libloops_comparison.dispatch.h_SSE42.a.p/loops.h'
+            [60/494] Generating 'numpy/core/libloops_comparison.dispatch.h_SSE42.a.p/loops_utils.h'
+            [61/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_baseline.a.p/loops.h'
+            [62/494] Generating 'numpy/core/libloops_comparison.dispatch.h_SSE42.a.p/loops_comparison.dispatch.c'
+            [63/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_baseline.a.p/loops_utils.h'
+            [64/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_baseline.a.p/loops_exponent_log.dispatch.c'
+            [65/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512_SKX.a.p/loops_utils.h'
+            [66/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512_SKX.a.p/loops.h'
+            [67/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512_SKX.a.p/loops_exponent_log.dispatch.c'
+            [68/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512F.a.p/loops_utils.h'
+            [69/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512F.a.p/loops.h'
+            [70/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_AVX512F.a.p/loops_exponent_log.dispatch.c'
+            [71/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_FMA3__AVX2.a.p/loops_utils.h'
+            [72/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_FMA3__AVX2.a.p/loops.h'
+            [73/494] Generating 'numpy/core/libloops_exponent_log.dispatch.h_FMA3__AVX2.a.p/loops_exponent_log.dispatch.c'
+            [74/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_baseline.a.p/loops.h'
+            [75/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_baseline.a.p/loops_utils.h'
+            [76/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_baseline.a.p/loops_hyperbolic.dispatch.c'
+            [77/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_AVX512_SKX.a.p/loops.h'
+            [78/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_AVX512_SKX.a.p/loops_utils.h'
+            [79/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_FMA3__AVX2.a.p/loops_utils.h'
+            [80/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_AVX512_SKX.a.p/loops_hyperbolic.dispatch.c'
+            [81/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_FMA3__AVX2.a.p/loops.h'
+            [82/494] Generating 'numpy/core/libloops_hyperbolic.dispatch.h_FMA3__AVX2.a.p/loops_hyperbolic.dispatch.c'
+            [83/494] Generating 'numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops_utils.h'
+            [84/494] Generating 'numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops.h'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops.h
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops.h.src --outfile numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops.h
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            [85/494] Generating 'numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops_logical.dispatch.c'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops_logical.dispatch.c
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops_logical.dispatch.c.src --outfile numpy/core/libloops_logical.dispatch.h_baseline.a.p/loops_logical.dispatch.c
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            [86/494] Generating 'numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops.h'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops.h
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops.h.src --outfile numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops.h
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            [87/494] Generating 'numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_utils.h'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_utils.h
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops_utils.h.src --outfile numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_utils.h
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            [88/494] Generating 'numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_logical.dispatch.c'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_logical.dispatch.c
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops_logical.dispatch.c.src --outfile numpy/core/libloops_logical.dispatch.h_AVX512_SKX.a.p/loops_logical.dispatch.c
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            [89/494] Generating 'numpy/core/libloops_logical.dispatch.h_AVX2.a.p/loops.h'
+            FAILED: [code=1] numpy/core/libloops_logical.dispatch.h_AVX2.a.p/loops.h
+            /usr/local/bin/python3.13 /tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py ../numpy/core/src/umath/loops.h.src --outfile numpy/core/libloops_logical.dispatch.h_AVX2.a.p/loops.h
+            Traceback (most recent call last):
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 67, in <module>
+                main()
+                ~~~~^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 63, in main
+                process_and_write_file(args.infile, outfile_abs)
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+              File "/tmp/pip-install-u5uzgzaq/numpy_5135e8e3e28e4f84bc7e848bb22df4ca/numpy/_build_utils/process_src_template.py", line 33, in process_and_write_file
+                with open(outfile, 'w') as f:
+                     ~~~~^^^^^^^^^^^^^^
+            OSError: [Errno 122] Disk quota exceeded
+            ninja: build stopped: subcommand failed.
+            [end of output]
+      
+        note: This error originates from a subprocess, and is likely not a problem with pip.
+      error: metadata-generation-failed
+      
+      × Encountered error while generating package metadata.
+      ╰─> See above for output.
+      
+      note: This is an issue with the package mentioned above, not pip.
+      hint: See above for details.
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: subprocess-exited-with-error
+
+× pip subprocess to install build dependencies did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.
+11:17 ~/Timetable-3 (main)$ 

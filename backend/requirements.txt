@@ -34,4 +34,3 @@ waitress==3.0.0
 # Encoding Detection
 charset-normalizer==3.4.3
 openpyxl==3.1.2
-pandas==2.2.0

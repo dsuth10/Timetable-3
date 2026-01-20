@@ -1,6 +1,6 @@
 import os
 import sys
-import pandas as pd
+import openpyxl
 import re
 from datetime import datetime
 
@@ -36,6 +36,10 @@ def import_dates(directory):
         db.create_all()
         
         print(f"Scanning directory: {directory}")
+        if not os.path.exists(directory):
+            print(f"Directory not found: {directory}")
+            return
+
         files = [f for f in os.listdir(directory) if f.endswith('.xlsx')]
         
         total_records = 0
@@ -45,24 +49,33 @@ def import_dates(directory):
             print(f"Processing {filename}...")
             
             try:
-                df = pd.read_excel(filepath)
+                wb = openpyxl.load_workbook(filepath, data_only=True)
+                sheet = wb.active
                 
-                # Verify columns
-                required_cols = ['Week/Term', 'Date']
-                if not all(col in df.columns for col in required_cols):
-                    print(f"Skipping {filename}: Missing required columns. Found: {df.columns.tolist()}")
+                # Identify headers
+                headers = [cell.value for cell in sheet[1]]
+                try:
+                    week_term_idx = headers.index('Week/Term')
+                    date_idx = headers.index('Date')
+                except ValueError:
+                    print(f"Skipping {filename}: Missing required columns. Found: {headers}")
                     continue
                 
-                for _, row in df.iterrows():
-                    date_str = row['Date'] # e.g. 27/01/2026
-                    week_term_str = row['Week/Term']
+                # Process rows (start from row 2)
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    if not row[date_idx]:
+                        continue
+                        
+                    date_val = row[date_idx]
+                    week_term_str = row[week_term_idx]
                     
                     try:
-                        # Handle potential timestamp objects or strings
-                        if isinstance(date_str, datetime):
-                            date_obj = date_str.date()
+                        # Handle potential datetime objects or strings from openpyxl
+                        if isinstance(date_val, datetime):
+                            date_obj = date_val.date()
                         else:
-                            date_obj = datetime.strptime(str(date_str), '%d/%m/%Y').date()
+                            # Try parsing string if not a datetime object
+                            date_obj = datetime.strptime(str(date_val), '%d/%m/%Y').date()
                             
                         # Parse term info
                         term, week = parse_term_week(week_term_str)
@@ -75,7 +88,7 @@ def import_dates(directory):
                         
                         record.term_number = term
                         record.week_number = week
-                        record.display_label = str(week_term_str) if pd.notna(week_term_str) else None
+                        record.display_label = str(week_term_str) if week_term_str else None
                         
                         total_records += 1
                         
@@ -93,13 +106,12 @@ def import_dates(directory):
 
 if __name__ == '__main__':
     # Adjust path to where the user said the files are: rough-ideas/Date_Information
-    # Assuming script is run from project root or checks relative paths
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     target_dir = os.path.join(project_root, 'rough-ideas', 'Date_Information')
     
-    # If project root calculation is wrong, try the absolute path known from context
     if not os.path.exists(target_dir):
         # Fallback to the known path from user request
         target_dir = r'c:\Users\dsuth\Documents\Code Projects\Timetable-3\rough-ideas\Date_Information'
         
     import_dates(target_dir)
+
