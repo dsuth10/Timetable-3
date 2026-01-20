@@ -117,6 +117,8 @@ export default function Schedule() {
     aideId?: number;
   } | null>(null);
 
+  const [termInfo, setTermInfo] = useState<any>(null);
+
   // Get selectedAideId from URL parameter
   const selectedAideId = useMemo(() => {
     const aideIdParam = searchParams.get('aideId');
@@ -225,6 +227,12 @@ export default function Schedule() {
             });
             byAide[aideId] = aideAssignments;
           });
+        }
+
+        if (matrix?.term_info) {
+          setTermInfo(matrix.term_info);
+        } else {
+          setTermInfo(null);
         }
 
         setAssignmentsByAide(byAide);
@@ -405,6 +413,12 @@ export default function Schedule() {
         });
       }
 
+      if (matrix?.term_info) {
+        setTermInfo(matrix.term_info);
+      } else {
+        setTermInfo(null);
+      }
+
       setAssignmentsByAide(byAide);
       // Trigger refresh of unassigned panel
       setRefreshTrigger(prev => prev + 1);
@@ -541,6 +555,7 @@ export default function Schedule() {
         onPrevWeek={prevWeek}
         onNextWeek={nextWeek}
         onToday={thisWeek}
+        termInfo={termInfo}
       />
 
       {/* Main Content Area */}

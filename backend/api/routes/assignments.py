@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from api.models.task import Task
 from api.models.teacher_aide import TeacherAide
+from api.models.term_week import TermWeek
 from api.services.collision_service import CollisionService
 from api.services.conflict_resolver import ConflictResolver
 from api.services.assignment_service import AssignmentSeriesService
@@ -393,6 +394,15 @@ def weekly_matrix():
     # 5 weekdays horizon (Mon-Fri)
     days = [start_date + timedelta(days=i) for i in range(5)]
 
+    # Fetch Term Information for the week (try to find the first available record in the week)
+    term_info = db.session.execute(
+        select(TermWeek)
+        .filter(TermWeek.date >= days[0], TermWeek.date <= days[-1])
+        .order_by(TermWeek.date)
+        .limit(1)
+    ).scalar_one_or_none()
+    term_data = term_info.to_dict() if term_info else None
+
     # Build aides list
     stmt = select(TeacherAide).order_by(TeacherAide.id)
     aides = db.session.execute(stmt).scalars().all()
@@ -461,5 +471,6 @@ def weekly_matrix():
         'time_slots': time_slots,
         'matrix': matrix,
         'conflicts': conflicts,
-        'timeline_config': timeline_config
+        'timeline_config': timeline_config,
+        'term_info': term_data
     }, 200
