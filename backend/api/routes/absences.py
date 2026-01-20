@@ -46,7 +46,8 @@ def create_absence():
         return {'error': 'Invalid date format'}, 400
 
     # Create absence if not exists
-    existing = Absence.query.filter_by(aide_id=aide_id, date=absence_date).first()
+    stmt = select(Absence).filter_by(aide_id=aide_id, date=absence_date)
+    existing = db.session.execute(stmt).scalar_one_or_none()
     if existing:
         return {'error': 'Absence already exists for this date'}, 409
 
@@ -124,7 +125,8 @@ def list_absences_for_aide(aide_id: int):
     if not aide:
         return {'error': 'Aide not found'}, 404
 
-    items = Absence.query.filter_by(aide_id=aide_id).order_by(Absence.date).all()
+    stmt = select(Absence).filter_by(aide_id=aide_id).order_by(Absence.date)
+    items = db.session.execute(stmt).scalars().all()
     return [
         {
             'id': a.id,

@@ -20,6 +20,8 @@ class CollisionService:
     - Absence conflicts
     """
     
+    WEEKDAY_MAP = {0: 'MO', 1: 'TU', 2: 'WE', 3: 'TH', 4: 'FR'}
+
     @staticmethod
     def check_time_overlap(
         start1: dt_time,
@@ -141,12 +143,11 @@ class CollisionService:
         """
         # Get weekday (Monday=0, Sunday=6)
         weekday_num = assignment_date.weekday()
-        weekday_map = {0: 'MO', 1: 'TU', 2: 'WE', 3: 'TH', 4: 'FR'}
         
-        if weekday_num not in weekday_map:
+        if weekday_num not in CollisionService.WEEKDAY_MAP:
             return True, None  # allow weekend by default for tests
         
-        weekday = weekday_map[weekday_num]
+        weekday = CollisionService.WEEKDAY_MAP[weekday_num]
         
         # Fetch any availability for this aide
         any_slots_stmt = select(func.count(Availability.id)).where(Availability.aide_id == aide_id)

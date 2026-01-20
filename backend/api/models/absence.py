@@ -2,8 +2,8 @@
 T034: Absence Model
 Represents a teacher aide being unavailable on a specific date.
 """
-from datetime import datetime, date as dt_date
-from sqlalchemy import Column, Integer, Date, Text, DateTime, ForeignKey, UniqueConstraint, Index
+from datetime import datetime, date as dt_date, timezone
+from sqlalchemy import Column, Integer, Date, Text, DateTime, ForeignKey, UniqueConstraint, Index, select
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy import event, text as sa_text
 from api.models import db
@@ -28,7 +28,7 @@ class Absence(db.Model):
     aide_id = Column(Integer, ForeignKey('teacher_aides.id', ondelete='CASCADE'), nullable=False)
     date = Column(Date, nullable=False, index=True)
     reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     aide = relationship('TeacherAide', back_populates='absences')

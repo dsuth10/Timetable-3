@@ -17,10 +17,10 @@ export const assignmentsApi = {
   batch(payload: { task_id: ID; aide_id: ID | null; dates: string[]; start_time: string; end_time: string; }) {
     return api.post('/assignments/batch', payload).then((r) => r.data as { assignments: Assignment[]; conflicts: any[] });
   },
-  weeklyMatrix(startDateISO: string) {
+  weeklyMatrix(startDateISO: string): Promise<any> {
     const url = `/assignments/weekly-matrix?start_date=${startDateISO}`;
     return api.get(url)
-      .then((r) => (r?.data ?? { assignments: [] }) as any)
+      .then((r) => r.data || { matrix: {}, time_slots: [], term_info: null })
       .catch((err) => {
         console.error('Failed to fetch weekly matrix:', err);
         throw err;

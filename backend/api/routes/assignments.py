@@ -124,10 +124,6 @@ def create_assignment():
         # Build response explicitly to ensure required fields
         # Use model serializer for full fidelity
         result = assignment.to_dict(include_seconds=auto_shorten)
-        try:
-            print("DEBUG_CREATE_ASSIGNMENT_RES", result)
-        except Exception:
-            pass
         return result, 201
     except Exception as e:
         db.session.rollback()
