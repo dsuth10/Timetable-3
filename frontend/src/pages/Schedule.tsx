@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { format, startOfWeek } from 'date-fns';
 import {
   Box,
   FormControl,
@@ -55,6 +56,7 @@ import { TimetableExportView } from '../components/TimetableExportView';
 import { useTimetableExport } from '../hooks/useTimetableExport';
 
 export default function Schedule() {
+  const navigate = useNavigate();
   const {
     getSegmentForTime,
     calculateDuration,
@@ -532,6 +534,25 @@ export default function Schedule() {
     fetchClassrooms().catch(() => undefined);
   };
 
+  // Handler for viewing aide schedule from card
+  const handleViewAideSchedule = useCallback((aideId: number) => {
+    // Calculate start of the week for the current selected week
+    const weekStart = startOfWeek(new Date(selectedWeekStartISO + 'T00:00:00'), { weekStartsOn: 1 });
+    const weekParam = format(weekStart, 'yyyy-MM-dd');
+    
+    // Navigate to schedule with aide filter
+    navigate(`/schedule?aideId=${aideId}&week=${weekParam}&view=AIDE`);
+  }, [selectedWeekStartISO, navigate]);
+
+  // Handler for editing aide from card
+  const handleEditAideFromCard = useCallback((aide: typeof aides[0]) => {
+    setSelectedAideForEdit(aide);
+    setShowAideFormModal(true);
+  }, []);
+
+  // State for selected aide for editing from card
+  const [selectedAideForEdit, setSelectedAideForEdit] = useState<typeof aides[0] | null>(null);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Top App Bar */}
@@ -753,7 +774,13 @@ export default function Schedule() {
               onTaskDoubleClick={handleTaskDoubleClick}
             />
           ) : (
-            <TeacherAideListPanel assignmentsByAide={assignmentsByAide} />
+            <TeacherAideListPanel 
+              assignmentsByAide={assignmentsByAide}
+              onMarkAbsence={handleMarkAbsence}
+              onEditAide={handleEditAideFromCard}
+              onViewSchedule={handleViewAideSchedule}
+              selectedWeekStartISO={selectedWeekStartISO}
+            />
           )}
         </Box>
 
@@ -899,6 +926,11 @@ export default function Schedule() {
           fetchAides({ includeAvailability: true });
           // Add the new aide to visible set
           setVisibleAideIds(prev => new Set([...prev, aide.id]));
+        }}
+        onUpdated={(aide) => {
+          setShowAideFormModal(false);
+          // Refresh aides to get updated data
+          fetchAides({ includeAvailability: true });
         }}
       />
       <TaskSelectionModal

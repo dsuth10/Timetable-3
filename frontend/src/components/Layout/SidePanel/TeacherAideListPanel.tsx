@@ -12,6 +12,8 @@ import {
   alpha,
 } from '@mui/material';
 import { Search, Person, DragIndicator } from '@mui/icons-material';
+import { Tooltip, IconButton } from '@mui/material';
+import { EventBusy as AbsenceIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { useAidesStore } from '../../../store/stores/aides';
 import { useUiStore } from '../../../store/stores/uiStore';
@@ -19,15 +21,25 @@ import LoadingState from '../../common/LoadingState';
 import EmptyState from '../../common/EmptyState';
 import { isAideAvailable } from '../../../utils/availabilityUtils';
 import { addMinutesToTime, timeIntervalsOverlap } from '../../TimetableGrid/timeUtils';
-import type { Assignment } from '../../../types';
+import type { Assignment, TeacherAide } from '../../../types';
 
 const DRAWER_WIDTH = 320;
 
 type Props = {
   assignmentsByAide: Record<string, Assignment[]>;
+  onMarkAbsence?: (aideId: number) => void;
+  onEditAide?: (aide: TeacherAide) => void;
+  onViewSchedule?: (aideId: number) => void;
+  selectedWeekStartISO?: string;
 };
 
-export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) {
+export default function TeacherAideListPanel({ 
+  assignmentsByAide = {},
+  onMarkAbsence,
+  onEditAide,
+  onViewSchedule,
+  selectedWeekStartISO
+}: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const { aides, loading } = useAidesStore();
   const { selectedTimeSlot } = useUiStore();
@@ -148,25 +160,106 @@ export default function TeacherAideListPanel({ assignmentsByAide = {} }: Props) 
                           ...dragProvided.draggableProps.style,
                         }}
                       >
-                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <DragIndicator fontSize="small" color="action" />
-                          <Avatar
-                            sx={{
-                              bgcolor: aide.colour_hex,
-                              width: 32,
-                              height: 32,
-                              fontSize: '0.875rem'
-                            }}
-                          >
-                            {aide.name.charAt(0)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {aide.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {aide.details || 'No details'}
-                            </Typography>
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {/* Top Row: Drag Indicator, Avatar, Name */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <DragIndicator fontSize="small" color="action" />
+                            <Avatar
+                              sx={{
+                                bgcolor: aide.colour_hex,
+                                width: 32,
+                                height: 32,
+                                fontSize: '0.875rem'
+                              }}
+                            >
+                              {aide.name.charAt(0)}
+                            </Avatar>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                                {aide.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                {aide.details || 'No details'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          {/* Bottom Row: Action Buttons */}
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5, mt: 0.5, ml: 4.5 }}>
+                            {/* Button 1: Set Absence */}
+                            {onMarkAbsence && (
+                              <Tooltip title="Mark Absence">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onMarkAbsence(aide.id);
+                                  }}
+                                  sx={{ 
+                                    border: 1, 
+                                    borderColor: 'divider', 
+                                    borderRadius: 1,
+                                    p: 0.5,
+                                    '&:hover': {
+                                      bgcolor: 'action.hover',
+                                      borderColor: 'primary.main'
+                                    }
+                                  }}
+                                >
+                                  <AbsenceIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            
+                            {/* Button 2: Edit Details */}
+                            {onEditAide && (
+                              <Tooltip title="Edit Details & Availability">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditAide(aide);
+                                  }}
+                                  sx={{ 
+                                    border: 1, 
+                                    borderColor: 'divider', 
+                                    borderRadius: 1,
+                                    p: 0.5,
+                                    '&:hover': {
+                                      bgcolor: 'action.hover',
+                                      borderColor: 'primary.main'
+                                    }
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            
+                            {/* Button 3: View Schedule */}
+                            {onViewSchedule && (
+                              <Tooltip title="View Weekly Schedule">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewSchedule(aide.id);
+                                  }}
+                                  sx={{ 
+                                    border: 1, 
+                                    borderColor: 'divider', 
+                                    borderRadius: 1,
+                                    p: 0.5,
+                                    '&:hover': {
+                                      bgcolor: 'action.hover',
+                                      borderColor: 'primary.main'
+                                    }
+                                  }}
+                                >
+                                  <VisibilityIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
                           </Box>
                         </CardContent>
                       </Card>

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isLocal = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.');
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || (isLocal ? '/api' : 'https://threft.pythonanywhere.com/api'),
   timeout: 10000,

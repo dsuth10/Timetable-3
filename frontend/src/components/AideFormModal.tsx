@@ -30,6 +30,7 @@ type Props = {
   onUpdated?: (aide: TeacherAide) => void;
   onDeleted?: () => void;
   aide?: TeacherAide | null;
+  isEdit?: boolean; // Explicitly track edit mode for better clarity
 };
 
 // Generate a random color hex

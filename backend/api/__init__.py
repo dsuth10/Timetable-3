@@ -51,18 +51,10 @@ def create_app(config=None):
     db.init_app(app)
     
     # CORS configuration
-    origins = [
-        "https://threft.pythonanywhere.com",
-        "https://thunderous-moonbeam-94b722.netlify.app",
-        "https://mrsutherland.net",
-        "https://www.mrsutherland.net",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000"
-    ]
-    
+    # CORS configuration - Allow all origins for development/testing
     CORS(app, resources={
         r"/api/.*": {
-            "origins": origins,
+            "origins": "*",
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True
