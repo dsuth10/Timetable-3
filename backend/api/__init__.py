@@ -54,7 +54,7 @@ def create_app(config=None):
     # CORS configuration - Allow all origins for development/testing
     CORS(app, resources={
         r"/api/.*": {
-            "origins": "*",
+            "origins": r".*",
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True

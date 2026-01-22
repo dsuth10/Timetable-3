@@ -117,4 +117,43 @@ A markdown guide (`START_GUIDE.md`) has been created in the project root. It con
 - [x] Created START_GUIDE.md with full startup guide
 - [x] Task completed
 </task_progress>
-</attempt_completion>
+
+---
+
+## 5. Troubleshooting Common Issues
+
+### 5.1 "Address already in use" or Stale Processes
+
+If you see errors like `OSError: [Errno 98] Address already in use` or cannot start the servers, you might have old processes running in the background.
+
+**Solution:** Kill all stale Python and Node processes.
+
+**Windows PowerShell:**
+```powershell
+taskkill /F /IM python.exe /T
+taskkill /F /IM node.exe /T
+```
+
+**macOS/Linux:**
+```bash
+pkill -f python
+pkill -f node
+```
+
+### 5.2 Database Errors (500 Internal Server Error)
+
+If you see `500 Internal Server Error` or CORS errors that mention `no such column` or other database issues in the backend logs:
+
+**Solution:** Re-initialize the separate local database.
+
+1.  Stop the backend server.
+2.  Navigate to `backend/instance` and delete `timetable.db`.
+3.  Restart the backend server (`python backend/app.py`). It will automatically recreate the database with the correct schema.
+4.  *Note: You will lose existing local data, but this fixes schema corruption.*
+
+### 5.3 Network Access Issues
+
+If other devices cannot connect:
+1.  **Check Firewall:** Ensure Windows Firewall allows traffic on ports `3000` (Frontend) and `5000` (Backend).
+2.  **Verify IP:** Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to ensure you are using the correct LAN IP.
+3.  **Same Network:** Ensure devices are on the same Wi-Fi network and AP Isolation is disabled on your router.
