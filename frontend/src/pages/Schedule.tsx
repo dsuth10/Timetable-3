@@ -76,7 +76,7 @@ export default function Schedule() {
     setViewMode
   } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
-  const { tasks, fetchTasks } = useTasksStore();
+  const { tasks, fetchTasks, handleQuickCreate } = useTasksStore();
   const { classrooms, fetchClassrooms } = useClassroomsStore();
   const [assignmentsByAide, setAssignmentsByAide] = useState<Record<string, Assignment[]>>({});
   const [loading, setLoading] = useState(false);
@@ -240,6 +240,9 @@ export default function Schedule() {
     setLoading(true);
     setError(undefined);
 
+    // Refresh tasks to ensure store is in sync (safety net)
+    fetchTasks().catch(() => undefined);
+
     // Refresh absences
     if (aides.length) {
       const targets = viewMode === 'CLASS' ? aides : aides.filter(a => visibleAideIds.has(a.id));
@@ -255,7 +258,7 @@ export default function Schedule() {
         setLoading(false);
         setRefreshTrigger(prev => prev + 1);
       });
-  }, [selectedWeekStartISO, processMatrixResponse, aides, viewMode, visibleAideIds, listForAide]);
+  }, [selectedWeekStartISO, processMatrixResponse, aides, viewMode, visibleAideIds, listForAide, fetchTasks]);
 
   // Initial load and week change
   useEffect(() => {
@@ -1039,7 +1042,8 @@ export default function Schedule() {
           setShowQuickCreate(false);
           setTaskCreationDefaults(null);
         }}
-        onSuccess={async () => {
+        onSuccess={async (response) => {
+          handleQuickCreate(response); // Add task to store
           setShowQuickCreate(false);
           setTaskCreationDefaults(null);
           await refreshData();
