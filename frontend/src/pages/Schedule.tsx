@@ -77,7 +77,7 @@ export default function Schedule() {
     setViewMode
   } = useUiStore();
   const { aides, fetchAides } = useAidesStore();
-  const { tasks, fetchTasks } = useTasksStore();
+  const { tasks, fetchTasks, handleQuickCreate } = useTasksStore();
   const { classrooms, fetchClassrooms } = useClassroomsStore();
   const [assignmentsByAide, setAssignmentsByAide] = useState<Record<string, Assignment[]>>({});
   const [loading, setLoading] = useState(false);
@@ -387,6 +387,8 @@ export default function Schedule() {
 
   const refreshData = async () => {
     setLoading(true);
+    // Refresh tasks to ensure store is in sync (safety net)
+    fetchTasks().catch(() => undefined);
     try {
       const matrix = await assignmentsApi.weeklyMatrix(selectedWeekStartISO);
       const byAide: Record<string, Assignment[]> = {};
@@ -1056,7 +1058,8 @@ export default function Schedule() {
           setShowQuickCreate(false);
           setTaskCreationDefaults(null);
         }}
-        onSuccess={async () => {
+        onSuccess={async (response) => {
+          handleQuickCreate(response); // Add task to store
           setShowQuickCreate(false);
           setTaskCreationDefaults(null);
           await refreshData();
