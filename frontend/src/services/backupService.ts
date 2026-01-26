@@ -1,5 +1,12 @@
 import { api } from './api';
-import type { BackupRequest, BackupResponse, BackupProgress } from '../types/backup';
+import type { 
+  BackupRequest, 
+  BackupResponse, 
+  BackupProgress, 
+  ValidationResponse, 
+  ImportResponse, 
+  DatabaseStatus 
+} from '../types/backup';
 
 export const backupService = {
   /**
@@ -40,8 +47,104 @@ export const backupService = {
   },
 
   /**
+   * Validate a backup file before import.
+   */
+  async validateBackup(file: File, format: string): Promise<ValidationResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('format', format);
+    
+    const response = await api.post<ValidationResponse>('/backup/validate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Start an import job.
+   */
+  async importBackup(file: File, format: string): Promise<ImportResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('format', format);
+    
+    const response = await api.post<ImportResponse>('/backup/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get progress for an import job.
+   */
+  async getImportProgress(importId: string): Promise<BackupProgress> {
+    const response = await api.get<BackupProgress>(`/backup/import/${importId}/progress`);
+    return response.data;
+  },
+
+  /**
+   * Poll for import progress.
+   */
+  pollImportProgress(
+    importId: string,
+    onProgress: (progress: BackupProgress) => void,
+    onError: (error: Error) => void,
+    interval: number = 1000
+  ): () => void {
+    let pollInterval: NodeJS.Timeout | null = null;
+    let isPolling = true;
+
+    const poll = async () => {
+      if (!isPolling) return;
+
+      try {
+        const progress = await this.getImportProgress(importId);
+        onProgress(progress);
+
+        if (progress.status === 'completed' || progress.status === 'failed' || progress.status === 'cancelled') {
+          stopPolling();
+        }
+      } catch (error) {
+        onError(error as Error);
+        stopPolling();
+      }
+    };
+
+    const stopPolling = () => {
+      isPolling = false;
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    poll();
+    pollInterval = setInterval(poll, interval);
+
+    return stopPolling;
+  },
+
+  /**
+   * Cancel an import in progress.
+   */
+  async cancelImport(importId: string): Promise<void> {
+    await api.post(`/backup/import/${importId}/cancel`);
+  },
+
+  /**
+   * Check if database is empty.
+   */
+  async checkDatabaseEmpty(): Promise<DatabaseStatus> {
+    const response = await api.get<DatabaseStatus>('/backup/check-database');
+    return response.data;
+  },
+
+  /**
    * Poll for backup progress updates.
-   * Returns a function to stop polling.
    */
   pollBackupProgress(
     backupId: string,

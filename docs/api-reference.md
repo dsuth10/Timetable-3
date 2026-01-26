@@ -14,7 +14,8 @@
 6. [Classrooms](#classrooms)
 7. [Requests](#requests)
 8. [Scheduler](#scheduler)
-9. [Error Responses](#error-responses)
+9. [Backup & Import](#backup--import)
+10. [Error Responses](#error-responses)
 
 ---
 
@@ -974,6 +975,100 @@ POST /api/scheduler/extend-horizon
 {
   "assignments_created": 45,
   "new_horizon_end": "2025-11-15"
+}
+```
+
+---
+
+## Backup & Import
+
+Manage database backups and restore data.
+
+### Create Backup
+
+```http
+POST /api/backup/create
+```
+
+**Request Body**:
+```json
+{
+  "format": "json"
+}
+```
+
+**Formats**: `sql`, `json`, `csv`, `sqlite_gz`
+
+**Response** (200 OK):
+```json
+{
+  "backup_id": "uuid",
+  "status": "completed",
+  "download_url": "/api/backup/uuid/download"
+}
+```
+
+### Validate Backup
+
+```http
+POST /api/backup/validate
+```
+
+**Request Body**: Multipart form data with `file` and `format`.
+
+**Response** (200 OK):
+```json
+{
+  "is_valid": true,
+  "metadata": {
+    "format_type": "json",
+    "file_size_bytes": 1024
+  }
+}
+```
+
+### Import Backup
+
+```http
+POST /api/backup/import
+```
+
+**Request Body**: Multipart form data with `file` and `format`.
+
+**Response** (200 OK):
+```json
+{
+  "import_id": "uuid",
+  "status": "validating"
+}
+```
+
+### Get Import Progress
+
+```http
+GET /api/backup/import/{id}/progress
+```
+
+**Response** (200 OK):
+```json
+{
+  "status": "importing",
+  "progress_percent": 45,
+  "current_step": "Importing table 3 of 8"
+}
+```
+
+### Check Database Status
+
+```http
+GET /api/backup/check-database
+```
+
+**Response** (200 OK):
+```json
+{
+  "is_empty": true,
+  "non_empty_tables": []
 }
 ```
 

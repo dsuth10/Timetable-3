@@ -109,12 +109,24 @@ Leave this terminal open as well.
 
 ```
 http://<your‑machine‑IP>:3000
-<|end|><|start|>assistant<|channel|>final<|message|><attempt_completion>
-<result>
-A markdown guide (`START_GUIDE.md`) has been created in the project root. It contains step‑by‑step instructions for starting the backend Flask server and the frontend Vite dev server on a Windows machine with the same restrictions, and explains how to access the app from other devices on the network.
-</result>
-<task_progress>
-- [x] Created START_GUIDE.md with full startup guide
-- [x] Task completed
-</task_progress>
-</attempt_completion>
+```
+
+---
+
+## 5. Backup and Restore
+
+The application includes a robust backup and restore system.
+
+### 5.1 Creating a Backup
+1. Click the "Management" button in the bottom right.
+2. Select the "Database Management" tab.
+3. Choose your preferred format (SQL, JSON, CSV, or Compressed SQLite).
+4. Click "Create Backup" and download the resulting file.
+
+### 5.2 Restoring from a Backup
+1. Ensure you are on a **fresh installation** with no existing data.
+2. Click "Management" -> "Database Management".
+3. Switch to the "Import Backup" tab.
+4. Select your backup file.
+5. Click "Start Import" and wait for the success message.
+6. The application will automatically refresh with the restored data.
