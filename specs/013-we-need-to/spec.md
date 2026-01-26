@@ -68,6 +68,8 @@ Then, I need to import that file into a fresh installation of the application an
 - No validation during import process
 - No error handling for corrupted or incompatible backup files
 
+**Note on Scope**: Original user request mentioned "calendar set up" being duplicated. This specification focuses on importing timetable data (8 database tables). If calendar-specific features exist in the application (beyond the timetable data itself), those are considered out of scope for this initial import feature and should be addressed in a future enhancement.
+
 ### Acceptance Scenarios
 
 #### Export Scenarios
@@ -108,7 +110,7 @@ Then, I need to import that file into a fresh installation of the application an
 - What happens when importing a backup with duplicate aide names or classroom names? → Validation catches duplicates, import fails with clear error
 - How does the system handle very large backup files (e.g., 100MB+)? → Files over 100MB rejected; 50-100MB show warning
 - What happens if the import file contains references to IDs that don't exist? → Foreign key validation catches this, import fails with rollback
-- How does the system handle import during active use by other administrators? → Import prevented on non-empty database regardless of active users
+- How does the system handle import during active use by other administrators? → Import prevented on installations with existing data regardless of active users
 - What happens when disk space is insufficient during import? → Database operation fails, automatic rollback triggered
 - How does the system handle character encoding issues in imported files? → File validation detects encoding issues before import begins
 - What if only some tables are empty during import check? → System requires ALL tables to be empty; any data prevents import
@@ -149,7 +151,7 @@ Then, I need to import that file into a fresh installation of the application an
 
 - **FR-014**: System MUST display progress indicators during import showing percentage complete and current table being processed.
 
-- **FR-015**: System MUST prevent import if any timetable data already exists in the database. Import is only allowed on fresh installations with empty tables. System must display a clear error message if data exists.
+- **FR-015**: System MUST prevent import if any timetable data already exists in the database. Import is only allowed on fresh installations (all 8 tables must be empty). System must display a clear error message listing which tables contain data if import is blocked.
 
 - **FR-016**: System MUST preserve all relationships during import (assignments linked to correct tasks, tasks linked to correct classrooms, etc.).
 
@@ -173,9 +175,7 @@ Then, I need to import that file into a fresh installation of the application an
 
 - **FR-025**: System MUST validate data types and formats in backup files match expected schema.
 
-- **FR-026**: System MUST detect and report schema version mismatches if backup is from different application version.
-
-- **FR-026a**: System MUST warn users about schema version mismatches but allow them to proceed with import or cancel. Warning must clearly indicate potential compatibility issues.
+- **FR-026**: System MUST detect schema version mismatches when backup is from a different application version. System must warn users with detailed information including backup version, current application version, and potential compatibility risks. Users must be able to either proceed with import (accepting risks) or cancel the operation. Warning dialog must clearly indicate that proceeding may cause data corruption or import failures.
 
 - **FR-027**: System MUST validate foreign key relationships in backup data are valid.
 
@@ -189,13 +189,15 @@ Then, I need to import that file into a fresh installation of the application an
 
 - **FR-031**: System MUST preserve existing backup files even after import (don't delete source files).
 
-- **FR-032**: Export and import operations MUST provide estimated time remaining for operations longer than 5 seconds.
+- **FR-032**: Export and import operations MUST display progress percentage immediately. For operations exceeding 5 seconds duration, system must additionally display estimated time remaining (e.g., "2 minutes remaining"). Time estimates must update every 5 seconds based on average throughput of completed tables or data chunks.
 
 ### Key Entities
 
 - **Backup File**: A complete export of all timetable data in one of four formats (SQL, JSON, CSV zip, or compressed SQLite). Contains snapshots of all 8 tables with metadata about creation time and format.
 
 - **Import Job**: A process that reads a backup file and restores the data to the database. Tracks progress, validates data, handles errors, and provides status updates.
+
+- **Validation Result**: Internal data structure tracking validation outcomes across 4 stages (format, schema, data types, relationships). Contains detailed error messages, warnings, and validation status for each stage. Used during import to provide clear feedback about why a backup file is invalid or incompatible.
 
 - **Teacher Aide**: Staff member data including name, color, and availability patterns that must be preserved during export/import.
 
@@ -250,8 +252,8 @@ All requirements have been clarified and confirmed:
 - [x] Key concepts extracted
 - [x] Ambiguities marked and resolved (4 clarifications confirmed)
 - [x] User scenarios defined
-- [x] Requirements generated (33 functional requirements)
-- [x] Entities identified (10 entities)
+- [x] Requirements generated (32 functional requirements: FR-001 to FR-032)
+- [x] Entities identified (11 entities: 8 database tables + Backup File + Import Job + Validation Result)
 - [x] Review checklist passed ✅
 
 ---

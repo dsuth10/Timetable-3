@@ -320,7 +320,13 @@ The `/tasks` command will generate implementation tasks organized by these categ
 4. **Tests Alongside Implementation**: Mark [P] for parallel test development
 5. **Integration Last** (Tasks 42-51): Requires all components complete
 
-**Estimated Output**: 56 numbered, ordered tasks in tasks.md
+**Estimated Output**: 76 numbered, ordered tasks in tasks.md
+
+**Note**: Task count increased from initial estimate of 56 to 76 during detailed breakdown. Additional granularity added for:
+- Separate contract tests per endpoint (5 tests instead of 1 combined)
+- Separate validation stage tests (5 tests instead of 1 combined)
+- Separate import format tests (4 tests instead of 1 combined)
+- Additional component tests for frontend UI (4 tests instead of generic coverage)
 
 **Dependencies**:
 - Tasks 1-5 can run in parallel (different export formats)

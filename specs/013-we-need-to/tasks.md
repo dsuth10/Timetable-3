@@ -13,9 +13,9 @@ This task list implements a complete backup import system for the Timetable appl
 - Enforces fresh-installation-only imports with atomic rollback
 - Provides real-time progress tracking and clear error messages
 
-**Total Tasks**: 56  
-**Estimated Duration**: 10-15 days (2 developers working in parallel)  
-**Test-Driven**: 22 test tasks before implementation
+**Total Tasks**: 76  
+**Estimated Duration**: 10-15 business days (2 developers working in parallel)  
+**Test-Driven**: 39 test tasks (51% of total)
 
 ---
 
@@ -329,8 +329,8 @@ This task list implements a complete backup import system for the Timetable appl
 
 - [ ] **T047** Create import progress component with real-time updates  
   **Files**: `frontend/src/components/Management/BackupManagement.tsx`  
-  **Criteria**: Material-UI LinearProgress, status text, percentage display  
-  **Acceptance**: T041 tests pass, updates via polling every 1 second
+  **Criteria**: Material-UI LinearProgress, status text, percentage display (immediate), estimated time remaining (after 5s, update every 5s)  
+  **Acceptance**: T041 tests pass, updates via polling every 1 second, time estimate appears after 5s and updates based on throughput
 
 - [ ] **T048** Implement error message display with retry button  
   **Files**: `frontend/src/components/Management/BackupManagement.tsx`  
@@ -509,8 +509,8 @@ This task list implements a complete backup import system for the Timetable appl
 
 - [ ] **T074** Final constitution compliance check  
   **Files**: Manual review against `.specify/memory/constitution.md`  
-  **Criteria**: Verify all 6 core principles satisfied, test coverage ≥90%  
-  **Acceptance**: No constitution violations, comprehensive tests exist
+  **Criteria**: Verify all 6 core principles satisfied, test coverage ≥90% (run `pytest --cov` for backend, `npm run test:coverage` for frontend)  
+  **Acceptance**: No constitution violations, backend coverage ≥90%, frontend coverage ≥90%, all critical paths tested
 
 - [ ] **T075** Code review and cleanup  
   **Files**: All modified files  
