@@ -25,6 +25,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-01
 - Python 3.12+, TypeScript 5.x + Flask, SQLAlchemy (Backend); React 18, MUI v5, @hello-pangea/dnd (Frontend) (011-feature-sophisticated-hover)
 - Python 3.12 (Backend), TypeScript 5.0+, React 18+ + `jsPDF`, `html2canvas` (for high-fidelity frontend reproduction) (012-redesign-of-the)
 - N/A (Client-side generation preferred for high fidelity) (012-redesign-of-the)
+- Python 3.12+ (backend), TypeScript strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Material-UI v5, Zustand (013-we-need-to)
+- SQLite (single file, local-first architecture) (013-we-need-to)
 
 ## Project Structure
 ```
@@ -40,9 +42,9 @@ cd src; pytest; ruff check .
 Python 3.12+ (backend), TypeScript 5+ in strict mode (frontend): Follow standard conventions
 
 ## Recent Changes
+- 013-we-need-to: Added Python 3.12+ (backend), TypeScript strict mode (frontend) + Flask 3.x, SQLAlchemy 2.x, React 18+, Material-UI v5, Zustand
 - 012-redesign-of-the: Added Python 3.12 (Backend), TypeScript 5.0+, React 18+ + `jsPDF`, `html2canvas` (for high-fidelity frontend reproduction)
 - 011-feature-sophisticated-hover: Added Python 3.12+, TypeScript 5.x + Flask, SQLAlchemy (Backend); React 18, MUI v5, @hello-pangea/dnd (Frontend)
-- 010-we-need-to: Added Python 3.12+ (Backend), TypeScript (Strict Mode) (Frontend) + Flask, SQLAlchemy, Material-UI v5, Zustand, @hello-pangea/dnd
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

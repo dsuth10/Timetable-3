@@ -1,0 +1,626 @@
+openapi: 3.0.3
+info:
+  title: Timetable Backup Import API
+  description: REST API for importing backup files to restore timetable data
+  version: 1.0.0
+  contact:
+    name: Timetable Development Team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Import
+    description: Backup import operations
+  - name: Validation
+    description: Backup file validation
+
+paths:
+  /api/backup/validate:
+    post:
+      summary: Validate backup file before import
+      description: |
+        Performs multi-stage validation on a backup file without importing data.
+        Returns validation results including any errors or warnings.
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - format
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Backup file to validate
+                format:
+                  type: string
+                  enum: [sql, json, csv, sqlite_gz]
+                  description: Expected backup format
+      responses:
+        '200':
+          description: Validation completed (may contain errors/warnings)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              examples:
+                valid:
+                  summary: Valid backup file
+                  value:
+                    is_valid: true
+                    metadata:
+                      format_type: json
+                      schema_version: "abc123"
+                      created_at: "2026-01-24T10:30:00Z"
+                      tables_present: ["teacher_aides", "tasks", "assignments", "classrooms", "absences", "availability", "requests", "recurring_series"]
+                      total_records: 650
+                      file_size_bytes: 52428800
+                    warnings:
+                      - "Schema version mismatch: backup is v1.2.3, current is v1.2.5"
+                    errors: []
+                    stages:
+                      - stage: format
+                        is_valid: true
+                        errors: []
+                        warnings: []
+                      - stage: schema
+                        is_valid: true
+                        errors: []
+                        warnings: ["Schema version mismatch"]
+                      - stage: data_types
+                        is_valid: true
+                        errors: []
+                        warnings: []
+                      - stage: relationships
+                        is_valid: true
+                        errors: []
+                        warnings: []
+                invalid:
+                  summary: Invalid backup file
+                  value:
+                    is_valid: false
+                    metadata:
+                      format_type: json
+                      schema_version: "abc123"
+                      created_at: "2026-01-24T10:30:00Z"
+                      tables_present: ["teacher_aides", "tasks", "assignments"]
+                      total_records: 120
+                      file_size_bytes: 10485760
+                    warnings: []
+                    errors:
+                      - "Missing required table: classrooms"
+                      - "Foreign key violation: assignments.task_id references non-existent task #42"
+                    stages:
+                      - stage: format
+                        is_valid: true
+                        errors: []
+                        warnings: []
+                      - stage: schema
+                        is_valid: false
+                        errors: ["Missing required table: classrooms"]
+                        warnings: []
+        '400':
+          description: Invalid request (missing file, invalid format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_file:
+                  summary: No file provided
+                  value:
+                    error: "No file provided"
+                    details: "Request must include a file in multipart/form-data"
+                file_too_large:
+                  summary: File exceeds size limit
+                  value:
+                    error: "File exceeds 100MB limit"
+                    details: "Uploaded file is 125MB, maximum allowed is 100MB"
+        '500':
+          description: Server error during validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/backup/import:
+    post:
+      summary: Import backup file to restore data
+      description: |
+        Imports a backup file to restore timetable data. This operation:
+        - Requires an empty database (all tables must have 0 records)
+        - Uses atomic transactions (full rollback on any error)
+        - Tracks progress via import_id
+        - Returns immediately with import_id, then processes asynchronously
+      tags:
+        - Import
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - format
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Backup file to import
+                format:
+                  type: string
+                  enum: [sql, json, csv, sqlite_gz]
+                  description: Backup format
+                skip_validation:
+                  type: boolean
+                  default: false
+                  description: Skip validation if already validated (use with caution)
+      responses:
+        '200':
+          description: Import started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+              examples:
+                started:
+                  summary: Import started
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: validating
+                    progress_percent: 0
+                    current_step: "Validating backup file..."
+                    started_at: "2026-01-24T10:35:00Z"
+                completed_immediately:
+                  summary: Small import completed immediately
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: completed
+                    progress_percent: 100
+                    current_step: "Import completed successfully"
+                    started_at: "2026-01-24T10:35:00Z"
+                    completed_at: "2026-01-24T10:35:02Z"
+                    records_imported:
+                      teacher_aides: 10
+                      classrooms: 5
+                      tasks: 50
+                      recurring_series: 5
+                      assignments: 500
+                      absences: 20
+                      availability: 50
+                      requests: 10
+        '400':
+          description: Invalid request or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                database_not_empty:
+                  summary: Database not empty
+                  value:
+                    error: "Import not allowed: database contains existing data"
+                    details: "Found data in: teacher_aides (10 records), tasks (50 records)"
+                    code: "E003"
+                validation_failed:
+                  summary: Validation failed
+                  value:
+                    error: "Backup validation failed"
+                    details: "Missing required table: classrooms"
+                    code: "E004"
+        '409':
+          description: Database state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                import_in_progress:
+                  summary: Another import already in progress
+                  value:
+                    error: "Import already in progress"
+                    details: "Wait for current import to complete or cancel it"
+                    import_id: "existing-import-id"
+        '500':
+          description: Server error during import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/backup/import/{import_id}/progress:
+    get:
+      summary: Get import progress
+      description: Poll this endpoint to track import progress and get final results
+      tags:
+        - Import
+      parameters:
+        - name: import_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Import job ID returned from POST /import
+      responses:
+        '200':
+          description: Import progress information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportProgressResponse'
+              examples:
+                validating:
+                  summary: Validation in progress
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: validating
+                    progress_percent: 25
+                    current_step: "Validating relationships (Stage 4/4)"
+                    started_at: "2026-01-24T10:35:00Z"
+                    warnings: []
+                importing:
+                  summary: Import in progress
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: importing
+                    progress_percent: 60
+                    current_step: "Importing table 5 of 8: assignments"
+                    started_at: "2026-01-24T10:35:00Z"
+                    warnings: ["Schema version mismatch: backup is v1.2.3, current is v1.2.5"]
+                    records_imported:
+                      teacher_aides: 10
+                      classrooms: 5
+                      tasks: 50
+                      recurring_series: 5
+                      assignments: 250
+                completed:
+                  summary: Import completed
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: completed
+                    progress_percent: 100
+                    current_step: "Import completed successfully"
+                    started_at: "2026-01-24T10:35:00Z"
+                    completed_at: "2026-01-24T10:35:45Z"
+                    warnings: ["Schema version mismatch: backup is v1.2.3, current is v1.2.5"]
+                    records_imported:
+                      teacher_aides: 10
+                      classrooms: 5
+                      tasks: 50
+                      recurring_series: 5
+                      assignments: 500
+                      absences: 20
+                      availability: 50
+                      requests: 10
+                failed:
+                  summary: Import failed
+                  value:
+                    import_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: failed
+                    progress_percent: 45
+                    current_step: "Import failed during table: assignments"
+                    started_at: "2026-01-24T10:35:00Z"
+                    completed_at: "2026-01-24T10:35:30Z"
+                    error: "Foreign key constraint violation"
+                    error_details: "assignments.task_id=42 references non-existent task"
+                    rollback_status: "completed"
+                    warnings: []
+        '404':
+          description: Import job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/backup/import/{import_id}/cancel:
+    post:
+      summary: Cancel an import in progress
+      description: |
+        Attempts to cancel an in-progress import. If import is in validation stage,
+        cancellation is immediate. If import is in progress, waits for current
+        table to complete then performs rollback.
+      tags:
+        - Import
+      parameters:
+        - name: import_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Import job ID to cancel
+      responses:
+        '200':
+          description: Import cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  import_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [cancelled]
+                  message:
+                    type: string
+                  rollback_status:
+                    type: string
+                    enum: [completed, not_needed]
+        '400':
+          description: Cannot cancel import in current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                already_completed:
+                  summary: Import already completed
+                  value:
+                    error: "Cannot cancel completed import"
+                    details: "Import finished at 2026-01-24T10:35:45Z"
+        '404':
+          description: Import job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during cancellation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/backup/check-database:
+    get:
+      summary: Check if database is empty (ready for import)
+      description: Returns whether all required tables are empty and ready for import
+      tags:
+        - Validation
+      responses:
+        '200':
+          description: Database status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_empty:
+                    type: boolean
+                    description: True if all tables are empty
+                  tables_checked:
+                    type: array
+                    items:
+                      type: string
+                    description: List of tables checked
+                  non_empty_tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        record_count:
+                          type: integer
+                    description: Tables with existing data
+              examples:
+                empty:
+                  summary: Database is empty
+                  value:
+                    is_empty: true
+                    tables_checked: ["teacher_aides", "tasks", "assignments", "classrooms", "absences", "availability", "requests", "recurring_series"]
+                    non_empty_tables: []
+                has_data:
+                  summary: Database has existing data
+                  value:
+                    is_empty: false
+                    tables_checked: ["teacher_aides", "tasks", "assignments", "classrooms", "absences", "availability", "requests", "recurring_series"]
+                    non_empty_tables:
+                      - table_name: teacher_aides
+                        record_count: 10
+                      - table_name: tasks
+                        record_count: 50
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ValidationResponse:
+      type: object
+      required:
+        - is_valid
+        - metadata
+        - errors
+        - warnings
+        - stages
+      properties:
+        is_valid:
+          type: boolean
+          description: True if backup passed all validation stages
+        metadata:
+          $ref: '#/components/schemas/BackupMetadata'
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation errors (if any)
+        warnings:
+          type: array
+          items:
+            type: string
+          description: List of non-fatal warnings
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationStageResult'
+          description: Results of each validation stage
+
+    BackupMetadata:
+      type: object
+      required:
+        - format_type
+        - tables_present
+        - total_records
+        - file_size_bytes
+      properties:
+        format_type:
+          type: string
+          enum: [sql, json, csv, sqlite_gz]
+        schema_version:
+          type: string
+          description: Alembic schema version from backup
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          description: When backup was created
+          nullable: true
+        tables_present:
+          type: array
+          items:
+            type: string
+          description: Tables found in backup file
+        total_records:
+          type: integer
+          description: Total row count across all tables
+        file_size_bytes:
+          type: integer
+          description: Backup file size in bytes
+        application_version:
+          type: string
+          description: Application version that created backup
+          nullable: true
+
+    ValidationStageResult:
+      type: object
+      required:
+        - stage
+        - is_valid
+        - errors
+        - warnings
+      properties:
+        stage:
+          type: string
+          enum: [format, schema, data_types, relationships]
+        is_valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional stage-specific details
+
+    ImportResponse:
+      type: object
+      required:
+        - import_id
+        - status
+        - progress_percent
+        - current_step
+        - started_at
+      properties:
+        import_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this import job
+        status:
+          type: string
+          enum: [validating, importing, verifying, completed, failed]
+          description: Current import status
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Progress percentage (0-100)
+        current_step:
+          type: string
+          description: Human-readable description of current step
+        started_at:
+          type: string
+          format: date-time
+          description: When import started
+        completed_at:
+          type: string
+          format: date-time
+          description: When import completed (if finished)
+          nullable: true
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-fatal warnings
+        records_imported:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of records imported per table
+          nullable: true
+
+    ImportProgressResponse:
+      allOf:
+        - $ref: '#/components/schemas/ImportResponse'
+        - type: object
+          properties:
+            error:
+              type: string
+              description: Error message if status is failed
+              nullable: true
+            error_details:
+              type: string
+              description: Detailed error information
+              nullable: true
+            rollback_status:
+              type: string
+              enum: [completed, in_progress, not_needed]
+              description: Status of rollback operation if failed
+              nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Additional error details
+          nullable: true
+        code:
+          type: string
+          description: Error code (e.g., E001, E002)
+          nullable: true
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggested actions to resolve error
