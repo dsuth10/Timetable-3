@@ -121,7 +121,7 @@ class Task(db.Model):
         
         return value
     
-    def to_dict(self, include_assignments=False, include_seconds=True):
+    def to_dict(self, include_assignments=False, include_seconds=True, include_relationships=False):
         """Convert to dictionary for JSON serialization"""
         time_format = '%H:%M:%S' if include_seconds else '%H:%M'
         data = {
@@ -138,7 +138,7 @@ class Task(db.Model):
         }
 
         
-        if self.classroom:
+        if (include_assignments or include_relationships) and self.classroom:
             data['classroom'] = self.classroom.to_dict()
         
         if include_assignments:

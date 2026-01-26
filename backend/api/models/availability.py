@@ -79,7 +79,7 @@ class Availability(db.Model):
         
         return value
     
-    def to_dict(self):
+    def to_dict(self, include_relationships=False):
         """Convert to dictionary for JSON serialization"""
         return {
             'id': self.id,

@@ -28,10 +28,13 @@ from api.models.task import Task
 from api.models.teacher_aide import TeacherAide
 from api.models.validation import REQUIRED_TABLES
 from api.services.import_validator import ImportValidator
+import logging
 
 # Module-level storage for backup progress and responses (in-memory)
 _backup_progress: dict[str, dict[str, Any]] = {}
 _backup_responses: dict[str, dict[str, Any]] = {}
+
+logger = logging.getLogger(__name__)
 
 
 class BackupService:
@@ -243,14 +246,35 @@ class BackupService:
             ('requests', Request)
         ]
 
+        from dateutil.parser import parse as parse_date
+        from sqlalchemy import Date, Time, DateTime, Boolean
+
         try:
             with db.session.begin_nested():
                 for table_name, model_class in import_order:
                     if table_name in data and data[table_name]:
                         # Clear existing data just in case
                         model_class.query.delete()
+                        
+                        # Process records to convert strings to date/time objects and booleans
+                        processed_records = []
+                        for record in data[table_name]:
+                            processed_record = record.copy()
+                            for column in model_class.__table__.columns:
+                                col_name = column.name
+                                if col_name in processed_record and processed_record[col_name] is not None:
+                                    val = processed_record[col_name]
+                                    if isinstance(column.type, (Date, DateTime)):
+                                        processed_record[col_name] = parse_date(val).date() if isinstance(column.type, Date) else parse_date(val)
+                                    elif isinstance(column.type, Time):
+                                        processed_record[col_name] = parse_date(val).time()
+                                    elif isinstance(column.type, Boolean):
+                                        if isinstance(val, str):
+                                            processed_record[col_name] = val.lower() in ('true', 'yes', '1', 't')
+                            processed_records.append(processed_record)
+                            
                         # Bulk insert
-                        db.session.bulk_insert_mappings(model_class, data[table_name])
+                        db.session.bulk_insert_mappings(model_class, processed_records)
                 db.session.commit()
         except Exception:
             db.session.rollback()
@@ -264,6 +288,8 @@ class BackupService:
             filepath: Path to .zip file
         """
         import io
+        from dateutil.parser import parse as parse_date
+        from sqlalchemy import Date, Time, DateTime, Boolean
 
         # Dependency order for insertion
         import_order = [
@@ -290,6 +316,20 @@ class BackupService:
                             for row in reader:
                                 # Convert empty strings to None for nullable fields
                                 clean_row = {k: (v if v != '' else None) for k, v in row.items()}
+                                
+                                # Convert strings to date/time objects and booleans
+                                for column in model_class.__table__.columns:
+                                    col_name = column.name
+                                    if col_name in clean_row and clean_row[col_name] is not None:
+                                        val = clean_row[col_name]
+                                        if isinstance(column.type, (Date, DateTime)):
+                                            clean_row[col_name] = parse_date(val).date() if isinstance(column.type, Date) else parse_date(val)
+                                        elif isinstance(column.type, Time):
+                                            clean_row[col_name] = parse_date(val).time()
+                                        elif isinstance(column.type, Boolean):
+                                            if isinstance(val, str):
+                                                clean_row[col_name] = val.lower() in ('true', 'yes', '1', 't')
+                                            
                                 records.append(clean_row)
 
                             if records:
@@ -876,20 +916,27 @@ class BackupService:
         }
         return extensions.get(format_type, 'bin')
 
-    def get_backup_filepath(self, backup_id: str, format_type: str) -> Optional[str]:
+    def get_backup_filepath(self, backup_id: str, format_type: Optional[str] = None) -> Optional[str]:
         """
-        Get filepath for a backup by ID and format.
+        Get filepath for a backup by ID.
 
         Args:
             backup_id: Backup identifier
-            format_type: Backup format
+            format_type: Optional backup format
 
         Returns:
             Filepath if found, None otherwise
         """
-        # Search for backup file matching ID and format
-        pattern = f'{backup_id}_{format_type}_*.{self._get_extension(format_type)}'
-        for filepath in self.backup_dir.glob(pattern):
+        # If format_type is provided, try that first
+        if format_type:
+            pattern = f'{backup_id}_{format_type}_*.{self._get_extension(format_type)}'
+            for filepath in self.backup_dir.glob(pattern):
+                return str(filepath)
+
+        # Otherwise (or if not found), search for ANY format with this ID
+        # Filename format: {backup_id}_{format}_{timestamp}.{ext}
+        for filepath in self.backup_dir.glob(f'{backup_id}_*'):
             return str(filepath)
+
         return None
 

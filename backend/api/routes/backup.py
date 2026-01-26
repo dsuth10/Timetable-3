@@ -123,24 +123,24 @@ def download_backup(backup_id: str):
     try:
         # Get backup progress to check status
         progress = get_backup_service().get_progress(backup_id)
-
-        if not progress:
-            return {'error': 'Backup not found'}, 404
-
-        if progress['status'] != 'completed':
-            return {
-                'error': 'Backup not ready for download',
-                'details': f"Backup status is '{progress['status']}'"
-            }, 400
-
-        # Get backup filepath
-        format_type = progress.get('format') or 'sql'  # Fallback if not in progress
-        filepath = get_backup_service().get_backup_filepath(backup_id, format_type)
+        
+        filepath = None
+        if progress:
+            if progress['status'] != 'completed':
+                return {
+                    'error': 'Backup not ready for download',
+                    'details': f"Backup status is '{progress['status']}'"
+                }, 400
+            format_type = progress.get('format')
+            filepath = get_backup_service().get_backup_filepath(backup_id, format_type)
+        else:
+            # If not in progress, try to find the file anyway (might have restarted)
+            filepath = get_backup_service().get_backup_filepath(backup_id)
 
         if not filepath:
             return {'error': 'Backup file not found'}, 404
 
-        # Determine filename from progress or generate from filepath
+        # Determine filename from filepath
         from pathlib import Path
         path_obj = Path(filepath)
         filename = path_obj.name

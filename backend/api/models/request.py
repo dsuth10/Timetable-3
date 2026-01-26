@@ -111,7 +111,7 @@ class Request(db.Model):
         
         return value
     
-    def to_dict(self, include_classroom=False):
+    def to_dict(self, include_relationships=False):
         """Convert to dictionary for JSON serialization"""
         data = {
             'id': self.id,
@@ -126,7 +126,7 @@ class Request(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
         
-        if include_classroom and self.classroom:
+        if include_relationships and self.classroom:
             data['classroom'] = self.classroom.to_dict()
         
         return data
