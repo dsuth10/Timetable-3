@@ -817,7 +817,7 @@ export default function Schedule() {
         classroomsContent={<ClassroomsManagement onChanged={handleManagementChange} />}
         tasksContent={<TasksManagement refreshTrigger={refreshTrigger} onChanged={handleManagementChange} />}
         requestsContent={<RequestsManagement />}
-        backupContent={<BackupManagement />}
+        backupContent={<BackupManagement onChanged={handleManagementChange} />}
         adminContent={<AdminPanel />}
       />
 

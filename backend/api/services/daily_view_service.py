@@ -80,7 +80,7 @@ class DailyViewService:
         return {
             "aides": aides_data,
             "relief_pool": relief_pool,
-            "task_bank": [t.to_dict() for t in task_bank],
+            "task_bank": [t.to_dict(include_relationships=True) for t in task_bank],
             "timeline_config": {
                 "slots": slots,
                 "start_time": SCHEDULE_CONFIG["START_TIME"],

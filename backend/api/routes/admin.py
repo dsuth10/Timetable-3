@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, current_app
 from api.models import db
 import time
+from sqlalchemy import text as sa_text
 
 bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
@@ -11,14 +12,27 @@ def reset_db():
     This drops all tables and recreates them.
     """
     try:
-        # Close any existing connections (optional but good practice)
+        # Import all models to ensure they are registered with SQLAlchemy
+        from api.models import (
+            TeacherAide, Availability, Classroom, Task, 
+            RecurringSeries, Assignment, Absence, Request, TermWeek
+        )
+        
+        # Close any existing sessions
         db.session.remove()
+        
+        # Disable foreign key checks for the drop operation
+        db.session.execute(sa_text("PRAGMA foreign_keys = OFF"))
         
         # Drop all tables
         db.drop_all()
         
         # Create all tables
         db.create_all()
+        
+        # Re-enable foreign key checks
+        db.session.execute(sa_text("PRAGMA foreign_keys = ON"))
+        db.session.commit()
         
         return jsonify({
             "message": "Database reset successfully", 

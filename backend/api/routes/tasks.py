@@ -31,7 +31,7 @@ def list_tasks():
             return {'error': 'Bad request', 'message': 'Invalid classroom_id'}, 400
             
     tasks = db.session.execute(stmt.order_by(Task.id)).scalars().all()
-    return [t.to_dict() for t in tasks], 200
+    return [t.to_dict(include_relationships=True) for t in tasks], 200
 
 
 @bp.get('/tasks/<int:task_id>')
@@ -39,7 +39,7 @@ def get_task(task_id: int):
     task = db.session.get(Task, task_id)
     if not task:
         return {'error': 'Not found', 'message': 'Task not found'}, 404
-    return task.to_dict(), 200
+    return task.to_dict(include_relationships=True), 200
 
 
 @bp.post('/tasks')

@@ -141,7 +141,7 @@ class Assignment(db.Model):
         
         if include_relationships:
             if self.task:
-                data['task'] = self.task.to_dict()
+                data['task'] = self.task.to_dict(include_relationships=True)
             if self.aide:
                 data['aide'] = self.aide.to_dict()
             if self.original_aide:

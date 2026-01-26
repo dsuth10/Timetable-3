@@ -26,7 +26,11 @@ import {
 import { backupService } from '../../services/backupService';
 import type { BackupFormat, BackupResponse, BackupProgress } from '../../types/backup';
 
-export default function BackupManagement() {
+interface BackupManagementProps {
+  onChanged?: () => void;
+}
+
+export default function BackupManagement({ onChanged }: BackupManagementProps) {
   const [activeTab, setActiveTab] = useState(0);
   
   // Export states
@@ -61,6 +65,10 @@ export default function BackupManagement() {
     setActiveTab(newValue);
     setError(null);
     setImportError(null);
+    // Refresh database status when switching to import tab
+    if (newValue === 1) {
+      checkDatabase();
+    }
   };
 
   const handleCreateBackup = async () => {
@@ -150,6 +158,7 @@ export default function BackupManagement() {
     
     setImportLoading(true);
     setImportError(null);
+    setImportProgress(null); // Clear previous progress state
     setImportProgress({ status: 'starting', progress_percent: 0 });
 
     try {
@@ -178,6 +187,10 @@ export default function BackupManagement() {
             if (progressUpdate.status === 'completed') {
               // Refresh database status
               checkDatabase();
+              // Trigger global refresh if provided
+              if (onChanged) {
+                onChanged();
+              }
             }
           }
         },
@@ -317,7 +330,11 @@ export default function BackupManagement() {
           </Typography>
 
           {dbEmpty && !dbEmpty.is_empty && (
-            <Alert severity="warning">
+            <Alert severity="warning" action={
+              <Button color="inherit" size="small" onClick={checkDatabase}>
+                Refresh
+              </Button>
+            }>
               <Typography variant="body2">
                 Database is not empty. Found data in: {dbEmpty.non_empty_tables.join(', ')}.
               </Typography>
@@ -354,11 +371,11 @@ export default function BackupManagement() {
             variant="contained"
             color="primary"
             onClick={handleImport}
-            disabled={!importFile || importLoading || (dbEmpty !== null && !dbEmpty.is_empty)}
+            disabled={!importFile || importLoading || dbEmpty === null || !dbEmpty.is_empty}
             fullWidth
             size="large"
           >
-            {importLoading ? 'Importing...' : 'Start Import'}
+            {dbEmpty === null ? <CircularProgress size={20} /> : (importLoading ? 'Importing...' : 'Start Import')}
           </Button>
 
           {importProgress && importProgress.status !== 'completed' && importProgress.status !== 'failed' && (
@@ -382,7 +399,7 @@ export default function BackupManagement() {
           )}
 
           {importProgress && importProgress.status === 'completed' && (
-            <Alert severity="success" icon={<SuccessIcon />}>
+            <Alert severity="success" icon={<SuccessIcon />} onClose={() => setImportProgress(null)}>
               <Typography variant="body2">
                 Import completed successfully!
               </Typography>
@@ -402,7 +419,7 @@ export default function BackupManagement() {
           )}
 
           {importError && (
-            <Alert severity="error" icon={<ErrorIcon />}>
+            <Alert severity="error" icon={<ErrorIcon />} onClose={() => setImportError(null)}>
               <Typography variant="body2">{importError}</Typography>
             </Alert>
           )}

@@ -84,12 +84,20 @@ class BackupService:
             'recurring_series': RecurringSeries
         }
 
+        from sqlalchemy.exc import OperationalError
+
         for table_name in REQUIRED_TABLES:
             model_class = model_map.get(table_name)
             if model_class:
-                count = model_class.query.count()
-                if count > 0:
-                    non_empty_tables.append(f"{table_name} ({count} records)")
+                try:
+                    count = model_class.query.count()
+                    if count > 0:
+                        non_empty_tables.append(f"{table_name} ({count} records)")
+                except OperationalError as e:
+                    # If table doesn't exist, it's considered empty for import purposes
+                    if 'no such table' in str(e).lower():
+                        continue
+                    raise
 
         return len(non_empty_tables) == 0, non_empty_tables
 
@@ -185,7 +193,26 @@ class BackupService:
         try:
             with open(filepath, encoding='utf-8') as f:
                 sql_script = f.read()
+            
+            # Disable foreign keys to allow dropping and recreating tables in any order.
+            # Many SQL dumps (like those from iterdump) are alphabetical and will 
+            # insert data into child tables before parent tables exist.
+            conn.execute("PRAGMA foreign_keys = OFF")
+            
+            # Get all existing tables
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            existing_tables = [row[0] for row in cursor.fetchall()]
+            
+            # Drop all existing tables to allow the SQL script to recreate them
+            for table in existing_tables:
+                if table != 'sqlite_sequence':
+                    conn.execute(f"DROP TABLE IF EXISTS \"{table}\"")
+            
+            # Execute the script with foreign keys OFF
             conn.executescript(sql_script)
+            
+            # Re-enable foreign keys and commit
+            conn.execute("PRAGMA foreign_keys = ON")
             conn.commit()
         finally:
             conn.close()
